@@ -10,7 +10,7 @@
 
 
 # SOURCES: list of sources in the user application
-SOURCES = main.c system.c usbd_conf.c usbd_cdc_if.c usb_device.c usbd_desc.c interrupts.c system_stm32f0xx.c can.c slcan.c led.c error.c printf.c
+SOURCES := $(shell find src -name "*.c")
 
 # Get git version and dirty flag
 GIT_VERSION := $(shell git describe --abbrev=7 --dirty --always --tags)
@@ -23,7 +23,7 @@ TARGET = canable-$(GIT_VERSION)
 BUILD_DIR = build
 
 # LD_SCRIPT: location of the linker script
-LD_SCRIPT = STM32F042C6_FLASH.ld
+LD_SCRIPT = STM32F072C8TX_FLASH.ld
 
 # USER_DEFS user defined macros
 USER_DEFS = -D HSI48_VALUE=48000000 -D HSE_VALUE=16000000
@@ -36,7 +36,7 @@ USB_INCLUDES = -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc
 USB_INCLUDES += -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 
 # USER_CFLAGS: user C flags (enable warnings, enable debug info)
-USER_CFLAGS = -Wall -g -ffunction-sections -fdata-sections -Os
+USER_CFLAGS = -Os -std=gnu11 -DUSE_HAL_DRIVER -DSTM32F072xB -static --specs=nano.specs -mthumb -mfloat-abi=soft -Wl,--start-group -lc -lm -Wl,--end-group -Wl,--gc-sections  -Wall -fstack-usage -fno-exceptions -ffunction-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections
 
 ifneq ($(EXTERNAL_OSCILLATOR), 1)
 USER_CFLAGS += -DINTERNAL_OSCILLATOR
@@ -46,7 +46,7 @@ endif
 USER_LDFLAGS = -fno-exceptions -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 # TARGET_DEVICE: device to compile for
-TARGET_DEVICE = STM32F042x6
+TARGET_DEVICE = STM32F072xB
 
 #######################################
 # end of user configuration
@@ -89,7 +89,7 @@ INCLUDES += $(USER_INCLUDES)
 DEFS = -D$(CORE) $(USER_DEFS) -D$(TARGET_DEVICE)
 
 # compile gcc flags
-CFLAGS = $(DEFS) $(INCLUDES)
+CFLAGS += $(DEFS) $(INCLUDES)
 CFLAGS += -mcpu=$(CPU) -mthumb
 CFLAGS += $(USER_CFLAGS)
 CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -154,7 +154,7 @@ $(USB_BUILD_DIR):
 # list of user program objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.c=.o)))
 # add an object for the startup code
-OBJECTS += $(BUILD_DIR)/startup_stm32f042x6.o
+OBJECTS += $(BUILD_DIR)/startup_stm32f072c8tx.o
 
 # use the periphlib core library, plus generic ones (libc, libm, libnosys)
 LIBS = -lstm32cube -lc -lm -lnosys
