@@ -38,10 +38,6 @@ USB_INCLUDES += -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 # USER_CFLAGS: user C flags (enable warnings, enable debug info)
 USER_CFLAGS = -Os -std=gnu11 -DUSE_HAL_DRIVER -DSTM32F072xB -static --specs=nano.specs -mthumb -mfloat-abi=soft -Wl,--start-group -lc -lm -Wl,--end-group -Wl,--gc-sections  -Wall -fstack-usage -fno-exceptions -ffunction-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections
 
-ifneq ($(EXTERNAL_OSCILLATOR), 1)
-USER_CFLAGS += -DINTERNAL_OSCILLATOR
-endif
-
 # USER_LDFLAGS:  user LD flags
 USER_LDFLAGS = -fno-exceptions -ffunction-sections -fdata-sections -Wl,--gc-sections
 
