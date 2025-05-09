@@ -176,7 +176,7 @@ void cdc_process(void)
 		{
 		   if (rxbuf.buf[rxbuf.tail][i] == '\r')
 		   {
-			   slcan_parse_str(slcan_str, slcan_str_index);
+			   /*int8_t result =*/ slcan_parse_str(slcan_str, slcan_str_index);
 
 			   // Success
 			   //if(result == 0)

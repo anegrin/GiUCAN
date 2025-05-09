@@ -23,7 +23,7 @@ TARGET = canable-$(GIT_VERSION)
 BUILD_DIR = build
 
 # LD_SCRIPT: location of the linker script
-LD_SCRIPT = STM32F072C8TX_FLASH.ld
+LD_SCRIPT = STM32F072CBTX_FLASH.ld
 
 # USER_DEFS user defined macros
 USER_DEFS = -D HSI48_VALUE=48000000 -D HSE_VALUE=16000000
@@ -154,7 +154,7 @@ $(USB_BUILD_DIR):
 # list of user program objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.c=.o)))
 # add an object for the startup code
-OBJECTS += $(BUILD_DIR)/startup_stm32f072c8tx.o
+OBJECTS += $(BUILD_DIR)/startup_stm32f072cbtx.o
 
 # use the periphlib core library, plus generic ones (libc, libm, libnosys)
 LIBS = -lstm32cube -lc -lm -lnosys

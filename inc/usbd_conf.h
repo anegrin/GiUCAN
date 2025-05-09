@@ -91,17 +91,11 @@
   */
 
 /*---------- -----------*/
-//#define USBD_MAX_NUM_INTERFACES     1
-/*---------- -----------*/
-//#define USBD_MAX_NUM_CONFIGURATION     1
-/*---------- -----------*/
 #define USBD_MAX_STR_DESC_SIZ     256
 /*---------- -----------*/
 #define USBD_SUPPORT_USER_STRING     0
 /*---------- -----------*/
 #define USBD_DEBUG_LEVEL     0
-/*---------- -----------*/
-//#define USBD_SELF_POWERED     0
 /*---------- -----------*/
 #define MAX_STATIC_ALLOC_SIZE     512
 
