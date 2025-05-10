@@ -3,13 +3,13 @@
 #include "usbd_conf.h"
 #include "system.h"
 
-#define USBD_VID			0xad50
-#define USBD_LANGID_STRING		1033
-#define USBD_MANUFACTURER_STRING	"Protofusion Labs"
-#define USBD_PID_FS			0x60c4
-#define USBD_PRODUCT_STRING_FS		"CANable" " " GIT_VERSION " " GIT_REMOTE
-#define USBD_CONFIGURATION_STRING_FS    "CDC Config"
-#define USBD_INTERFACE_STRING_FS	"CDC Interface"
+#define USBD_VID     1155
+#define USBD_LANGID_STRING     1033
+#define USBD_MANUFACTURER_STRING     "TOSC" //the open source community
+#define USBD_PID_FS     22336
+#define USBD_PRODUCT_STRING_FS     "GiUCAN"
+#define USBD_CONFIGURATION_STRING_FS     "CDC Config"
+#define USBD_INTERFACE_STRING_FS     "CDC Interface"
 
 
 
@@ -185,7 +185,7 @@ uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
     system_hex32(buf     , *(uint32_t*)(UID_BASE    ));
     system_hex32(buf +  8, *(uint32_t*)(UID_BASE + 4));
     system_hex32(buf + 16, *(uint32_t*)(UID_BASE + 8));
-    USBD_GetString(buf, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)buf, USBD_StrDesc, length);
     return USBD_StrDesc; 
     
     

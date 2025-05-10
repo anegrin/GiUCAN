@@ -9,7 +9,7 @@
 #include "error.h"
 
 // Private variables
-static volatile usbrx_buf_t rxbuf = {0};
+static usbrx_buf_t rxbuf = {0};
 static uint8_t txbuf[TX_BUF_SIZE];
 extern USBD_HandleTypeDef hUsbDeviceFS;
 static uint8_t slcan_str[SLCAN_MTU];
@@ -176,7 +176,7 @@ void cdc_process(void)
 		{
 		   if (rxbuf.buf[rxbuf.tail][i] == '\r')
 		   {
-			   int8_t result = slcan_parse_str(slcan_str, slcan_str_index);
+			   /*int8_t result =*/ slcan_parse_str(slcan_str, slcan_str_index);
 
 			   // Success
 			   //if(result == 0)

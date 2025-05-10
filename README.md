@@ -1,8 +1,27 @@
-# CANable Firmware
+# GiUCAN Firmware
 
-This repository contains sources for the slcan CANable firmware, based off of the CANtact firwmare. This firmware may still compile and run on the CANtact.
+This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Diesel engines; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
 
-## Supported Commands
+- Smart Start and Stop disabling
+- DPF regeneration warnings
+- Dashboard info dispaly
+
+It's tested using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**.
+
+## DISCLAIMER
+
+GiUCAN is an experimental project developed solely for educational and research purposes. It is strictly prohibited to use this tool on vehicles operating on public roads or in any manner that may pose a risk to public safety, violate laws or regulations, or cause harm to people or property.
+
+The developer of GiUCAN assumes no liability for any damages, malfunctions, legal issues, or other consequences arising from its use. All responsibility lies with the end user, who assumes full civil, criminal, and legal liability for any misuse.
+
+Do not use this project in real-world vehicle control or autonomous driving applications.
+
+## Rationale
+
+I'm contributing to the [BACCAble](https://github.com/gaucho1978/BACCAble) repository, I'm keeping this one strictly target to my needs; the goal is to use it as a learning playgroud.
+Please check the amazing [BACCAble](https://github.com/gaucho1978/BACCAble) project!
+
+## Supported Commands in CANable mode
 
 - `O` - Open channel 
 - `C` - Close channel 
@@ -29,37 +48,9 @@ Note: Channel configuration commands must be sent before opening the channel. Th
 
 This firmware currently does not provide any ACK/NACK feedback for serial commands.
 
-## Building
+## Building, Flashing  and Debugging
 
-Firmware builds with GCC. Specifically, you will need gcc-arm-none-eabi, which
-is packaged for Windows, OS X, and Linux on
-[Launchpad](https://launchpad.net/gcc-arm-embedded/+download). Download for your
-system and add the `bin` folder to your PATH.
-
-Your Linux distribution may also have a prebuilt package for `arm-none-eabi-gcc`, check your distro's repositories to see if a build exists.
-
-- If you have a CANable device, you can compile using `make`. 
-- If you have a CANtact or other device with external oscillator, you can compile using `make INTERNAL_OSCILLATOR=1`
-
-## Flashing with the Bootloader
-
-Simply plug in your CANable with the BOOT jumper enabled (or depress the boot button on the CANable Pro while plugging in). Next, type `make flash` and your CANable will be updated to the latest firwmare. Unplug/replug the device after moving the boot jumper back, and your CANable will be up and running.
-
-## Debugging
-
-Debugging and flashing can be done with any STM32 Discovery board as a
-programmer, or an st-link. You can also use other tools that support SWD.
-
-To use an STM32 Discovery, run [OpenOCD](http://openocd.sourceforge.net/) using
-the stm32f0x.cfg file: `openocd -f fw/stm32f0x.cfg`.
-
-With OpenOCD running, arm-none-eabi-gdb can be used to load code and debug.
-
-## Contributors
-
-- [Ethan Zonca](https://github.com/normaldotcom) - New features, HAL updates, Makefile fixes and code size optimization, updates for CANable
-- [onejope](https://github.com/onejope) - Fixes to extended ID handling
-- Phil Wise - Added dfu-util compatibility to Makefile
+Please check [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md)
 
 ## License
 
