@@ -13,7 +13,6 @@
 #include "led.h"
 #include "error.h"
 
-
 int main(void)
 {
     // Initialize peripherals
@@ -29,27 +28,26 @@ int main(void)
     uint8_t rx_msg_data[8] = {0};
     uint8_t msg_buf[SLCAN_MTU];
 
-
-    while(1)
+    while (1)
     {
         cdc_process();
         led_process();
         can_process();
 
         // If CAN message receive is pending, process the message
-        if(is_can_msg_pending(CAN_RX_FIFO0))
+        if (is_can_msg_pending(CAN_RX_FIFO0))
         {
-			// If message received from bus, parse the frame
-			if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
-			{
-				uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
+            // If message received from bus, parse the frame
+            if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
+            {
+                uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
 
-				// Transmit message via USB-CDC
-				if(msg_len)
-				{
-					CDC_Transmit_FS(msg_buf, msg_len);
-				}
-			}
+                // Transmit message via USB-CDC
+                if (msg_len)
+                {
+                    CDC_Transmit_FS(msg_buf, msg_len);
+                }
+            }
         }
     }
 }
