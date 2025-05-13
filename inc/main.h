@@ -30,38 +30,9 @@ extern "C"
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
 
-  /* Private includes ----------------------------------------------------------*/
-  /* USER CODE BEGIN Includes */
-
-  /* USER CODE END Includes */
-
-  /* Exported types ------------------------------------------------------------*/
-  /* USER CODE BEGIN ET */
-
-  /* USER CODE END ET */
-
-  /* Exported constants --------------------------------------------------------*/
-  /* USER CODE BEGIN EC */
-
-  /* USER CODE END EC */
-
-  /* Exported macUSBD_Startro ------------------------------------------------------------*/
-  /* USER CODE BEGIN EM */
-
-  /* USER CODE END EM */
-
-  /* Exported functions prototypes ---------------------------------------------*/
-  // void Error_Handler(void);
-
-  /* USER CODE BEGIN EFP */
-
-  /* USER CODE END EFP */
-
-  /* Private defines -----------------------------------------------------------*/
-
-  /* USER CODE BEGIN Private defines */
-
-  /* USER CODE END Private defines */
+#ifdef INCLUDE_USER_CONFIG_H
+#include "user_config.h"
+#endif
 
 #ifdef __cplusplus
 }

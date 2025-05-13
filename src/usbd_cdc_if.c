@@ -7,6 +7,7 @@
 #include "led.h"
 #include "system.h"
 #include "error.h"
+#include "printf.h"
 
 // Private variables
 static usbrx_buf_t rxbuf = {0};
@@ -166,8 +167,9 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 
 
 // Process incoming USB-CDC messages from RX FIFO
-void cdc_process(void)
+uint8_t cdc_process(void)
 {
+  uint8_t processed = 0;
 	system_irq_disable();
 	if(rxbuf.tail != rxbuf.head)
 	{
@@ -186,6 +188,7 @@ void cdc_process(void)
 			   //    CDC_Transmit_FS("\a", 1);
 
 			   slcan_str_index = 0;
+         processed = 1;
 		   }
 		   else
 		   {
@@ -204,6 +207,7 @@ void cdc_process(void)
 		rxbuf.tail = (rxbuf.tail + 1) % NUM_RX_BUFS;
 	}
 	system_irq_enable();
+  return processed;
 }
 
 
@@ -251,3 +255,20 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
     USBD_CDC_SetTxBuffer(&hUsbDeviceFS, txbuf, Len);
     return USBD_CDC_TransmitPacket(&hUsbDeviceFS);
 }
+
+#ifdef DEBUG_MODE
+uint8_t print_to_usb(char* message)
+{
+    uint16_t msg_len = strlen(message);
+    return CDC_Transmit_FS((uint8_t*)message, msg_len < SLCAN_MTU ? msg_len : SLCAN_MTU);
+}
+
+uint8_t printf_to_usb(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int written = vsnprintf((char*)slcan_str, SLCAN_MTU, format, args);
+    va_end(args);
+    return CDC_Transmit_FS(slcan_str, written < SLCAN_MTU ? (uint8_t) written : SLCAN_MTU);
+  }
+#endif

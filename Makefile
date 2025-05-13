@@ -17,7 +17,7 @@ GIT_VERSION := $(shell git describe --abbrev=7 --dirty --always --tags)
 GIT_REMOTE := $(shell git config --get remote.origin.url | sed 's/^.*github/github/')
 
 # TARGET: name of the user application
-TARGET = canable-$(GIT_VERSION)
+TARGET = GiUCAN-$(GIT_VERSION)
 
 # BUILD_DIR: directory to place output files in
 BUILD_DIR = build
@@ -36,7 +36,7 @@ USB_INCLUDES = -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc
 USB_INCLUDES += -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 
 # USER_CFLAGS: user C flags (enable warnings, enable debug info)
-USER_CFLAGS = -Os -std=gnu11 -DUSE_HAL_DRIVER -DSTM32F072xB -static --specs=nano.specs -mthumb -mfloat-abi=soft -Wl,--start-group -lc -lm -Wl,--end-group -Wl,--gc-sections  -Wall -fstack-usage -fno-exceptions -ffunction-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections
+USER_CFLAGS = -Os -std=gnu11 -DPRINTF_INCLUDE_CONFIG_H -DUSE_HAL_DRIVER -DSTM32F072xB -static --specs=nano.specs -mthumb -mfloat-abi=soft -Wl,--start-group -lc -lm -Wl,--end-group -Wl,--gc-sections  -Wall -fstack-usage -fno-exceptions -ffunction-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fdata-sections
 
 # USER_LDFLAGS:  user LD flags
 USER_LDFLAGS = -fno-exceptions -ffunction-sections -fdata-sections -Wl,--gc-sections

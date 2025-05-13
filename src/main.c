@@ -2,8 +2,9 @@
 // CANable firmware
 //
 
+
 #include "stm32f0xx.h"
-#include "stm32f0xx_hal.h"
+#include "main.h"
 
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
@@ -13,15 +14,27 @@
 #include "led.h"
 #include "error.h"
 
+uint32_t now;
+
+#ifdef DEBUG_MODE
+#define LOGS(message) print_to_usb(message)
+#define LOG(format, ...) printf_to_usb(format, ##__VA_ARGS__)
+#else
+#define LOG(...)
+#define LOGS(message)
+#endif
+
 int main(void)
 {
     // Initialize peripherals
     system_init();
     can_init();
     led_init();
+#if defined(SLCAN) || defined(DEBUG_MODE)
+    #pragma message("USB will be initialized")
     usb_init();
+#endif
 
-    led_blue_blink(2);
 
     // Storage for status and received message buffer
     CAN_RxHeaderTypeDef rx_msg_header;
@@ -30,8 +43,15 @@ int main(void)
 
     while (1)
     {
-        cdc_process();
+        now = HAL_GetTick();
         led_process();
+#if defined(ECHO_MODE) || defined(DEBUG_MODE)
+    can_set_bitrate(CAN_BITRATE_500K);
+    can_enable();
+#endif
+#ifdef SLCAN
+        uint8_t processed = cdc_process();
+#endif
         can_process();
 
         // If CAN message receive is pending, process the message
@@ -45,7 +65,19 @@ int main(void)
                 // Transmit message via USB-CDC
                 if (msg_len)
                 {
+                    LOG("%d RX %d\r\n", now, msg_len);
+#ifdef ECHO_MODE
+                    CAN_TxHeaderTypeDef echoMsgHeader;
+                    echoMsgHeader.IDE= rx_msg_header.IDE;
+                    echoMsgHeader.RTR = rx_msg_header.RTR;
+                    echoMsgHeader.StdId=rx_msg_header.StdId;
+                    echoMsgHeader.DLC=rx_msg_header.DLC;
+                    echoMsgHeader.ExtId=rx_msg_header.ExtId;
+                    can_tx(&echoMsgHeader, rx_msg_data);
+#endif
+#ifdef SLCAN
                     CDC_Transmit_FS(msg_buf, msg_len);
+#endif
                 }
             }
         }
