@@ -19,6 +19,9 @@ extern "C"
     #ifdef C1CAN
         #error "Can't build SLCAN+C1CAN"
     #endif
+    #ifdef DEBUG_MODE
+        #error "Can't build SLCAN+DEBUG_MODE"
+    #endif
 #endif
 
 #ifdef BHCAN
