@@ -37,6 +37,15 @@ extern "C"
     #ifdef ECHO_MODE
         #error "Can't build C1CAN+ECHO_MODE"
     #endif
+    #ifndef DISABLE_SNS_AUTO_OFF
+        #define ENABLE_SNS_AUTO_OFF
+        #ifndef SNS_AUTO_OFF_DELAY_MS
+            #define SNS_AUTO_OFF_DELAY_MS 10000
+        #endif
+        #ifndef SNS_AUTO_OFF_MIN_RPM
+            #define SNS_AUTO_OFF_MIN_RPM 400
+        #endif
+    #endif
 #endif
 
 #ifdef BHCAN
