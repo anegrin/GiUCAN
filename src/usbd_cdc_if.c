@@ -267,7 +267,7 @@ uint8_t printf_to_usb(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int written = vsnprintf((char*)slcan_str, SLCAN_MTU, format, args);
+    int written = vsnprintf_((char*)slcan_str, SLCAN_MTU, format, args);
     va_end(args);
     return CDC_Transmit_FS(slcan_str, written < SLCAN_MTU ? (uint8_t) written : SLCAN_MTU);
   }

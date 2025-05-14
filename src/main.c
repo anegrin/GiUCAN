@@ -4,7 +4,7 @@
 
 
 #include "stm32f0xx.h"
-#include "main.h"
+#include "config.h"
 
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
@@ -13,16 +13,9 @@
 #include "system.h"
 #include "led.h"
 #include "error.h"
+#include "logging.h"
 
 uint32_t now;
-
-#ifdef DEBUG_MODE
-#define LOGS(message) print_to_usb(message)
-#define LOG(format, ...) printf_to_usb(format, ##__VA_ARGS__)
-#else
-#define LOG(...)
-#define LOGS(message)
-#endif
 
 int main(void)
 {
@@ -30,8 +23,7 @@ int main(void)
     system_init();
     can_init();
     led_init();
-#if defined(SLCAN) || defined(DEBUG_MODE)
-    #pragma message("USB will be initialized")
+#ifdef ENABLE_USB_PORT
     usb_init();
 #endif
 
@@ -45,8 +37,8 @@ int main(void)
     {
         now = HAL_GetTick();
         led_process();
-#if defined(ECHO_MODE) || defined(DEBUG_MODE)
-    can_set_bitrate(CAN_BITRATE_500K);
+#ifdef ENABLE_CAN_AT_BOOT
+    can_set_bitrate(CAN_BITRATE);
     can_enable();
 #endif
 #ifdef SLCAN

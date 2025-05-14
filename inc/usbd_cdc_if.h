@@ -1,6 +1,7 @@
 #ifndef __USBD_CDC_IF_H__
 #define __USBD_CDC_IF_H__
 
+#include "config.h"
 #include "usbd_cdc.h"
 
 // Buffer settings
