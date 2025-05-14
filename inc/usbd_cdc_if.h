@@ -1,6 +1,7 @@
 #ifndef __USBD_CDC_IF_H__
 #define __USBD_CDC_IF_H__
 
+#include "config.h"
 #include "usbd_cdc.h"
 
 // Buffer settings
@@ -26,9 +27,11 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 
 // Prototypes
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
-void cdc_process(void);
-
-
+uint8_t cdc_process(void);
+#ifdef DEBUG_MODE
+uint8_t print_to_usb(char* message);
+uint8_t printf_to_usb(const char* format, ...);
+#endif
 
 #endif /* __USBD_CDC_IF_H__ */
 

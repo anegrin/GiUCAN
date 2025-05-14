@@ -2,7 +2,7 @@
 // slcan: Parse incoming and generate outgoing slcan messages
 //
 
-#include "stm32f0xx_hal.h"
+#include "config.h"
 #include <string.h>
 #include "can.h"
 #include "error.h"
