@@ -10,8 +10,6 @@
 #define LED_GREEN_Port GPIOA
 #define LED_GREEN LED_GREEN_Port , LED_GREEN_Pin
 
-
-
 #define LED_DURATION 25 
 
 void led_init();
