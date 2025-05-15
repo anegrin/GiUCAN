@@ -201,7 +201,7 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t* tx_msg_data)
 	// Increment the head pointer
 	txqueue.head = (txqueue.head + 1) % TXQUEUE_LEN;
 
-    led_blue_on();
+    led_tx_on();
     return HAL_OK;
 }
 
@@ -230,7 +230,7 @@ void can_process(void)
 uint32_t can_rx(CAN_RxHeaderTypeDef *rx_msg_header, uint8_t* rx_msg_data)
 {
     uint32_t status = HAL_CAN_GetRxMessage(&can_handle, CAN_RX_FIFO0, rx_msg_header, rx_msg_data);
-	led_green_on();
+	led_rx_on();
     return status;
 }
 

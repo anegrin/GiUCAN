@@ -34,9 +34,9 @@ int main(void)
     };
 
     // Initialize peripherals
+    led_init();
     system_init();
     can_init();
-    led_init();
 #ifdef ENABLE_USB_PORT
     usb_init();
 #endif
@@ -55,7 +55,7 @@ int main(void)
         can_enable();
 #endif
 #ifdef SLCAN
-        uint8_t processed = cdc_process();
+        cdc_process();
 #endif
         can_process();
 

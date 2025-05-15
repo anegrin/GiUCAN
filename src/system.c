@@ -3,103 +3,94 @@
 //
 
 #include "stm32f0xx_hal.h"
+#include "led.h"
 #include "system.h"
 
+void error_handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  leds_on_error();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+void SystemClock_Config(void)
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
+     */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSI48;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        error_handler();
+    }
+
+    /** Initializes the CPU, AHB and APB buses clocks
+     */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+    {
+        error_handler();
+    }
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
+
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+        error_handler();
+    }
+}
 
 // Initialize system clocks
 void system_init(void)
 {
     HAL_Init();
-
-
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    RCC_PeriphCLKInitTypeDef PeriphClkInit;
-
-    // Set up the oscillators
-    // use internal HSI48 (48 MHz), no PLL
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48;
-    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-
-    // Set sysclk, hclk, and pclk1 source to HSI48 (48 MHz)
-    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK |
-				   RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1);
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI48;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-
-    // Set USB clock source to HSI48 (48 MHz)
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
-    PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-
-    HAL_RCC_OscConfig(&RCC_OscInitStruct);
-    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1);
-    HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
-
-    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-
-    // Enable clock recovery system for internal oscillator
-    RCC_CRSInitTypeDef RCC_CRSInitStruct;
-    __HAL_RCC_CRS_CLK_ENABLE();
-	
-    // Default Synchro Signal division factor (not divided) 
-    RCC_CRSInitStruct.Prescaler = RCC_CRS_SYNC_DIV1;
-
-    // Set the SYNCSRC[1:0] bits according to CRS_Source value 
-    RCC_CRSInitStruct.Source = RCC_CRS_SYNC_SOURCE_USB;
-
-    // Rising polarity
-    RCC_CRSInitStruct.Polarity = RCC_CRS_SYNC_POLARITY_RISING;
-
-    // HSI48 is synchronized with USB SOF at 1KHz rate 
-    RCC_CRSInitStruct.ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000, 1000);
-    RCC_CRSInitStruct.ErrorLimitValue = RCC_CRS_ERRORLIMIT_DEFAULT;
-
-    // Set the TRIM[5:0] to the default value
-    RCC_CRSInitStruct.HSI48CalibrationValue = 32;
-
-    // Start automatic synchronization 
-    HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
-	
-    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+    SystemClock_Config();
 }
-
 
 // Convert a 32-bit value to an ascii hex value
 void system_hex32(char *out, uint32_t val)
 {
-	char *p = out + 8;
-	*p-- = 0;
-	while (p >= out) {
-		uint8_t nybble = val & 0x0F;
-		if (nybble < 10)
-			*p = '0' + nybble;
-		else
-			*p = 'A' + nybble - 10;
-		val >>= 4;
-		p--;
-	}
-} 
-
+    char *p = out + 8;
+    *p-- = 0;
+    while (p >= out)
+    {
+        uint8_t nybble = val & 0x0F;
+        if (nybble < 10)
+            *p = '0' + nybble;
+        else
+            *p = 'A' + nybble - 10;
+        val >>= 4;
+        p--;
+    }
+}
 
 // Disable all interrupts
 void system_irq_disable(void)
 {
-        __disable_irq();
-        __DSB();
-        __ISB();
+    __disable_irq();
+    __DSB();
+    __ISB();
 }
-
 
 // Enable all interrupts
 void system_irq_enable(void)
 {
-        __enable_irq();
+    __enable_irq();
 }
-
