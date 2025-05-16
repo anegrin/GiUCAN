@@ -32,6 +32,7 @@ int main(void)
             .sns = {.available = false, .snsOffAt = 0},
         },
     };
+    UNUSED(state);
 
     // Initialize peripherals
     led_init();
@@ -49,7 +50,6 @@ int main(void)
     while (1)
     {
         state.board.now = HAL_GetTick();
-        led_process();
 #ifdef ENABLE_CAN_AT_BOOT
         can_set_bitrate(CAN_BITRATE);
         can_enable();
@@ -57,6 +57,7 @@ int main(void)
 #ifdef SLCAN
         cdc_process();
 #endif
+        led_process();
         can_process();
 
 #ifdef C1CAN
