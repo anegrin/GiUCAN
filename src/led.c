@@ -33,9 +33,19 @@ void leds_on_error(void)
     HAL_GPIO_WritePin(LED_RX, 1);
 }
 
+void leds_blink(uint8_t count, uint32_t delay){
+	for(uint8_t i=0; i<count; i++){
+        HAL_GPIO_WritePin(LED_RX, 1);
+ 		HAL_Delay(delay);
+        HAL_GPIO_WritePin(LED_RX, 0);
+        HAL_GPIO_WritePin(LED_TX, 1);
+		HAL_Delay(delay);
+        HAL_GPIO_WritePin(LED_TX, 0);
+	}
+}
+
 void led_rx_on(void)
 {
-#ifndef DISABLE_LEDS
     // Make sure the LED has been off for at least LED_DURATION before turning on again
     // This prevents a solid status LED on a busy canbus
     if (led_rx_laston == 0 && HAL_GetTick() - led_rx_lastoff > LED_DURATION)
@@ -44,13 +54,11 @@ void led_rx_on(void)
         HAL_GPIO_WritePin(LED_RX, 1);
         led_rx_laston = HAL_GetTick();
     }
-#endif
 }
 
 // Attempt to turn on status LED
 void led_tx_on(void)
 {
-#ifndef DISABLE_LEDS
     // Make sure the LED has been off for at least LED_DURATION before turning on again
     // This prevents a solid status LED on a busy canbus
     if (led_tx_laston == 0 && HAL_GetTick() - led_tx_lastoff > LED_DURATION)
@@ -58,13 +66,11 @@ void led_tx_on(void)
         HAL_GPIO_WritePin(LED_TX, 1);
         led_tx_laston = HAL_GetTick();
     }
-#endif
 }
 
 // Process time-based LED events
 void led_process(void)
 {
-#ifndef DISABLE_LEDS
     // If LED has been on for long enough, turn it off
     if (led_tx_laston > 0 && HAL_GetTick() - led_tx_laston > LED_DURATION)
     {
@@ -80,5 +86,4 @@ void led_process(void)
         led_rx_laston = 0;
         led_rx_lastoff = HAL_GetTick();
     }
-#endif
 }

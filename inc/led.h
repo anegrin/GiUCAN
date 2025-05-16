@@ -14,6 +14,7 @@
 
 void led_init();
 void leds_on_error(void);
+void leds_blink(uint8_t count, uint32_t delay);
 void led_rx_on(void);
 void led_tx_on(void);
 void led_process(void);

@@ -16,8 +16,6 @@ static can_bus_state_t bus_state = OFF_BUS;
 static uint8_t can_autoretransmit = ENABLE;
 can_txbuf_t txqueue = {0};
 
-extern uint8_t immobilizerEnabled;
-
 // Initialize CAN peripheral settings, but don't actually start the peripheral
 void can_init(void)
 {
@@ -36,7 +34,7 @@ void can_init(void)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     // default to 500 kbit/s
-    prescaler = 12;
+    can_set_bitrate(CAN_BITRATE);
     can_handle.Instance = CAN;
     bus_state = OFF_BUS;
 
@@ -193,7 +191,9 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data)
 
     // Increment the head pointer
     txqueue.head = (txqueue.head + 1) % TXQUEUE_LEN;
+#ifdef LEDS_ON_CAN_TX
     led_tx_on();
+#endif
     return HAL_OK;
 }
 
@@ -222,7 +222,9 @@ void can_process(void)
 uint32_t can_rx(CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data)
 {
     uint32_t status = HAL_CAN_GetRxMessage(&can_handle, CAN_RX_FIFO0, rx_msg_header, rx_msg_data);
+#ifdef LEDS_ON_CAN_RX
     led_rx_on();
+#endif
     return status;
 }
 

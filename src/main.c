@@ -21,6 +21,7 @@ uint32_t now;
 
 int main(void)
 {
+
     GlobalState state = {
         .board = {
             .now = 0,
@@ -29,7 +30,7 @@ int main(void)
             .rpm = 0.0f,
             .gear = '0',
             .oil = {.pressure = 0, .temperature = 0},
-            .sns = {.available = false, .snsOffAt = 0},
+            .sns = {.active = true, .snsOffAt = 0},
         },
     };
     UNUSED(state);
@@ -40,6 +41,12 @@ int main(void)
     can_init();
 #ifdef ENABLE_USB_PORT
     usb_init();
+#endif
+#ifdef C1CAN
+        leds_blink(3, 200);
+#endif
+#ifdef BHCAN
+        leds_blink(2, 500);
 #endif
 
     // Storage for status and received message buffer
@@ -63,6 +70,9 @@ int main(void)
 #ifdef C1CAN
         c1_loop(&state);
 #endif
+#ifdef BHCAN
+        bh_loop(&state);
+#endif
 
         // If CAN message receive is pending, process the message
         if (is_can_msg_pending(CAN_RX_FIFO0))
@@ -75,7 +85,6 @@ int main(void)
                 // Transmit message via USB-CDC
                 if (msg_len)
                 {
-                    VLOG("%d RX %d\r\n", state.board.now, msg_len);
 #ifdef ECHO_MODE
                     CAN_TxHeaderTypeDef echoMsgHeader;
                     echoMsgHeader.IDE = rx_msg_header.IDE;
@@ -90,6 +99,9 @@ int main(void)
 #endif
 #ifdef C1CAN
                     handle_c1_frame(&state, rx_msg_header, rx_msg_data);
+#endif
+#ifdef BHCAN
+                    handle_bh_frame(&state, rx_msg_header, rx_msg_data);
 #endif
                 }
             }

@@ -5,7 +5,7 @@
 
 typedef struct
 {
-    bool available;
+    bool active;
     uint32_t snsOffAt;
 } SNSState;
 

@@ -3,15 +3,16 @@
 //
 
 #include "config.h"
+#include "led.h"
 #include "can.h"
 #include "frame_handlers.h"
 #include "logging.h"
 
 #ifdef C1CAN
 
-CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
-uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00};
-char gears[]={'N','1','2','3','4','5','6','R','7','8','9'};
+CAN_TxHeaderTypeDef disableSNSHeader={.IDE=CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId=0x4B1, .DLC=8};
+uint8_t disableSNSFrame[8]= {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; //byte 5 shall be set to 0x08
+char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 
 void handle_c1_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
@@ -25,27 +26,29 @@ void handle_c1_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_hea
         }
         break;
     case 0x00000226:
-        if (!state->car.sns.available && rx_msg_header.DLC >= 3)
+        if (state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && rx_msg_header.DLC >= 3)
         {
-            state->car.sns.available = (((rx_msg_data[2] >> 2) & 0x03) == 0x01);
-            VLOG("%d SNS s:%d\r\n", state->board.now, state->car.sns.available);
+            state->car.sns.active = !(((rx_msg_data[2] >> 2) & 0x03) == 0x01);
+            LOG("%d SNS status:%d\r\n", state->board.now, state->car.sns.active);
         }
         break;
     case 0x000002EF:
         uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
-        state->car.gear=gears[i];
+        state->car.gear = gears[i];
         VLOG("%d gear %c\r\n", state->board.now, state->car.gear);
         break;
     case 0x000004B1:
-        bool shouldDisableSNS = state->car.sns.available && state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt > 0;
+        bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0;
         if (shouldDisableSNS)
         {
+            LOG("%d disable SNS\r\n", state->board.now);
             memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
             disableSNSHeader.DLC = rx_msg_header.DLC;
             disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
             can_tx(&disableSNSHeader, disableSNSFrame);
             state->car.sns.snsOffAt = state->board.now;
-            VLOG("%d dis SNS\r\n", state->board.now);
+            led_tx_on();
+            LOG("%d SNS disabled\r\n", state->board.now);
         }
         break;
     case 0x000004B2:
@@ -69,6 +72,21 @@ void handle_c1_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint
         case CAN_ID_STD:
             handle_c1_standard_frame(state, rx_msg_header, rx_msg_data);
             break;
+        case CAN_ID_EXT:
+        default:
+        }
+    }
+}
+#endif
+
+#ifdef BHCAN
+void handle_bh_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    if (rx_msg_header.RTR == CAN_RTR_DATA)
+    {
+        switch (rx_msg_header.IDE)
+        {
+        case CAN_ID_STD:
         case CAN_ID_EXT:
         default:
         }

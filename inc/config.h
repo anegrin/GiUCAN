@@ -22,6 +22,9 @@ extern "C"
     #ifdef DEBUG_MODE
         #error "Can't build SLCAN+DEBUG_MODE"
     #endif
+
+    #define LEDS_ON_CAN_RX
+    #define LEDS_ON_CAN_TX
 #endif
 
 #ifdef BHCAN
@@ -31,12 +34,15 @@ extern "C"
     #ifdef ECHO_MODE
         #error "Can't build BHCAN+ECHO_MODE"
     #endif
+
+    #define CAN_BITRATE CAN_BITRATE_125K
 #endif
 
 #ifdef C1CAN
     #ifdef ECHO_MODE
         #error "Can't build C1CAN+ECHO_MODE"
     #endif
+
     #ifndef DISABLE_SNS_AUTO_OFF
         #define ENABLE_SNS_AUTO_OFF
         #ifndef SNS_AUTO_OFF_DELAY_MS
@@ -46,10 +52,6 @@ extern "C"
             #define SNS_AUTO_OFF_MIN_RPM 400
         #endif
     #endif
-#endif
-
-#ifdef BHCAN
-    #define CAN_BITRATE CAN_BITRATE_125K
 #endif
 
 #ifndef CAN_BITRATE
@@ -62,6 +64,10 @@ extern "C"
 
 #if defined(SLCAN) || defined(DEBUG_MODE)
     #define ENABLE_USB_PORT
+#endif
+
+#ifdef DEBUG_MODE
+    #define LEDS_ON_CAN_RX
 #endif
 
 #ifdef __cplusplus

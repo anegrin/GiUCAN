@@ -8,4 +8,8 @@
 void c1_loop(GlobalState *state);
 #endif
 
+#ifdef BHCAN
+void bh_loop(GlobalState *state);
+#endif
+
 #endif // _LOOPS_H
