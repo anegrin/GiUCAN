@@ -1,6 +1,7 @@
 #ifndef __MODEL_H
 #define __MODEL_H
 
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef struct

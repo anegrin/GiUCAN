@@ -1,6 +1,7 @@
 #ifndef INC_ERROR_H_
 #define INC_ERROR_H_
 
+#include <stdint.h>
 
 typedef enum _error_t
 {

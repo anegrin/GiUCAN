@@ -2,7 +2,7 @@
 // slcan: Parse incoming and generate outgoing slcan messages
 //
 
-#include "config.h"
+#include "stm32f0xx_hal.h"
 #include <string.h>
 #include "can.h"
 #include "error.h"
@@ -229,4 +229,3 @@ int8_t slcan_parse_str(uint8_t *buf, uint8_t len)
 
     return 0;
 }
-

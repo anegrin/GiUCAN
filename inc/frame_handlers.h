@@ -1,7 +1,7 @@
 #ifndef _FRAME_HANDLERS_H
 #define _FRAME_HANDLERS_H
 
-#include "config.h"
+#include "main.h"
 #include "model.h"
 
 #ifdef C1CAN

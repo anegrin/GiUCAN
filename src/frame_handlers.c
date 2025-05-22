@@ -2,7 +2,7 @@
 // can: initializes and provides methods to interact with the CAN peripheral
 //
 
-#include "config.h"
+#include "main.h"
 #include "led.h"
 #include "can.h"
 #include "frame_handlers.h"

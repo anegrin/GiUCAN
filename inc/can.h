@@ -1,6 +1,8 @@
 #ifndef _CAN_H
 #define _CAN_H
 
+#include "stm32f0xx_hal.h"
+
 enum can_bitrate {
     CAN_BITRATE_10K = 0,
     CAN_BITRATE_20K,
@@ -36,7 +38,6 @@ typedef struct cantxbuf_
 
 
 // Prototypes
-void can_init(void);
 void can_enable(void);
 void can_disable(void);
 void can_set_bitrate(enum can_bitrate bitrate);

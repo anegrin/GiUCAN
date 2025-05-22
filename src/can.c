@@ -11,35 +11,31 @@
 
 // Private variables
 static CAN_HandleTypeDef can_handle;
-static uint32_t prescaler;
+static CAN_FilterTypeDef filter;
+static uint32_t prescaler = 12; // 500k
 static can_bus_state_t bus_state = OFF_BUS;
 static uint8_t can_autoretransmit = ENABLE;
-can_txbuf_t txqueue = {0};
+static can_txbuf_t txqueue = {0};
 
-// Initialize CAN peripheral settings, but don't actually start the peripheral
-void can_init(void)
+void MX_CAN_Init()
 {
-    // Initialize GPIO for CAN transceiver
-    GPIO_InitTypeDef GPIO_InitStruct;
-    __HAL_RCC_CAN1_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    // PB8     ------> CAN_RX
-    // PB9     ------> CAN_TX
-    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF4_CAN;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    // default to 500 kbit/s
-    can_set_bitrate(CAN_BITRATE);
     can_handle.Instance = CAN;
-    bus_state = OFF_BUS;
-
-    HAL_NVIC_SetPriority(CEC_CAN_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
+    can_handle.Init.Prescaler = prescaler;
+    can_handle.Init.Mode = CAN_MODE_NORMAL;
+    can_handle.Init.SyncJumpWidth = CAN_SJW_1TQ;
+    can_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
+    can_handle.Init.TimeSeg2 = CAN_BS2_3TQ;
+    can_handle.Init.TimeTriggeredMode = DISABLE;
+    can_handle.Init.AutoBusOff = ENABLE;
+    can_handle.Init.AutoWakeUp = DISABLE;
+    can_handle.Init.AutoRetransmission = ENABLE;
+    can_handle.Init.ReceiveFifoLocked = DISABLE;
+    can_handle.Init.TransmitFifoPriority = ENABLE;
+    if (HAL_CAN_Init(&can_handle) != HAL_OK)
+    {
+        Error_Handler();
+    }
 }
 
 // Start the CAN peripheral
@@ -47,21 +43,7 @@ void can_enable(void)
 {
     if (bus_state == OFF_BUS)
     {
-        can_handle.Init.Prescaler = prescaler;
-        can_handle.Init.Mode = CAN_MODE_NORMAL; // just for test, we can set it to CAN_MODE_LOOPBACK in order to receive whatever we send
-
-        can_handle.Init.SyncJumpWidth = CAN_SJW_1TQ;
-        can_handle.Init.TimeSeg1 = CAN_BS1_4TQ;
-        can_handle.Init.TimeSeg2 = CAN_BS2_3TQ;
-        can_handle.Init.TimeTriggeredMode = DISABLE;
-        can_handle.Init.AutoBusOff = ENABLE;
-        can_handle.Init.AutoWakeUp = DISABLE;
-        can_handle.Init.AutoRetransmission = can_autoretransmit;
-        can_handle.Init.ReceiveFifoLocked = DISABLE;
-        can_handle.Init.TransmitFifoPriority = ENABLE;
-        HAL_CAN_Init(&can_handle);
-
-        CAN_FilterTypeDef filter;
+        MX_CAN_Init();
         filter.FilterIdHigh = 0;
         filter.FilterIdLow = 0;
         filter.FilterMaskIdHigh = 0;
@@ -72,9 +54,10 @@ void can_enable(void)
         filter.FilterScale = CAN_FILTERSCALE_32BIT;
         filter.FilterActivation = ENABLE;
         HAL_CAN_ConfigFilter(&can_handle, &filter);
-
         HAL_CAN_Start(&can_handle);
         bus_state = ON_BUS;
+
+        led_rx_on();
     }
 }
 
@@ -86,6 +69,8 @@ void can_disable(void)
         // Do a bxCAN reset (set RESET bit to 1)
         can_handle.Instance->MCR |= CAN_MCR_RESET;
         bus_state = OFF_BUS;
+
+        led_rx_on();
     }
 }
 
@@ -132,6 +117,8 @@ void can_set_bitrate(enum can_bitrate bitrate)
         prescaler = 6;
         break;
     }
+
+    led_tx_on();
 }
 
 // Set CAN peripheral to silent mode
@@ -150,6 +137,8 @@ void can_set_silent(uint8_t silent)
     {
         can_handle.Init.Mode = CAN_MODE_NORMAL;
     }
+
+    led_tx_on();
 }
 
 // Enable/disable auto-retransmission
@@ -168,6 +157,8 @@ void can_set_autoretransmit(uint8_t autoretransmit)
     {
         can_autoretransmit = DISABLE;
     }
+
+    led_tx_on();
 }
 
 // Send a message on the CAN bus
@@ -191,9 +182,11 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data)
 
     // Increment the head pointer
     txqueue.head = (txqueue.head + 1) % TXQUEUE_LEN;
+
 #ifdef LEDS_ON_CAN_TX
     led_tx_on();
 #endif
+
     return HAL_OK;
 }
 
@@ -206,8 +199,6 @@ void can_process(void)
         uint32_t mailbox_txed = 0;
         uint32_t status = HAL_CAN_AddTxMessage(&can_handle, &txqueue.header[txqueue.tail], txqueue.data[txqueue.tail], &mailbox_txed);
         txqueue.tail = (txqueue.tail + 1) % TXQUEUE_LEN;
-
-        // onboardLed_red_on();
 
         // This drops the packet if it fails (no retry). Failure is unlikely
         // since we check if there is a TX mailbox free.

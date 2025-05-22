@@ -1,6 +1,7 @@
 #ifndef _LED_H
 #define _LED_H
 
+#include <stdint.h>
 
 #define LED_TX_Pin GPIO_PIN_1
 #define LED_TX_Port GPIOA

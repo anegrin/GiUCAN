@@ -11,6 +11,8 @@
 
 # SOURCES: list of sources in the user application
 SOURCES := $(shell find src -name "*.c")
+USB_SOURCES_APP = usb_device.c usbd_cdc_if.c usbd_desc.c
+USB_SOURCES_TARGET = usbd_conf.c
 
 # Get git version and dirty flag
 GIT_VERSION := $(shell git describe --abbrev=7 --dirty --always --tags)
@@ -29,7 +31,8 @@ LD_SCRIPT = STM32F072CBTX_FLASH.ld
 USER_DEFS = -D HSI48_VALUE=48000000 -D HSE_VALUE=16000000
 
 # USER_INCLUDES: user defined includes
-USER_INCLUDES =
+USER_INCLUDES = -IUSB_DEVICE/Target
+USER_INCLUDES += -IUSB_DEVICE/App
 
 # USB_INCLUDES: includes for the usb library
 USB_INCLUDES = -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc
@@ -149,6 +152,8 @@ $(USB_BUILD_DIR):
 
 # list of user program objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(SOURCES:.c=.o)))
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(USB_SOURCES_APP:.c=.o)))
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(USB_SOURCES_TARGET:.c=.o)))
 # add an object for the startup code
 OBJECTS += $(BUILD_DIR)/startup_stm32f072cbtx.o
 
@@ -169,8 +174,15 @@ $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) $(USB_OBJECTS) $(CUBELIB)
 	$(SIZE) $@
 
 $(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
+	mkdir -p build
 	$(CC) $(CFLAGS) -Os -c -o $@ $^
 
+$(BUILD_DIR)/%.o: USB_DEVICE/App/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -Os -c -o $@ $^
+
+$(BUILD_DIR)/%.o: USB_DEVICE/Target/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -Os -c -o $@ $^
+	
 $(BUILD_DIR)/%.o: src/%.s | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $^
 

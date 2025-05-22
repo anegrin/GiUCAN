@@ -1,7 +1,7 @@
 #ifndef _LOOPS_H
 #define _LOOPS_H
 
-#include "config.h"
+#include "main.h"
 #include "model.h"
 
 #ifdef C1CAN
