@@ -12,15 +12,24 @@ typedef struct
 
 typedef struct
 {
+    uint8_t chargePercent;
+    float current;
+} Battery;
+
+typedef struct
+{
     float pressure;
-    float temperature;
+    int16_t temperature;
 } Oil;
 
 typedef struct
 {
-    float rpm;
+    uint32_t rpm;
+    uint16_t torque;
     char gear;
+    bool ccActive;
     Oil oil;
+    Battery battery;
     SNSState sns;
 } CarState;
 

@@ -1,30 +1,10 @@
-/* USER CODE BEGIN Header */
-/**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2025 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
 #include "led.h"
 #include "logging.h"
 #include "model.h"
 #include "slcan.h"
-#include "loops.h"
-#include "frame_handlers.h"
+#include "processing.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
@@ -34,21 +14,12 @@ DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 void SystemClock_Config(void);
 static void MX_DMA_Init(void);
 static void MX_CRC_Init(void);
+void state_init(GlobalState* state);
 
 int main(void)
 {
-    GlobalState state = {
-        .board = {
-            .now = 0,
-            .snsRequestOffAt = 0},
-        .car = {
-            .rpm = 0.0f,
-            .gear = '0',
-            .oil = {.pressure = 0, .temperature = 0},
-            .sns = {.active = true, .snsOffAt = 0},
-        },
-    };
-    UNUSED(state);
+    GlobalState state = {};
+    state_init(&state);
 
     CAN_RxHeaderTypeDef rx_msg_header; // msg header
     uint8_t rx_msg_data[8] = {
@@ -71,13 +42,13 @@ int main(void)
 #endif
 
 #ifdef DEBUG_MODE
-    leds_blink(10, 50);
-#endif
-#ifdef SLCAN
     leds_blink(5, 50);
 #endif
+#ifdef SLCAN
+    leds_blink(4, 100);
+#endif
 #ifdef C1CAN
-    leds_blink(3, 200);
+    leds_blink(3, 250);
 #endif
 #ifdef BHCAN
     leds_blink(2, 500);
@@ -86,17 +57,17 @@ int main(void)
     while (1)
     {
         state.board.now = HAL_GetTick();
-#ifdef SLCAN
+        //just for the warning
+        UNUSED(state);
+
+        #ifdef SLCAN
         cdc_process();
 #endif
         led_process();
         can_process();
 
-#ifdef C1CAN
-        c1_loop(&state);
-#endif
-#ifdef BHCAN
-        bh_loop(&state);
+#if defined(C1CAN) || defined(BHCAN)
+        process_state(&state);
 #endif
         if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
         {
@@ -118,16 +89,29 @@ int main(void)
 #ifdef SLCAN
                     CDC_Transmit_FS(msg_buf, msg_len);
 #endif
-#ifdef C1CAN
-                    handle_c1_frame(&state, rx_msg_header, rx_msg_data);
-#endif
-#ifdef BHCAN
-                    handle_bh_frame(&state, rx_msg_header, rx_msg_data);
+#if defined(C1CAN) || defined(BHCAN)
+                    if (rx_msg_header.RTR == CAN_RTR_DATA)
+                    {
+                        switch (rx_msg_header.IDE)
+                        {
+                        case CAN_ID_STD:
+                            handle_standard_frame(&state, rx_msg_header, rx_msg_data);
+                            break;
+                        case CAN_ID_EXT:
+                            handle_extended_frame(&state, rx_msg_header, rx_msg_data);
+                            break;
+                        default:
+                        }
+                    }
 #endif
                 }
             }
         }
     }
+}
+
+void state_init(GlobalState* state) {
+    state->car.sns.active = 1;
 }
 
 /**
@@ -181,14 +165,6 @@ void SystemClock_Config(void)
  */
 static void MX_CRC_Init(void)
 {
-
-    /* USER CODE BEGIN CRC_Init 0 */
-
-    /* USER CODE END CRC_Init 0 */
-
-    /* USER CODE BEGIN CRC_Init 1 */
-
-    /* USER CODE END CRC_Init 1 */
     hcrc.Instance = CRC;
     hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
     hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
@@ -199,9 +175,6 @@ static void MX_CRC_Init(void)
     {
         Error_Handler();
     }
-    /* USER CODE BEGIN CRC_Init 2 */
-
-    /* USER CODE END CRC_Init 2 */
 }
 
 /**
@@ -230,10 +203,6 @@ static void MX_DMA_Init(void)
     }
 }
 
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
 /**
  * @brief  This function is executed in case of error occurrence.
  * @retval None
@@ -248,20 +217,3 @@ void Error_Handler(void)
     }
     /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef USE_FULL_ASSERT
-/**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-    /* USER CODE BEGIN 6 */
-    /* User can add his own implementation to report the file name and line number,
-       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
