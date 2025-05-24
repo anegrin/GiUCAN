@@ -103,6 +103,8 @@ int main(void)
 void state_init(GlobalState *state)
 {
     state->car.sns.active = 1;
+    state->board.dashboardState.itemsCount = 10;//TODO
+    state->board.dashboardState.currentItemIndex = 0;
 }
 
 /**

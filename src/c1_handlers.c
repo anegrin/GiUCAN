@@ -14,6 +14,8 @@
 CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
 uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
 char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
+uint8_t latestCCButtonEvent = 0x10; // no button pressed
+uint32_t resPushedAt = 0;           // 1 is better that 0 as initial value here ;)
 
 void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
@@ -73,6 +75,7 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
         LOG("%d SNS disabled\r\n", state->board.now);
     }
 }
+
 void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (rx_msg_header.DLC >= 4)
@@ -80,6 +83,96 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
         state->car.oil.pressure = 0.1f * ((rx_msg_data[0] & 0b00000001) << 7 | ((rx_msg_data[1] >> 1) & 0b01111111));
         state->car.oil.temperature = ((rx_msg_data[2] & 0b00111111) << 2 | ((rx_msg_data[3] >> 6) & 0b00000011)) - 40;
         VLOG("%d Oil p:%.1f,t:%d\r\n", state->board.now, state->car.oil.pressure, state->car.oil.temperature);
+    }
+}
+
+void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    if (rx_msg_header.DLC >= 6)
+    {
+        state->car.dpf.regenMode = (rx_msg_data[5] >> 2) & 0b00000111;
+
+        if (state->car.dpf.regenMode == 2 && state->car.dpf.regenerating == 0)
+        {
+            state->car.dpf.regenerating = 1;
+            LOG("%d start DPF r\r\n", state->board.now);
+        }
+
+        if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating == 1)
+        {
+            state->car.dpf.regenerating = 0;
+            LOG("%d end DPF r\r\n", state->board.now);
+        }
+    }
+}
+
+void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    uint8_t ccButtonEvent = rx_msg_data[0];
+    //LOG("%d %d vs %d\r\n", state->board.now, latestCCButtonEvent, ccButtonEvent);
+
+    if (latestCCButtonEvent != ccButtonEvent)
+    {
+        bool knownEvent = false;
+        uint8_t itemsCount = state->board.dashboardState.itemsCount;
+        if (state->board.dashboardState.visible)
+        {
+            switch (ccButtonEvent)
+            {
+            case 0x18: // speed down
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + 1) % itemsCount;
+                LOG("%d speed v:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
+            case 0x20: // speed hard down
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE) % itemsCount;
+                LOG("%d speed vv:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
+            case 0x08: // speed up
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - 1) % itemsCount;
+                LOG("%d speed ^:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
+            case 0x00: // speed hard up
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE) % itemsCount;
+                LOG("%d speed ^^:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
+            }
+        }
+        switch (ccButtonEvent)
+        {
+        case 0x10: // no button pressed
+            if (resPushedAt > 0)
+            {
+                if (state->board.now - resPushedAt > RES_LONG_PRESS_DURATION_MS)
+                {
+                    // long click
+                    state->board.dashboardState.visible = !state->board.dashboardState.visible;
+                    LOG("%d res ^ lc\r\n", state->board.now);
+                }
+                else
+                {
+                    LOG("%d res ^ sc\r\n", state->board.now);
+                    // short click
+                }
+                resPushedAt = 0;
+            }
+            knownEvent = true;
+            break;
+        case 0x90: // RES button was pressed
+        case 0x50: // distance selector, used like RES, to manage the menu
+            LOG("%d res v\r\n", state->board.now);
+            resPushedAt = state->board.now;
+            knownEvent = true;
+            break;
+        }
+        if (knownEvent)
+        {
+
+            latestCCButtonEvent = ccButtonEvent;
+        }
     }
 }
 
@@ -102,7 +195,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         handle_gear(state, rx_msg_header, rx_msg_data);
         break;
     case 0x000002FA:
-        // processingMessage0x000002FA();
+        handle_cc_buttons(state, rx_msg_header, rx_msg_data);
         break;
     case 0x0000041A:
         handle_battery(state, rx_msg_header, rx_msg_data);
@@ -120,7 +213,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         VLOG("%d CC active:%d\r\n", state->board.now, state->car.ccActive);
         break;
     case 0x000005AE:
-        // uint8_t dieselEngineRegenerationMode = (rx_msg_data[5]>>2 ) & 0b00000111;
+        handle_dpf_regeneration(state, rx_msg_header, rx_msg_data);
         break;
     default:
     }

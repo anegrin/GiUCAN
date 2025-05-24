@@ -32,6 +32,12 @@
 
 #ifdef C1CAN
     #ifndef DISABLE_SNS_AUTO_OFF
+        #ifndef RES_LONG_PRESS_DURATION_MS
+            #define RES_LONG_PRESS_DURATION_MS 1000
+        #endif
+        #ifndef DASHBOARD_PAGE_SIZE
+            #define DASHBOARD_PAGE_SIZE 10
+        #endif
         #define ENABLE_SNS_AUTO_OFF
         #ifndef SNS_AUTO_OFF_DELAY_MS
             #define SNS_AUTO_OFF_DELAY_MS 10000
