@@ -21,5 +21,6 @@ void error_assert(error_t err);
 uint32_t error_timestamp(error_t err);
 uint8_t error_occurred(error_t err);
 uint32_t error_reg(void);
+void Error_Handler(void);
 
 #endif /* INC_ERROR_H_ */

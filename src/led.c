@@ -2,8 +2,7 @@
 // LED: Handles blinking of status light
 //
 
-#include "stm32f0xx_hal.h"
-#include "main.h"
+#include "config.h"
 #include "led.h"
 
 // Private variables

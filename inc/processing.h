@@ -1,7 +1,7 @@
 #ifndef _LOOPS_H
 #define _LOOPS_H
 
-#include "main.h"
+#include "config.h"
 #include "model.h"
 
 void process_state(GlobalState *state);

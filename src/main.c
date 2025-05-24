@@ -1,5 +1,6 @@
-#include "main.h"
+#include "config.h"
 #include "can.h"
+#include "error.h"
 #include "led.h"
 #include "logging.h"
 #include "model.h"
@@ -14,7 +15,7 @@ DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 void SystemClock_Config(void);
 static void MX_DMA_Init(void);
 static void MX_CRC_Init(void);
-void state_init(GlobalState* state);
+void state_init(GlobalState *state);
 
 int main(void)
 {
@@ -57,10 +58,8 @@ int main(void)
     while (1)
     {
         state.board.now = HAL_GetTick();
-        //just for the warning
-        UNUSED(state);
 
-        #ifdef SLCAN
+#ifdef SLCAN
         cdc_process();
 #endif
         led_process();
@@ -74,15 +73,6 @@ int main(void)
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
             {
                 led_rx_on();
-#ifdef ECHO_MODE
-                CAN_TxHeaderTypeDef echoMsgHeader;
-                echoMsgHeader.IDE = rx_msg_header.IDE;
-                echoMsgHeader.RTR = rx_msg_header.RTR;
-                echoMsgHeader.StdId = rx_msg_header.StdId;
-                echoMsgHeader.DLC = rx_msg_header.DLC;
-                echoMsgHeader.ExtId = rx_msg_header.ExtId;
-                can_tx(&echoMsgHeader, rx_msg_data);
-#endif
                 uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
                 if (msg_len)
                 {
@@ -110,7 +100,8 @@ int main(void)
     }
 }
 
-void state_init(GlobalState* state) {
+void state_init(GlobalState *state)
+{
     state->car.sns.active = 1;
 }
 

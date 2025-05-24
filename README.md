@@ -1,10 +1,14 @@
+# WIP
+
+**No stable release available yet**
+
 # GiUCAN Firmware
 
 This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Diesel engines; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
 
-- Smart Start and Stop disabling
-- DPF regeneration warnings
-- Dashboard info dispaly
+- Smart Start and Stop disabling ✔
+- DPF regeneration warnings ✘
+- Dashboard info dispaly ✘
 
 It's tested using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**.
 

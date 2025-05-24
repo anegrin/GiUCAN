@@ -1,6 +1,6 @@
 # Licenses
 
-## CANtact Sources
+## CANtact, CANable and GiUCAN Sources
 
 The MIT License (MIT)
 

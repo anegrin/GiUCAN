@@ -2,7 +2,7 @@
 // can: initializes and provides methods to interact with the CAN peripheral
 //
 
-#include "main.h"
+#include "config.h"
 
 #ifdef C1CAN
 

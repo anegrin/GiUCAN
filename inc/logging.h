@@ -1,7 +1,7 @@
 #ifndef _LOGGING_H
 #define _LOGGING_H
 
-#include "main.h"
+#include "config.h"
 #include "usbd_cdc_if.h"
 
 #ifdef DEBUG_MODE
