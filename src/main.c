@@ -72,7 +72,6 @@ int main(void)
         {
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
             {
-                led_rx_on();
                 uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
                 if (msg_len)
                 {
@@ -103,7 +102,7 @@ int main(void)
 void state_init(GlobalState *state)
 {
     state->car.sns.active = 1;
-    state->board.dashboardState.itemsCount = 10;//TODO
+    state->board.dashboardState.itemsCount = 13;//TODO
     state->board.dashboardState.currentItemIndex = 0;
 }
 

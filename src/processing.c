@@ -28,6 +28,12 @@ void process_state(GlobalState *state)
         }
     }
 #endif
+#ifdef ENABLE_DASHBOARD
+    if (state->board.dashboardState.visible)
+    {
+        //TODO
+    }
+#endif
 }
 #endif
 

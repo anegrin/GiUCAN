@@ -11,8 +11,16 @@
 #include "processing.h"
 #include "logging.h"
 
-CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
-uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
+void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    if (rx_msg_header.DLC >= 2)
+    {
+        state->car.rpm = (rx_msg_data[0] * 256 + (rx_msg_data[1] & ~0x3)) / 4;
+        VLOG("%d RPM:%d\r\n", state->board.now, state->car.rpm);
+    }
+}
+
+#ifdef ENABLE_DASHBOARD
 char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 uint8_t latestCCButtonEvent = 0x10; // no button pressed
 uint32_t resPushedAt = 0;           // 1 is better that 0 as initial value here ;)
@@ -23,23 +31,6 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
     {
         state->car.torque = (state->car.rpm * ((rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111))) - 500;
         VLOG("%d torque:%d\r\n", state->board.now, state->car.torque);
-    }
-}
-void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
-{
-    if (rx_msg_header.DLC >= 2)
-    {
-        state->car.rpm = (rx_msg_data[0] * 256 + (rx_msg_data[1] & ~0x3)) / 4;
-        VLOG("%d RPM:%d\r\n", state->board.now, state->car.rpm);
-    }
-}
-
-void handle_sns_status(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
-{
-    if (state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && rx_msg_header.DLC >= 3)
-    {
-        state->car.sns.active = !(((rx_msg_data[2] >> 2) & 0x03) == 0x01);
-        LOG("%d SNS status:%d\r\n", state->board.now, state->car.sns.active);
     }
 }
 
@@ -58,25 +49,7 @@ void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8
         state->car.battery.current = (0.1f * (rx_msg_data[4] << 4 | ((rx_msg_data[5] >> 4) & 0b00001111))) - 250.0f;
         VLOG("%d Battery p:%d,c:%.1f\r\n", state->board.now, state->car.battery.chargePercent, state->car.battery.current);
     }
-}
-
-void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
-{
-    bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0;
-    if (shouldDisableSNS)
-    {
-        LOG("%d disable SNS\r\n", state->board.now);
-        memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
-        disableSNSHeader.DLC = rx_msg_header.DLC;
-        disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
-        can_tx(&disableSNSHeader, disableSNSFrame);
-        state->car.sns.snsOffAt = state->board.now;
-        led_tx_on();
-        LOG("%d SNS disabled\r\n", state->board.now);
-    }
-}
-
-void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+}void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (rx_msg_header.DLC >= 4)
     {
@@ -86,30 +59,9 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
     }
 }
 
-void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
-{
-    if (rx_msg_header.DLC >= 6)
-    {
-        state->car.dpf.regenMode = (rx_msg_data[5] >> 2) & 0b00000111;
-
-        if (state->car.dpf.regenMode == 2 && state->car.dpf.regenerating == 0)
-        {
-            state->car.dpf.regenerating = 1;
-            LOG("%d start DPF r\r\n", state->board.now);
-        }
-
-        if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating == 1)
-        {
-            state->car.dpf.regenerating = 0;
-            LOG("%d end DPF r\r\n", state->board.now);
-        }
-    }
-}
-
 void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t ccButtonEvent = rx_msg_data[0];
-    //LOG("%d %d vs %d\r\n", state->board.now, latestCCButtonEvent, ccButtonEvent);
 
     if (latestCCButtonEvent != ccButtonEvent)
     {
@@ -119,24 +71,24 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
         {
             switch (ccButtonEvent)
             {
+            case 0x20: // speed hard down (it will also send speed down before and after)
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE - 2) % itemsCount;
+                LOG("%d speed vv:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
+            case 0x00: // speed hard up (it will also send speed up before and after)
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE + 2) % itemsCount;
+                LOG("%d speed ^^:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                break;
             case 0x18: // speed down
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + 1) % itemsCount;
                 LOG("%d speed v:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 break;
-            case 0x20: // speed hard down
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE) % itemsCount;
-                LOG("%d speed vv:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
-                knownEvent = true;
-                break;
             case 0x08: // speed up
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - 1) % itemsCount;
                 LOG("%d speed ^:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
-                knownEvent = true;
-                break;
-            case 0x00: // speed hard up
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE) % itemsCount;
-                LOG("%d speed ^^:%d\r\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 break;
             }
@@ -175,14 +127,63 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
         }
     }
 }
+#endif
+
+#ifdef ENABLE_SNS_AUTO_OFF
+CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
+uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
+
+void handle_sns_status(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    if (state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && rx_msg_header.DLC >= 3)
+    {
+        state->car.sns.active = !(((rx_msg_data[2] >> 2) & 0x03) == 0x01);
+        VLOG("%d SNS status:%d\r\n", state->board.now, state->car.sns.active);
+    }
+}
+
+void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0;
+    if (shouldDisableSNS)
+    {
+        LOG("%d disable SNS\r\n", state->board.now);
+        memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
+        disableSNSHeader.DLC = rx_msg_header.DLC;
+        disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
+        can_tx(&disableSNSHeader, disableSNSFrame);
+        state->car.sns.snsOffAt = state->board.now;
+        led_tx_on();
+    }
+}
+#endif
+
+#ifdef ENABLE_DPF_REGEN_NOTIFICATIION
+void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    if (rx_msg_header.DLC >= 6)
+    {
+        state->car.dpf.regenMode = (rx_msg_data[5] >> 2) & 0b00000111;
+
+        if (state->car.dpf.regenMode == 2 && state->car.dpf.regenerating == 0)
+        {
+            state->car.dpf.regenerating = 1;
+            LOG("%d start DPF r\r\n", state->board.now);
+        }
+
+        if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating == 1)
+        {
+            state->car.dpf.regenerating = 0;
+            LOG("%d end DPF r\r\n", state->board.now);
+        }
+    }
+}
+#endif
 
 void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     switch (rx_msg_header.StdId)
     {
-    case 0x000000FB:
-        handle_torque(state, rx_msg_header, rx_msg_data);
-        break;
     case 0x000000FC:
         handle_rpm(state, rx_msg_header, rx_msg_data);
         break;
@@ -191,30 +192,37 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         handle_sns_status(state, rx_msg_header, rx_msg_data);
         break;
 #endif
+#ifdef ENABLE_DASHBOARD
+    case 0x000000FB:
+        handle_torque(state, rx_msg_header, rx_msg_data);
+        break;
     case 0x000002EF:
         handle_gear(state, rx_msg_header, rx_msg_data);
         break;
     case 0x000002FA:
         handle_cc_buttons(state, rx_msg_header, rx_msg_data);
         break;
+    case 0x000005A5:
+        state->car.ccActive = ((rx_msg_data[0] >> 7) == 1);
+        VLOG("%d CC active:%d\r\n", state->board.now, state->car.ccActive);
+        break;
     case 0x0000041A:
         handle_battery(state, rx_msg_header, rx_msg_data);
         break;
+    case 0x000004B2:
+        handle_oil(state, rx_msg_header, rx_msg_data);
+        break;
+#endif
 #ifdef ENABLE_SNS_AUTO_OFF
     case 0x000004B1:
         handle_sns_request(state, rx_msg_header, rx_msg_data);
         break;
 #endif
-    case 0x000004B2:
-        handle_oil(state, rx_msg_header, rx_msg_data);
-        break;
-    case 0x000005A5:
-        state->car.ccActive = ((rx_msg_data[0] >> 7) == 1);
-        VLOG("%d CC active:%d\r\n", state->board.now, state->car.ccActive);
-        break;
+#ifdef ENABLE_DPF_REGEN_NOTIFICATIION
     case 0x000005AE:
         handle_dpf_regeneration(state, rx_msg_header, rx_msg_data);
         break;
+#endif
     default:
     }
 }
