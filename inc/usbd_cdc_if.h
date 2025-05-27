@@ -31,7 +31,7 @@
 #include "usbd_cdc.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "main.h"
+#include "config.h"
 #include "printf.h"
 /* USER CODE END INCLUDE */
 

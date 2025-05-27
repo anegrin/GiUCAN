@@ -1,21 +1,22 @@
 #include "config.h"
 #include "can.h"
+#include "uart.h"
 #include "error.h"
 #include "led.h"
-#include "logging.h"
 #include "model.h"
 #include "slcan.h"
 #include "processing.h"
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 
-CRC_HandleTypeDef hcrc;
+DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
-void SystemClock_Config(void);
-static void MX_DMA_Init(void);
-static void MX_CRC_Init(void);
 void state_init(GlobalState *state);
+void SystemClock_Config(void);
+#ifdef XCAN
+static void MX_DMA_Init(void);
+#endif
 
 int main(void)
 {
@@ -31,13 +32,16 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     led_init();
+#ifdef XCAN
     MX_DMA_Init();
-    MX_CRC_Init();
+    uart_init();
+#endif
+
 #ifdef ENABLE_USB_PORT
     MX_USB_DEVICE_Init();
 #endif
 
-#ifdef ENABLE_CAN_AT_BOOT
+#ifdef XCAN
     can_set_bitrate(CAN_BITRATE);
     can_enable();
 #endif
@@ -65,21 +69,21 @@ int main(void)
         led_process();
         can_process();
 
-#if defined(C1CAN) || defined(BHCAN)
+#ifdef XCAN
         process_state(&state);
+        uart_process(&state);
 #endif
         if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
         {
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
             {
-                led_rx_on();
                 uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
                 if (msg_len)
                 {
 #ifdef SLCAN
                     CDC_Transmit_FS(msg_buf, msg_len);
 #endif
-#if defined(C1CAN) || defined(BHCAN)
+#ifdef XCAN
                     if (rx_msg_header.RTR == CAN_RTR_DATA)
                     {
                         switch (rx_msg_header.IDE)
@@ -103,6 +107,11 @@ int main(void)
 void state_init(GlobalState *state)
 {
     state->car.sns.active = 1;
+    state->board.dashboardState.itemsCount = 13; // TODO
+    state->board.dashboardState.currentItemIndex = 0;
+    state->board.dashboardState.values[0] = 12.3f; // TODO
+    state->board.dashboardState.values[1] = 45.6f; // TODO
+    state->car.dpf.regenerating = 0;
 }
 
 /**
@@ -140,7 +149,8 @@ void SystemClock_Config(void)
     {
         Error_Handler();
     }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB | RCC_PERIPHCLK_USART1;
+    PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
     PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
 
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -149,25 +159,7 @@ void SystemClock_Config(void)
     }
 }
 
-/**
- * @brief CRC Initialization Function
- * @param None
- * @retval None
- */
-static void MX_CRC_Init(void)
-{
-    hcrc.Instance = CRC;
-    hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
-    hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
-    hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
-    hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
-    hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
-    if (HAL_CRC_Init(&hcrc) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
-
+#ifdef XCAN
 /**
  * Enable DMA controller clock
  * Configure DMA for memory to memory transfers
@@ -176,23 +168,30 @@ static void MX_CRC_Init(void)
 static void MX_DMA_Init(void)
 {
 
-    /* DMA controller clock enable */
-    __HAL_RCC_DMA1_CLK_ENABLE();
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
-    /* Configure DMA request hdma_memtomem_dma1_channel1 on DMA1_Channel1 */
-    hdma_memtomem_dma1_channel1.Instance = DMA1_Channel1;
-    hdma_memtomem_dma1_channel1.Init.Direction = DMA_MEMORY_TO_MEMORY;
-    hdma_memtomem_dma1_channel1.Init.PeriphInc = DMA_PINC_ENABLE;
-    hdma_memtomem_dma1_channel1.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_memtomem_dma1_channel1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    hdma_memtomem_dma1_channel1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_memtomem_dma1_channel1.Init.Mode = DMA_NORMAL;
-    hdma_memtomem_dma1_channel1.Init.Priority = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&hdma_memtomem_dma1_channel1) != HAL_OK)
-    {
-        Error_Handler();
-    }
+  /* Configure DMA request hdma_memtomem_dma1_channel1 on DMA1_Channel1 */
+  hdma_memtomem_dma1_channel1.Instance = DMA1_Channel1;
+  hdma_memtomem_dma1_channel1.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma1_channel1.Init.PeriphInc = DMA_PINC_ENABLE;
+  hdma_memtomem_dma1_channel1.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_memtomem_dma1_channel1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_memtomem_dma1_channel1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_memtomem_dma1_channel1.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma1_channel1.Init.Priority = DMA_PRIORITY_LOW;
+  if (HAL_DMA_Init(&hdma_memtomem_dma1_channel1) != HAL_OK)
+  {
+    Error_Handler( );
+  }
+
+  /* DMA interrupt init */
+  /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
+
 }
+#endif
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -200,6 +199,7 @@ static void MX_DMA_Init(void)
  */
 void Error_Handler(void)
 {
+    leds_on_error();
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();

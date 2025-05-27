@@ -11,7 +11,7 @@
 
 # SOURCES: list of sources in the user application
 SOURCES := $(shell find src -name "*.c")
-USB_SOURCES_APP = usb_device.c usbd_cdc_if.c usbd_desc.c
+USB_SOURCES_APP = usb_device.c usbd_desc.c
 USB_SOURCES_TARGET = usbd_conf.c
 
 # Get git version and dirty flag
@@ -28,7 +28,7 @@ BUILD_DIR = build
 LD_SCRIPT = STM32F072CBTX_FLASH.ld
 
 # USER_DEFS user defined macros
-USER_DEFS = -D HSI48_VALUE=48000000 -D HSE_VALUE=16000000
+USER_DEFS = 
 
 # USER_INCLUDES: user defined includes
 USER_INCLUDES = -IUSB_DEVICE/Target

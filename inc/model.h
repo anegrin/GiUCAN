@@ -24,10 +24,17 @@ typedef struct
 
 typedef struct
 {
+    uint8_t regenMode;
+    bool regenerating;
+} DPF;
+
+typedef struct
+{
     uint32_t rpm;
     uint16_t torque;
     char gear;
     bool ccActive;
+    DPF dpf;
     Oil oil;
     Battery battery;
     SNSState sns;
@@ -35,8 +42,17 @@ typedef struct
 
 typedef struct
 {
+    bool visible;
+    uint8_t itemsCount;
+    uint8_t currentItemIndex;
+    float values[2];
+} DashboardState;
+
+typedef struct
+{
     uint32_t now;
     uint32_t snsRequestOffAt;
+    DashboardState dashboardState;
 } BoardState;
 
 typedef struct
