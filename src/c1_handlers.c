@@ -143,8 +143,8 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 #endif
 
 #ifdef ENABLE_SNS_AUTO_OFF
-CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
-uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
+static CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
+static uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
 
 void handle_sns_status(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
@@ -164,9 +164,10 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
         memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
         disableSNSHeader.DLC = rx_msg_header.DLC;
         disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
-        can_tx(&disableSNSHeader, disableSNSFrame);
+        if (can_tx(&disableSNSHeader, disableSNSFrame) == HAL_OK){
+            led_tx_on();
+        }
         state->car.sns.snsOffAt = state->board.now;
-        led_tx_on();
     }
 }
 #endif

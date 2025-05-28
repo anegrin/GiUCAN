@@ -52,6 +52,7 @@ typedef struct
 {
     uint32_t now;
     uint32_t snsRequestOffAt;
+    uint32_t dpfRegenNotificationRequestOffAt;
     DashboardState dashboardState;
 } BoardState;
 

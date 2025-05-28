@@ -9,17 +9,21 @@
 
 #define QUEUE_SIZE 16
 
-const uint8_t MESSAGE_TYPE_DASHBORAD_STATE = 0xFE; // rare first byte for floats, Large negative NaNs
-const uint8_t MESSAGE_TYPE_SNS_STATE = 0xF0;       // rare first byte for floats, High magnitude negatives
+const uint8_t MSG_START = 0xFE; // rare first byte for floats, Large negative NaNs
 
-const int queuePollingInterval = 1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE));
-uint32_t queuePolledAt = 0;
-
-bool tx_done = true;
+static bool tx_done = true;
 
 UART_HandleTypeDef huart2;
 #ifdef BHCAN
-uint8_t rx_buffer[MESSAGE_SIZE];
+typedef enum
+{
+    UART_SYNC_WAIT_START,
+    UART_SYNC_RECEIVING
+} UART_RxState;
+static UART_RxState rx_state = UART_SYNC_WAIT_START;
+static uint8_t rx_sync_byte;
+static uint8_t rx_buffer[MESSAGE_SIZE];
+static size_t rx_index = 0;
 #endif
 
 typedef struct
@@ -30,8 +34,8 @@ typedef struct
     uint8_t count;
 } Queue;
 
-Queue queue = {0};
-Queue *rx_tx_queue = &queue;
+static Queue queue = {0};
+static Queue *rx_tx_queue = &queue;
 
 void fill_buffer(uint8_t *buffer, uint8_t bufferLength, const uint8_t *data, uint8_t dataLength)
 {
@@ -57,12 +61,13 @@ bool uart_enqueue(const uint8_t *data, uint8_t size)
     return false;
 }
 
+#ifdef C1CAN
 bool send_state(GlobalState *state)
 {
     float v0 = state->board.dashboardState.values[0];
     float v1 = state->board.dashboardState.values[1];
     uint8_t buffer[MESSAGE_SIZE];
-    uint8_t type = MESSAGE_TYPE_DASHBORAD_STATE;
+    uint8_t type = MSG_START;
     buffer[0] = type;
     bool visible = state->board.dashboardState.visible;
     buffer[1] = visible;
@@ -74,27 +79,20 @@ bool send_state(GlobalState *state)
     buffer[11] = regenerating;
     uint8_t crc = calculate_crc8(buffer, MESSAGE_SIZE - 1);
     buffer[MESSAGE_SIZE - 1] = crc;
-#ifdef UART_DEBUG_MODE
-    uint8_t sb[MESSAGE_SIZE];
-    bool regenerating = state->car.dpf.regenerating;
-    int s = snprintf((char *)sb, sizeof(sb), "t:%02X v:%d ci:%d v0:%.2f v1:%.2f r:%d c:%d\n", type, visible, currentItemIndex, v0, v1, , crc);
-    return uart_enqueue(sb, s);
-#else
     return uart_enqueue(buffer, MESSAGE_SIZE);
-#endif
 }
+#endif
 
+#ifdef BHCAN
 void update_state(GlobalState *state, bool visible, uint8_t currentItemIndex, float v0, float v1, bool regenerating)
 {
-    VLOG("v:%d ci:%d", visible, currentItemIndex);
-    VLOG(" v0:%.2f v1:%.2f", v0, v1);
-    VLOG(" r:%d\n", regenerating);
     state->board.dashboardState.visible = visible;
     state->board.dashboardState.currentItemIndex = currentItemIndex;
     state->board.dashboardState.values[0] = v0;
     state->board.dashboardState.values[1] = v1;
     state->car.dpf.regenerating = regenerating;
 }
+#endif
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
@@ -115,37 +113,39 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 #ifdef BHCAN
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    uart_enqueue(rx_buffer, MESSAGE_SIZE);
-    led_rx_on();
-    HAL_UART_Receive_IT(&huart2, rx_buffer, MESSAGE_SIZE);
-}
-#endif
-
-void uart_init(void)
-{
-    huart2.Instance = USART2;
-    huart2.Init.BaudRate = USART2_BAUD_RATE;
-    huart2.Init.WordLength = UART_WORDLENGTH_8B;
-    huart2.Init.StopBits = UART_STOPBITS_1;
-    huart2.Init.Parity = UART_PARITY_NONE;
-    huart2.Init.Mode = UART_MODE_TX_RX;
-    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-    huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-    huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-
-    if (HAL_HalfDuplex_Init(&huart2) != HAL_OK)
+    if (huart->Instance == USART2)
     {
-        Error_Handler();
+        if (rx_state == UART_SYNC_WAIT_START)
+        {
+            if (rx_sync_byte == MSG_START)
+            {
+                VLOG("---\nUART_W\n---\n");
+                rx_buffer[0] = MSG_START;
+                rx_index = 1;
+                rx_state = UART_SYNC_RECEIVING;
+                HAL_UART_Receive_DMA(&huart2, &rx_buffer[rx_index], MESSAGE_SIZE - 1);
+            }
+            else
+            {
+                // Still waiting for start byte
+                VLOG("---\nUART_W+\n---\n");
+                HAL_UART_Receive_DMA(&huart2, &rx_sync_byte, 1);
+            }
+        }
+        else if (rx_state == UART_SYNC_RECEIVING)
+        {
+            VLOG("---\nUART_R\n---\n");
+            rx_state = UART_SYNC_WAIT_START;
+            if (uart_enqueue(rx_buffer, MESSAGE_SIZE))
+            {
+                led_rx_on();
+            }
+            // Start looking for next message
+            HAL_UART_Receive_DMA(&huart2, &rx_sync_byte, 1);
+        }
     }
-#ifdef C1CAN
-    HAL_HalfDuplex_EnableTransmitter(&huart2);
-#endif
-#ifdef BHCAN
-    HAL_HalfDuplex_EnableReceiver(&huart2);
-    HAL_UART_Receive_IT(&huart2, rx_buffer, MESSAGE_SIZE);
-#endif
 }
+#endif
 
 #ifdef C1CAN
 bool uart_tx(const uint8_t *data, uint8_t size)
@@ -171,11 +171,28 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
     uint8_t currentItemIndex = data[2];
     memcpy(&v0, &data[3], 4);
     memcpy(&v1, &data[7], 4);
-    bool regenerating = data[12];
+    bool regenerating = data[11];
     uint8_t crc_check = calculate_crc8(data, MESSAGE_SIZE - 1);
     uint8_t crc = data[MESSAGE_SIZE - 1];
 
-    if (type == MESSAGE_TYPE_DASHBORAD_STATE && crc_check == crc)
+    /*VLOG("data:%02X,%02X,%02X,%02X,%02X,%02X,",
+        data[0],
+        data[1],
+        data[2],
+        data[3],
+        data[4],
+        data[5]
+    );
+    VLOG("%02X,%02X,%02X,%02X,%02X,%02X,%02X\n",
+        data[6],
+        data[7],
+        data[8],
+        data[9],
+        data[10],
+        data[11],
+        data[12]
+    );*/
+    if (type == MSG_START && crc_check == crc)
     {
         update_state(state, visible, currentItemIndex, v0, v1, regenerating);
         return true;
@@ -185,6 +202,36 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
 }
 #endif
 
+#ifdef XCAN
+const int QUEUE_POLLING_INTERVAL = 10 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
+static uint32_t queuePolledAt = 0;
+void uart_init(void)
+{
+    huart2.Instance = USART2;
+    huart2.Init.BaudRate = USART2_BAUD_RATE;
+    huart2.Init.WordLength = UART_WORDLENGTH_8B;
+    huart2.Init.StopBits = UART_STOPBITS_1;
+    huart2.Init.Parity = UART_PARITY_NONE;
+    huart2.Init.Mode = UART_MODE_TX_RX;
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+    huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
+    if (HAL_HalfDuplex_Init(&huart2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+#ifdef C1CAN
+    HAL_HalfDuplex_EnableTransmitter(&huart2);
+#endif
+#ifdef BHCAN
+    HAL_HalfDuplex_EnableReceiver(&huart2);
+    rx_state = UART_SYNC_WAIT_START;
+    HAL_UART_Receive_DMA(&huart2, &rx_sync_byte, 1);
+#endif
+}
+
 void uart_process(GlobalState *state)
 {
     if (rx_tx_queue->count == 0)
@@ -192,18 +239,20 @@ void uart_process(GlobalState *state)
         return;
     }
 
-    if (state->board.now - queuePolledAt > queuePollingInterval)
+    if (state->board.now - queuePolledAt > QUEUE_POLLING_INTERVAL)
     {
 #ifdef C1CAN
-        if (uart_tx(rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE))
+        bool success = uart_tx(rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
 #endif
 #ifdef BHCAN
-            if (dashboard_tx(state, rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE))
+        bool success = dashboard_tx(state, rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
 #endif
-            {
-                rx_tx_queue->head = (rx_tx_queue->head + 1) % QUEUE_SIZE;
-                rx_tx_queue->count--;
-                queuePolledAt = state->board.now;
-            }
+        if (success)
+        {
+            rx_tx_queue->head = (rx_tx_queue->head + 1) % QUEUE_SIZE;
+            rx_tx_queue->count--;
+            queuePolledAt = state->board.now;
+        }
     }
 }
+#endif

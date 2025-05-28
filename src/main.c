@@ -1,4 +1,5 @@
 #include "config.h"
+#include "dashboard.h"
 #include "can.h"
 #include "uart.h"
 #include "error.h"
@@ -10,6 +11,7 @@
 #include "usbd_cdc_if.h"
 
 DMA_HandleTypeDef hdma_usart2_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
 void state_init(GlobalState *state);
@@ -70,7 +72,7 @@ int main(void)
         can_process();
 
 #ifdef XCAN
-        process_state(&state);
+        state_process(&state);
         uart_process(&state);
 #endif
         if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
@@ -107,10 +109,13 @@ int main(void)
 void state_init(GlobalState *state)
 {
     state->car.sns.active = 1;
-    state->board.dashboardState.itemsCount = 13; // TODO
+    state->board.snsRequestOffAt = 0;
+    state->board.dpfRegenNotificationRequestOffAt = 0;
+    state->board.dashboardState.itemsCount = DASHBOARD_ITEM_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = 12.3f; // TODO
     state->board.dashboardState.values[1] = 45.6f; // TODO
+    state->car.dpf.regenMode = 0;
     state->car.dpf.regenerating = 0;
 }
 
@@ -168,28 +173,13 @@ void SystemClock_Config(void)
 static void MX_DMA_Init(void)
 {
 
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* Configure DMA request hdma_memtomem_dma1_channel1 on DMA1_Channel1 */
-  hdma_memtomem_dma1_channel1.Instance = DMA1_Channel1;
-  hdma_memtomem_dma1_channel1.Init.Direction = DMA_MEMORY_TO_MEMORY;
-  hdma_memtomem_dma1_channel1.Init.PeriphInc = DMA_PINC_ENABLE;
-  hdma_memtomem_dma1_channel1.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_memtomem_dma1_channel1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_memtomem_dma1_channel1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-  hdma_memtomem_dma1_channel1.Init.Mode = DMA_NORMAL;
-  hdma_memtomem_dma1_channel1.Init.Priority = DMA_PRIORITY_LOW;
-  if (HAL_DMA_Init(&hdma_memtomem_dma1_channel1) != HAL_OK)
-  {
-    Error_Handler( );
-  }
-
-  /* DMA interrupt init */
-  /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
-
+    /* DMA interrupt init */
+    /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
 }
 #endif
 

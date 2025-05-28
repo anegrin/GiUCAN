@@ -57,6 +57,7 @@ void can_enable(void)
         HAL_CAN_Start(&can_handle);
         bus_state = ON_BUS;
 
+        led_tx_on();
         led_rx_on();
     }
 }
@@ -70,6 +71,7 @@ void can_disable(void)
         can_handle.Instance->MCR |= CAN_MCR_RESET;
         bus_state = OFF_BUS;
 
+        led_tx_on();
         led_rx_on();
     }
 }

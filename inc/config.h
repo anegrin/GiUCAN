@@ -35,10 +35,16 @@
     #ifdef C1CAN
         #error "Can't build BHCAN+C1CAN"
     #endif
-    #ifdef UART_DEBUG_MODE
-        #error "Can't build BHCAN+UART_DEBUG_MODE"
+    #ifndef DISABLE_DPF_REGEN_NOTIFICATIION
+        #define ENABLE_DPF_REGEN_NOTIFICATIION
     #endif
-
+    // 0x02=FM radio, 0x03=AM Radio, 0x05=Aux, 0x06=left USB, 0x07=Right USB, 
+    // 0x08=Center USB, 0x09=Bluetooth, 0x12=phone connected, 0x13=phone disconnected, 
+    // 0x15=call in progress, 0x17=call in wait, 0x18=call terminated, 0x11=clear display, ...
+    #ifndef DISPLAY_INFO_CODE
+        #define DISPLAY_INFO_CODE 0x09
+    #endif
+    #define CLEAR_DISPLAY_INFO_CODE 0x11
     #define CAN_BITRATE CAN_BITRATE_125K
 #endif
 
@@ -53,9 +59,6 @@
             #define DASHBOARD_PAGE_SIZE 10
         #endif
     #endif
-    #ifndef DISABLE_DPF_REGEN_NOTIFICATIION
-        #define ENABLE_DPF_REGEN_NOTIFICATIION
-    #endif
     #ifndef DISABLE_SNS_AUTO_OFF
         #define ENABLE_SNS_AUTO_OFF
         #ifndef SNS_AUTO_OFF_DELAY_MS
@@ -66,16 +69,14 @@
         #endif
     #endif
     #ifndef ENABLE_DASHBOARD
-    #ifndef ENABLE_DPF_REGEN_NOTIFICATIION
     #ifndef ENABLE_SNS_AUTO_OFF
         #error "You're building a C1CAN without any active feature :/"
-    #endif
     #endif
     #endif
 #endif
 
 #ifndef USART2_BAUD_RATE
-    #define USART2_BAUD_RATE 38400
+    #define USART2_BAUD_RATE 9600
 #endif
 
 #ifndef CAN_BITRATE
@@ -86,8 +87,13 @@
     #define ENABLE_USB_PORT
 #endif
 
-#ifdef DEBUG_MODE
-    #define LEDS_ON_CAN_RX
+#if DEBUG_MODE
+    #ifdef ENABLE_DASHBOARD
+        #warning "DEBUG_MODE+ENABLE_DASHBOARD might lead to malfunction because of UART communication"
+    #endif
+    #ifdef BHCAN
+        #warning "DEBUG_MODE+BHCAN might lead to malfunction because of UART communication"
+    #endif
 #endif
 
 #endif /* __MAIN_H */
