@@ -44,6 +44,14 @@
     #ifndef DISPLAY_INFO_CODE
         #define DISPLAY_INFO_CODE 0x09
     #endif
+    //must be a multiple of 3
+    #ifndef DASHBOARD_MESSAGE_MAX_LENGTH
+        #ifdef SMALL_TFT
+            #define DASHBOARD_MESSAGE_MAX_LENGTH 18
+        #else
+            #define DASHBOARD_MESSAGE_MAX_LENGTH 24
+        #endif
+    #endif
     #define CLEAR_DISPLAY_INFO_CODE 0x11
     #define CAN_BITRATE CAN_BITRATE_125K
 #endif

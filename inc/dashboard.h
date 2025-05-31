@@ -3,6 +3,7 @@
 
 #include "config.h"
 
+#ifndef DASHBOARD_ITEMS
 #define DASHBOARD_ITEMS                            \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)     \
     X(HP_ITEM, "Power: %.1fhp")                    \
@@ -41,6 +42,7 @@
                        "C R.T. %.0f"               \
                        "\xB0"                      \
                        "C")
+#endif
 
 typedef enum
 {
@@ -51,7 +53,7 @@ typedef enum
 } DashboardItemType;
 
 #ifdef BHCAN
-char *pattern_of(DashboardItemType type);
+const char *pattern_of(DashboardItemType type);
 #endif
 
 #endif // _DASHBOARD_H
