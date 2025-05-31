@@ -7,7 +7,7 @@ const char *patterns[] = {
 #undef X
 };
 
-char *pattern_of(DashboardItemType type)
+const char *pattern_of(DashboardItemType type)
 {
     switch (type)
     {
