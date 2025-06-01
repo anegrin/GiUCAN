@@ -30,8 +30,11 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
 {
     if (rx_msg_header.DLC >= 4)
     {
-        state->car.torque = (state->car.rpm * ((rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111))) - 500;
-        VLOG("%d torque:%d\n", state->board.now, state->car.torque);
+        state->car.torque = (rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111);
+        state->car.power.hp = (int)((float)state->car.torque - 500 * (float)state->car.rpm * 0.000142378f);
+        state->car.power.nm = (int)((float)state->car.torque - 500);
+
+        VLOG("%d pow t:%d,h:%d,n:%d\n", state->board.now, state->car.torque, state->car.power.hp, state->car.power.nm);
     }
 }
 
@@ -164,7 +167,8 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
         memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
         disableSNSHeader.DLC = rx_msg_header.DLC;
         disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
-        if (can_tx(&disableSNSHeader, disableSNSFrame) == HAL_OK){
+        if (can_tx(&disableSNSHeader, disableSNSFrame) == HAL_OK)
+        {
             led_tx_on();
         }
         state->car.sns.snsOffAt = state->board.now;

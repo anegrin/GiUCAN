@@ -30,8 +30,15 @@ typedef struct
 
 typedef struct
 {
+    int hp;
+    int nm;
+} Power;
+
+typedef struct
+{
     uint32_t rpm;
     uint16_t torque;
+    Power power;
     char gear;
     bool ccActive;
     DPF dpf;
