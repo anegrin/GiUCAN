@@ -113,8 +113,8 @@ void state_init(GlobalState *state)
     state->board.dpfRegenNotificationRequestOffAt = 0;
     state->board.dashboardState.itemsCount = DASHBOARD_ITEM_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
-    state->board.dashboardState.values[0] = 12.3f; // TODO
-    state->board.dashboardState.values[1] = 45.6f; // TODO
+    state->board.dashboardState.values[0] = -1.0f;
+    state->board.dashboardState.values[1] = -1.0f;
     state->car.power.hp = 0;
     state->car.power.nm = 0;
     state->car.dpf.regenMode = 0;

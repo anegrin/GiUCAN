@@ -175,23 +175,6 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
     uint8_t crc_check = calculate_crc8(data, MESSAGE_SIZE - 1);
     uint8_t crc = data[MESSAGE_SIZE - 1];
 
-    /*VLOG("data:%02X,%02X,%02X,%02X,%02X,%02X,",
-        data[0],
-        data[1],
-        data[2],
-        data[3],
-        data[4],
-        data[5]
-    );
-    VLOG("%02X,%02X,%02X,%02X,%02X,%02X,%02X\n",
-        data[6],
-        data[7],
-        data[8],
-        data[9],
-        data[10],
-        data[11],
-        data[12]
-    );*/
     if (type == MSG_START && crc_check == crc)
     {
         update_state(state, visible, currentItemIndex, v0, v1, regenerating);

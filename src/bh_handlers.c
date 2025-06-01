@@ -11,6 +11,7 @@
 #include "processing.h"
 #include "logging.h"
 
+static uint8_t dpfSoundAlertFrame[8];
 static CAN_TxHeaderTypeDef dpfSoundAlertHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x5AC, .DLC = 8};
 
 void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -21,7 +22,6 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         if (state->board.dpfRegenNotificationRequestOffAt != 0)
         {
             state->board.dpfRegenNotificationRequestOffAt = 0;
-            uint8_t dpfSoundAlertFrame[8];
 
             memcpy(dpfSoundAlertFrame, &rx_msg_data, rx_msg_header.DLC);
 

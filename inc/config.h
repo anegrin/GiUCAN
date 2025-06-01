@@ -52,6 +52,9 @@
             #define DASHBOARD_MESSAGE_MAX_LENGTH 24
         #endif
     #endif
+    #ifndef DASHBOARD_FORCED_REFRESH_MS
+        #define DASHBOARD_FORCED_REFRESH_MS 1000
+    #endif
     #define CLEAR_DISPLAY_INFO_CODE 0x11
     #define CAN_BITRATE CAN_BITRATE_125K
 #endif
