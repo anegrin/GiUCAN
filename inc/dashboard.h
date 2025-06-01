@@ -3,47 +3,6 @@
 
 #include "config.h"
 
-#ifndef DASHBOARD_ITEMS
-#define DASHBOARD_ITEMS                            \
-    X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)     \
-    X(HP_ITEM, "Power: %.1fhp")                    \
-    X(TORQUE_ITEM, "Torque: %.0fnm")               \
-    X(DPF_CLOG_ITEM, "DPF clog: %.0f%%")           \
-    X(DPF_TEMP_ITEM, "DPF temp: %.0f"              \
-                     "\xB0"                        \
-                     "C")                          \
-    X(DPF_REG_ITEM, "DPF reg: %.0f%%")             \
-    X(DPF_DIST_ITEM, "DPF dist: %.0fkm")           \
-    X(DPF_COUNT_ITEM, "DPF count: %.0f")           \
-    X(DPF_MEAN_DIST_ITEM, "DPF mean: %.0fkm")      \
-    X(DPF_MEAN_DURATION_ITEM, "DPF mean: %.0fmin") \
-    X(BATTERY_V_ITEM, "Battery: %.1fV")            \
-    X(BATTERY_P_ITEM, "Battery: %.0f%%")           \
-    X(BATTERY_A_ITEM, "Battery: %.2fA")            \
-    X(OIL_QUALITY_ITEM, "Oil qlt: %.0f%%")         \
-    X(OIL_TEMP_ITEM, "Oil temp: %.0f"              \
-                     "\xB0"                        \
-                     "C")                          \
-    X(OIL_PRESS_ITEM, "Oil press: %.1fbar")        \
-    X(AIR_IN_ITEM, "Air in temp: %.0f"             \
-                   "\xB0"                          \
-                   "C")                            \
-    X(GEAR_ITEM, "Current gear: %c")               \
-    X(GEARBOX_TEMP_ITEM, "Gearbox: %.0f"           \
-                         "\xB0"                    \
-                         "C")                      \
-    X(FRONT_TIRES_TEMP_ITEM, "%.0f"                \
-                             "\xB0"                \
-                             "C F.T. %.0f"         \
-                             "\xB0"                \
-                             "C")                  \
-    X(REAR_TIRES_TEMP, "%.0f"                      \
-                       "\xB0"                      \
-                       "C R.T. %.0f"               \
-                       "\xB0"                      \
-                       "C")
-#endif
-
 typedef enum
 {
 #define X(name, str) name,
@@ -55,5 +14,68 @@ typedef enum
 #ifdef BHCAN
 const char *pattern_of(DashboardItemType type);
 #endif
+
+#define SWAP_UINT32(x) (((uint32_t)(x) >> 24) & 0x000000FF) |    \
+                           (((uint32_t)(x) >> 8) & 0x0000FF00) | \
+                           (((uint32_t)(x) << 8) & 0x00FF0000) | \
+                           (((uint32_t)(x) << 24) & 0xFF000000)
+
+typedef struct
+{
+    uint32_t reqId;
+    uint8_t reqLen;
+    uint32_t reqData;
+    uint32_t replyId;
+    uint8_t replyLen;
+    uint8_t replyOffset;
+    int32_t replyValOffset;
+    float replyScale;
+    int32_t replyScaleOffset;
+
+} CarValueExtractor;
+
+typedef struct
+{
+    bool dynamicV0;
+    bool dynamicV1;
+    CarValueExtractor forV0;
+    CarValueExtractor forV1;
+    float v0;
+    float v1;
+
+} CarValueExtractors;
+
+static CarValueExtractors noExtractors = {.dynamicV0 = false, .dynamicV1 = false, .v0 = 0.0f, .v1 = 0.0f};
+static CarValueExtractors dpfClogExtractors = {.dynamicV0 = true, .dynamicV1 = false, .forV0 = {
+                                                                                          .reqId = 0x18DA10F1,
+                                                                                          .reqData = SWAP_UINT32(0x032218E4),
+                                                                                          .replyId = 0x18DAF110,
+                                                                                          .replyLen = 2,
+                                                                                          .replyOffset = 0,
+                                                                                          .replyValOffset = 0,
+                                                                                          .replyScale = 0.015259022,
+                                                                                          .replyScaleOffset = 0,
+                                                                                      },
+                                               .v1 = 0.0f};
+CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
+{
+    switch (type)
+    {
+    case HP_ITEM:
+        CarValueExtractors e = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.hp, .v1 = 0.0f};
+        return e;
+        break;
+    case TORQUE_ITEM:
+        CarValueExtractors e = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.nm, .v1 = 0.0f};
+        return e;
+        break;
+    case DPF_CLOG_ITEM:
+        return dpfClogExtractors;
+        break;
+    default:
+        return noExtractors;
+        break;
+    }
+}
 
 #endif // _DASHBOARD_H
