@@ -8,7 +8,7 @@
 #include "dashboard.h"
 #include "can.h"
 
-uint32_t valuesUpdatedAt = 0;
+static uint32_t dashboardRefreshedAt = 0;
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
 static DPF dpfLocalState;
@@ -82,13 +82,13 @@ void state_process(GlobalState *state)
     dashboardLocalState.values[1] = state->board.dashboardState.values[1];
     dpfLocalState.regenerating = state->car.dpf.regenerating;
 
-    if (!updateDashboard && valuesUpdatedAt + DASHBOARD_FORCED_REFRESH_MS > state->board.now) {
-        valuesUpdatedAt = state->board.now;
+    if (!updateDashboard && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS > state->board.now) {
         updateDashboard = true;
     }
 
     if (updateDashboard)
     {
+        dashboardRefreshedAt = state->board.now;
         if (dashboardLocalState.visible)
         {
             const char *pattern = pattern_of(state->board.dashboardState.currentItemIndex);

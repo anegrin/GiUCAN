@@ -1,8 +1,11 @@
 #ifndef _DASHBOARD_H
 #define _DASHBOARD_H
 
+#include <stdbool.h>
 #include "config.h"
+#include "model.h"
 
+#ifdef XCAN
 typedef enum
 {
 #define X(name, str) name,
@@ -10,6 +13,9 @@ typedef enum
 #undef X
         DASHBOARD_ITEM_COUNT
 } DashboardItemType;
+#else
+#define DASHBOARD_ITEM_COUNT 0
+#endif
 
 #ifdef BHCAN
 const char *pattern_of(DashboardItemType type);
@@ -45,37 +51,8 @@ typedef struct
 
 } CarValueExtractors;
 
-static CarValueExtractors noExtractors = {.dynamicV0 = false, .dynamicV1 = false, .v0 = 0.0f, .v1 = 0.0f};
-static CarValueExtractors dpfClogExtractors = {.dynamicV0 = true, .dynamicV1 = false, .forV0 = {
-                                                                                          .reqId = 0x18DA10F1,
-                                                                                          .reqData = SWAP_UINT32(0x032218E4),
-                                                                                          .replyId = 0x18DAF110,
-                                                                                          .replyLen = 2,
-                                                                                          .replyOffset = 0,
-                                                                                          .replyValOffset = 0,
-                                                                                          .replyScale = 0.015259022,
-                                                                                          .replyScaleOffset = 0,
-                                                                                      },
-                                               .v1 = 0.0f};
-CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
-{
-    switch (type)
-    {
-    case HP_ITEM:
-        CarValueExtractors e = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.hp, .v1 = 0.0f};
-        return e;
-        break;
-    case TORQUE_ITEM:
-        CarValueExtractors e = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.nm, .v1 = 0.0f};
-        return e;
-        break;
-    case DPF_CLOG_ITEM:
-        return dpfClogExtractors;
-        break;
-    default:
-        return noExtractors;
-        break;
-    }
-}
+#ifdef C1CAN
+CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state);
+#endif
 
 #endif // _DASHBOARD_H

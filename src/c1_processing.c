@@ -6,7 +6,7 @@
 #include "dashboard.h"
 #include "can.h"
 
-
+static uint32_t valuesUpdatedAt = 0;
 void state_process(GlobalState *state)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
@@ -28,8 +28,24 @@ void state_process(GlobalState *state)
     }
 #endif
 #ifdef ENABLE_DASHBOARD
+
     if (state->board.dashboardState.visible)
     {
+        if (valuesUpdatedAt + VALUES_REFRESH_MS > state->board.now)
+        {
+            valuesUpdatedAt = state->board.now;
+            CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
+            if (extractors.dynamicV0)
+            {
+                CarValueExtractor extractor = extractors.forV0;
+                // send request
+            }
+            if (extractors.dynamicV1)
+            {
+                CarValueExtractor extractor = extractors.forV1;
+                // send request
+            }
+        }
     }
 #endif
 }

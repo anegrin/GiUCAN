@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "processing.h"
 #include "logging.h"
+#include "dashboard.h"
 
 void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
@@ -139,6 +140,8 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 
         if (sendEvent)
         {
+            state->board.dashboardState.values[0] = 0.0f;
+            state->board.dashboardState.values[1] = 0.0f;
             send_state(state);
         }
     }
@@ -245,7 +248,41 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
+float extract(CarValueExtractor *extractor, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+{
+    // todo
+    return 12.3f;
+}
+
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
+    if (state->board.dashboardState.visible)
+    {
+        CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
+        if (extractors.dynamicV0)
+        {
+            CarValueExtractor extractor = extractors.forV0;
+            if (extractor.replyId == rx_msg_header.ExtId)
+            {
+                state->board.dashboardState.values[0] = extract(&extractor, rx_msg_header, rx_msg_data);
+            }
+        }
+        else
+        {
+            state->board.dashboardState.values[0] = extractors.v0;
+        }
+        if (extractors.dynamicV1)
+        {
+            CarValueExtractor extractor = extractors.forV1;
+            if (extractor.replyId == rx_msg_header.ExtId)
+            {
+                state->board.dashboardState.values[1] = extract(&extractor, rx_msg_header, rx_msg_data);
+            }
+        }
+        else
+        {
+            state->board.dashboardState.values[1] = extractors.v1;
+        }
+    }
 }
 #endif
