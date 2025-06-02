@@ -1,0 +1,63 @@
+name: Build unstable
+
+on: 
+  workflow_dispatch:
+    inputs:
+      TAG_NAME:
+        description: "Tag name to generate (DO NOT USE vX.X.X!!!)"
+        default: "continuous"
+        required: true
+      CFLAGS:
+        description: "Optional GCC flags (-D)"
+        default: ""
+        required: false
+      
+jobs:
+  build:
+    name: GiUCAN unstable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+
+      - run: arm-none-eabi-gcc --version
+
+      - name: Clone
+        uses: actions/checkout@v3
+
+      - name: Set short git commit SHA
+        run: |
+          calculatedSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
+
+      - name: Set CFLAGS
+        run: |
+          echo "CFLAGS=${{github.event.inputs.CFLAGS}}" >> $GITHUB_ENV
+
+      - name: Echo GITHUB_ENV
+        run: echo ${{ env.CFLAGS }}
+
+      - name: Compile C1CAN
+        run: |
+          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DC1CAN' make all
+          mv build/GiUCAN*.elf GiUCAN_C1CAN_unstable.elf
+          
+      - name: Compile BHCAN
+        run: |
+          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make all
+          mv build/GiUCAN*.elf GiUCAN_BHCAN_unstable.elf
+          
+      - name: Compile SLCAN
+        run: |
+          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DSLCAN' make all
+          mv build/GiUCAN*.elf GiUCAN_SLCAN_unstable.elf
+          
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          tag_name: ${{github.event.inputs.TAG_NAME}}
+          name: Unstable ${{ env.COMMIT_SHORT_SHA }}
+          files: |
+            ./GiUCAN_C1CAN_unstable.elf
+            ./GiUCAN_BHCAN_unstable.elf
+            ./GiUCAN_SLCAN_unstable.elf
