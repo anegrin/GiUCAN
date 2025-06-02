@@ -265,11 +265,16 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 
             if (extractor.needsQuery && extractor.replyId == rx_msg_header.ExtId)
             {
-                state->board.dashboardState.values[0] = extract(&extractor, rx_msg_header, rx_msg_data);
+                float extractedValue = extract(&extractor, rx_msg_header, rx_msg_data);
+                if (state->board.dashboardState.values[0] != extractedValue)
+                {
+                    state->board.dashboardState.values[0] = extractedValue;
+                    send_state(state);
+                }
             }
         }
 
-        if (extractors.hasV1)
+        /*if (extractors.hasV1)
         {
             CarValueExtractor extractor = extractors.forV1;
 
@@ -277,7 +282,7 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
             {
                 state->board.dashboardState.values[1] = extract(&extractor, rx_msg_header, rx_msg_data);
             }
-        }
+        }*/
     }
 }
 #endif

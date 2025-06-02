@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "dashboard.h"
 #include "can.h"
+#include "uart.h"
 
 static uint32_t valuesUpdatedAt = 0;
 void state_process(GlobalState *state)
@@ -44,10 +45,13 @@ void state_process(GlobalState *state)
                 }
                 else
                 {
-                    state->board.dashboardState.values[0] = extractor.value;
+                    if (state->board.dashboardState.values[0] != extractor.value) {
+                        state->board.dashboardState.values[0] = extractor.value;
+                        send_state(state);
+                    }
                 }
             }
-            if (extractors.hasV1)
+            /*if (extractors.hasV1)
             {
                 CarValueExtractor extractor = extractors.forV1;
                 if (extractor.needsQuery)
@@ -58,7 +62,7 @@ void state_process(GlobalState *state)
                 {
                     state->board.dashboardState.values[1] = extractor.value;
                 }
-            }
+            }*/
         }
     }
 #endif

@@ -82,9 +82,9 @@ void state_process(GlobalState *state)
     dashboardLocalState.values[1] = state->board.dashboardState.values[1];
     dpfLocalState.regenerating = state->car.dpf.regenerating;
 
-    if (!updateDashboard && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now) {
+    /*if (!updateDashboard && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now) {
         updateDashboard = true;
-    }
+    }*/
 
     if (updateDashboard)
     {
