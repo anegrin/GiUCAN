@@ -87,7 +87,7 @@
 #endif
 #endif
 #ifndef VALUES_REFRESH_MS
-#define VALUES_REFRESH_MS 125
+#define VALUES_REFRESH_MS 250
 #endif
 #endif
 

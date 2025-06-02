@@ -31,25 +31,31 @@ void state_process(GlobalState *state)
 
     if (state->board.dashboardState.visible)
     {
-        if (valuesUpdatedAt + VALUES_REFRESH_MS > state->board.now)
+        if (valuesUpdatedAt + VALUES_REFRESH_MS < state->board.now)
         {
             valuesUpdatedAt = state->board.now;
             CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
             if (extractors.hasV0)
             {
                 CarValueExtractor extractor = extractors.forV0;
-                if (extractor.needsQuery) {
-                    //send query, will be handled in handle_extended_frame
-                } else {
+                if (extractor.needsQuery)
+                {
+                    // send query, will be handled in handle_extended_frame
+                }
+                else
+                {
                     state->board.dashboardState.values[0] = extractor.value;
                 }
             }
             if (extractors.hasV1)
             {
                 CarValueExtractor extractor = extractors.forV1;
-                if (extractor.needsQuery) {
-                    //send query, will be handled in handle_extended_frame
-                } else {
+                if (extractor.needsQuery)
+                {
+                    // send query, will be handled in handle_extended_frame
+                }
+                else
+                {
                     state->board.dashboardState.values[1] = extractor.value;
                 }
             }

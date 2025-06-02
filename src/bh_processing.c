@@ -82,7 +82,7 @@ void state_process(GlobalState *state)
     dashboardLocalState.values[1] = state->board.dashboardState.values[1];
     dpfLocalState.regenerating = state->car.dpf.regenerating;
 
-    if (!updateDashboard && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS > state->board.now) {
+    if (!updateDashboard && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now) {
         updateDashboard = true;
     }
 
@@ -96,16 +96,17 @@ void state_process(GlobalState *state)
             int written = snprintf_(buffer, DASHBOARD_MESSAGE_MAX_LENGTH + 1, pattern, state->board.dashboardState.values[0], state->board.dashboardState.values[1]);
             if (written >= 0 && written < DASHBOARD_MESSAGE_MAX_LENGTH)
             {
-                memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written - 1);
+                memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written);
             }
-            buffer[DASHBOARD_MESSAGE_MAX_LENGTH - 1] = 0x00;
+            buffer[DASHBOARD_MESSAGE_MAX_LENGTH] = 0x00;
 
+            int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
             int offset = 0;
             int part = 0;
 
             while (offset < DASHBOARD_MESSAGE_MAX_LENGTH)
             {
-                send_dashboard_text(DASHBOARD_MESSAGE_MAX_LENGTH / 3, part, buffer, offset, DISPLAY_INFO_CODE);
+                send_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE);
                 offset += 3;
                 part += 1;
             }
