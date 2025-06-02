@@ -259,29 +259,24 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     if (state->board.dashboardState.visible)
     {
         CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
-        if (extractors.dynamicV0)
+        if (extractors.hasV0)
         {
             CarValueExtractor extractor = extractors.forV0;
-            if (extractor.replyId == rx_msg_header.ExtId)
+
+            if (extractor.needsQuery && extractor.replyId == rx_msg_header.ExtId)
             {
                 state->board.dashboardState.values[0] = extract(&extractor, rx_msg_header, rx_msg_data);
             }
         }
-        else
-        {
-            state->board.dashboardState.values[0] = extractors.v0;
-        }
-        if (extractors.dynamicV1)
+
+        if (extractors.hasV1)
         {
             CarValueExtractor extractor = extractors.forV1;
-            if (extractor.replyId == rx_msg_header.ExtId)
+
+            if (extractor.needsQuery && extractor.replyId == rx_msg_header.ExtId)
             {
                 state->board.dashboardState.values[1] = extract(&extractor, rx_msg_header, rx_msg_data);
             }
-        }
-        else
-        {
-            state->board.dashboardState.values[1] = extractors.v1;
         }
     }
 }

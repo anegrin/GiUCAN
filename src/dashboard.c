@@ -23,28 +23,28 @@ const char *pattern_of(DashboardItemType type)
 #endif
 
 #ifdef C1CAN
-static CarValueExtractors noExtractors = {.dynamicV0 = false, .dynamicV1 = false, .v0 = 0.0f, .v1 = 0.0f};
-static CarValueExtractors dpfClogExtractors = {.dynamicV0 = true, .dynamicV1 = false, .forV0 = {
-                                                                                          .reqId = 0x18DA10F1,
-                                                                                          .reqData = SWAP_UINT32(0x032218E4),
-                                                                                          .replyId = 0x18DAF110,
-                                                                                          .replyLen = 2,
-                                                                                          .replyOffset = 0,
-                                                                                          .replyValOffset = 0,
-                                                                                          .replyScale = 0.015259022,
-                                                                                          .replyScaleOffset = 0,
-                                                                                      },
-                                               .v1 = 0.0f};
+static CarValueExtractors noExtractors = {.hasV0 = false, .hasV1 = false};
+static CarValueExtractors dpfClogExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = true,
+                                                                                  .reqId = 0x18DA10F1,
+                                                                                  .reqData = SWAP_UINT32(0x032218E4),
+                                                                                  .replyId = 0x18DAF110,
+                                                                                  .replyLen = 2,
+                                                                                  .replyOffset = 0,
+                                                                                  .replyValOffset = 0,
+                                                                                  .replyScale = 0.015259022,
+                                                                                  .replyScaleOffset = 0,
+                                                                              }};
 CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 {
     switch (type)
     {
     case HP_ITEM:
-        CarValueExtractors eHp = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.hp, .v1 = 0.0f};
+        CarValueExtractors eHp = {.hasV0 = true, .hasV1 = false, .forV0 = {0}, .forV1 = {.needsQuery = false, .value = (float)state->car.power.hp}};
         return eHp;
         break;
     case TORQUE_ITEM:
-        CarValueExtractors eT = {.dynamicV0 = false, .dynamicV1 = false, .forV0 = {0}, .forV1 = {0}, .v0 = state->car.power.nm, .v1 = 0.0f};
+        CarValueExtractors eT = {.hasV0 = true, .hasV1 = false, .forV0 = {0}, .forV1 = {.needsQuery = false, .value = (float)state->car.power.nm}};
         return eT;
         break;
     case DPF_CLOG_ITEM:

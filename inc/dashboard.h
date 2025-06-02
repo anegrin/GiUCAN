@@ -28,6 +28,8 @@ const char *pattern_of(DashboardItemType type);
 
 typedef struct
 {
+    bool needsQuery;
+    float value;
     uint32_t reqId;
     uint8_t reqLen;
     uint32_t reqData;
@@ -42,12 +44,10 @@ typedef struct
 
 typedef struct
 {
-    bool dynamicV0;
-    bool dynamicV1;
+    bool hasV0;
+    bool hasV1;
     CarValueExtractor forV0;
     CarValueExtractor forV1;
-    float v0;
-    float v1;
 
 } CarValueExtractors;
 

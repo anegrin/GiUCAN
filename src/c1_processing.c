@@ -35,15 +35,23 @@ void state_process(GlobalState *state)
         {
             valuesUpdatedAt = state->board.now;
             CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
-            if (extractors.dynamicV0)
+            if (extractors.hasV0)
             {
                 CarValueExtractor extractor = extractors.forV0;
-                // send request
+                if (extractor.needsQuery) {
+                    //send query, will be handled in handle_extended_frame
+                } else {
+                    state->board.dashboardState.values[0] = extractor.value;
+                }
             }
-            if (extractors.dynamicV1)
+            if (extractors.hasV1)
             {
                 CarValueExtractor extractor = extractors.forV1;
-                // send request
+                if (extractor.needsQuery) {
+                    //send query, will be handled in handle_extended_frame
+                } else {
+                    state->board.dashboardState.values[1] = extractor.value;
+                }
             }
         }
     }
