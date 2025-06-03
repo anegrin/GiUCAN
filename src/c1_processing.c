@@ -1,6 +1,7 @@
 #include "config.h"
 #ifdef C1CAN
 #include <stdbool.h>
+#include <string.h>
 #include "processing.h"
 #include "logging.h"
 #include "dashboard.h"
@@ -8,7 +9,29 @@
 #include "uart.h"
 
 static uint8_t *no_rx_msg_data = {0};
+
+void extract_or_send_request(CarValueExtractor extractor, GlobalState *state, uint8_t valueIndex)
+{
+    if (extractor.needsQuery)
+    {
+        // CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .DLC = 4};
+        // tx_msg_header.ExtId = extractor.query.reqId;
+        VLOG("%d req %02x%02x%02x%02x\n", state->board.now, extractor.query.reqData[0], extractor.query.reqData[1], extractor.query.reqData[2], extractor.query.reqData[3])
+        // can_tx(&tx_msg_header, &extractor.query.reqData);
+    }
+    else
+    {
+        float value = extractor.extract(state, no_rx_msg_data);
+        if (state->board.dashboardState.values[valueIndex] != value)
+        {
+            state->board.dashboardState.values[valueIndex] = value;
+            send_state(state);
+        }
+    }
+}
+
 static uint32_t valuesUpdatedAt = 0;
+static int valueToExtract = 0;
 void state_process(GlobalState *state)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
@@ -35,36 +58,41 @@ void state_process(GlobalState *state)
     {
         if (valuesUpdatedAt + VALUES_REFRESH_MS < state->board.now)
         {
+
             valuesUpdatedAt = state->board.now;
             CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
-            if (extractors.hasV0)
+            if (extractors.hasV0 && extractors.hasV1)
             {
-                CarValueExtractor extractor = extractors.forV0;
-                if (extractor.needsQuery)
+                if (valueToExtract == -1)
                 {
-                    // send query, will be handled in handle_extended_frame
+                    valueToExtract = 0;
                 }
                 else
                 {
-                    float value = extractor.extract(state, no_rx_msg_data);
-                    if (state->board.dashboardState.values[0] != value) {
-                        state->board.dashboardState.values[0] = value;
-                        send_state(state);
-                    }
+                    valueToExtract = (valueToExtract + 1) % 2;
                 }
             }
-            /*if (extractors.hasV1)
+            else if (extractors.hasV0)
             {
-                CarValueExtractor extractor = extractors.forV1;
-                if (extractor.needsQuery)
-                {
-                    // send query, will be handled in handle_extended_frame
-                }
-                else
-                {
-                    state->board.dashboardState.values[1] = extractor.value;
-                }
-            }*/
+                valueToExtract = 0;
+            }
+            else if (extractors.hasV1)
+            {
+                valueToExtract = 1;
+            }
+            else
+            {
+                valueToExtract = -1;
+            }
+
+            if (valueToExtract == 0)
+            {
+                extract_or_send_request(extractors.forV0, state, 0);
+            }
+            if (valueToExtract == 1)
+            {
+                extract_or_send_request(extractors.forV1, state, 1);
+            }
         }
     }
 #endif

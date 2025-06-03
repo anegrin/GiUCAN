@@ -244,6 +244,19 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
+void apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data, uint8_t valueIndex)
+{
+    if (extractor.needsQuery && extractor.query.replyId == rx_msg_header->ExtId)
+    {
+        float extractedValue = extractor.extract(state, rx_msg_data);
+        if (state->board.dashboardState.values[valueIndex] != extractedValue)
+        {
+            state->board.dashboardState.values[valueIndex] = extractedValue;
+            send_state(state);
+        }
+    }
+}
+
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (state->board.dashboardState.visible)
@@ -251,29 +264,13 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
         if (extractors.hasV0)
         {
-            CarValueExtractor extractor = extractors.forV0;
-
-            if (extractor.needsQuery && extractor.query.replyId == rx_msg_header.ExtId)
-            {
-                ExtractionFuncPtr extract = extractor.extract;
-                float extractedValue = extract(state, rx_msg_data);
-                if (state->board.dashboardState.values[0] != extractedValue)
-                {
-                    state->board.dashboardState.values[0] = extractedValue;
-                    send_state(state);
-                }
-            }
+            apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);
         }
 
-        /*if (extractors.hasV1)
+        if (extractors.hasV1)
         {
-            CarValueExtractor extractor = extractors.forV1;
-
-            if (extractor.needsQuery && extractor.replyId == rx_msg_header.ExtId)
-            {
-                state->board.dashboardState.values[1] = extract(&extractor, rx_msg_header, rx_msg_data);
-            }
-        }*/
+            apply_extractor(extractors.forV1, state, &rx_msg_header, rx_msg_data, 1);
+        }
     }
 }
 #endif
