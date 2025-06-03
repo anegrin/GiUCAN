@@ -7,6 +7,7 @@
 #include "can.h"
 #include "uart.h"
 
+static uint8_t *no_rx_msg_data = {0};
 static uint32_t valuesUpdatedAt = 0;
 void state_process(GlobalState *state)
 {
@@ -45,8 +46,9 @@ void state_process(GlobalState *state)
                 }
                 else
                 {
-                    if (state->board.dashboardState.values[0] != extractor.value) {
-                        state->board.dashboardState.values[0] = extractor.value;
+                    float value = extractor.extract(state, no_rx_msg_data);
+                    if (state->board.dashboardState.values[0] != value) {
+                        state->board.dashboardState.values[0] = value;
                         send_state(state);
                     }
                 }

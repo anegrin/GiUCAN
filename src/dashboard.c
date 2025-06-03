@@ -23,32 +23,66 @@ const char *pattern_of(DashboardItemType type)
 #endif
 
 #ifdef C1CAN
+
 static CarValueExtractors noExtractors = {.hasV0 = false, .hasV1 = false};
+float extractHP(GlobalState *state, uint8_t *rx_msg_data)
+{
+    return (float)state->car.torque - 500 * (float)state->car.rpm * 0.000142378f;
+}
+static CarValueExtractors hpExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                             .needsQuery = false,
+                                                                             .extract = extractHP,
+                                                                         }};
+
+float extractNM(GlobalState *state, uint8_t *rx_msg_data)
+{
+    return (float)state->car.torque - 500;
+}
+static CarValueExtractors nmExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                             .needsQuery = false,
+                                                                             .extract = extractNM,
+                                                                         }};
+
+float extractDpfClog(GlobalState *state, uint8_t *rx_msg_data)
+{
+    //TODO
+    //((A*256)+B)*(1000/65535)
+    return (float)state->car.rpm / 100;
+}
+
 static CarValueExtractors dpfClogExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
                                                                                   .needsQuery = true,
-                                                                                  .reqId = 0x18DA10F1,
-                                                                                  .reqData = SWAP_UINT32(0x032218E4),
-                                                                                  .replyId = 0x18DAF110,
-                                                                                  .replyLen = 2,
-                                                                                  .replyOffset = 0,
-                                                                                  .replyValOffset = 0,
-                                                                                  .replyScale = 0.015259022,
-                                                                                  .replyScaleOffset = 0,
+                                                                                  .query = {
+                                                                                      .reqId = 0x18DA10F1,
+                                                                                      .reqData = SWAP_UINT32(0x032218E4),
+                                                                                      .replyId = 0x18DAF110,
+                                                                                  },
+                                                                                  .extract = extractDpfClog,
+                                                                              }};
+float extractOilPressure(GlobalState *state, uint8_t *rx_msg_data)
+{
+    return state->car.oil.pressure;
+}
+
+static CarValueExtractors oilPressExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = false,
+                                                                                  .extract = extractOilPressure,
                                                                               }};
 CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 {
     switch (type)
     {
     case HP_ITEM:
-        CarValueExtractors eHp = {.hasV0 = true, .hasV1 = false, .forV0 = {0}, .forV1 = {.needsQuery = false, .value = (float)state->car.power.hp}};
-        return eHp;
+        return hpExtractors;
         break;
     case TORQUE_ITEM:
-        CarValueExtractors eT = {.hasV0 = true, .hasV1 = false, .forV0 = {0}, .forV1 = {.needsQuery = false, .value = (float)state->car.power.nm}};
-        return eT;
+        return nmExtractors;
         break;
     case DPF_CLOG_ITEM:
         return dpfClogExtractors;
+        break;
+    case OIL_PRESS_ITEM:
+        return oilPressExtractors;
         break;
     default:
         return noExtractors;

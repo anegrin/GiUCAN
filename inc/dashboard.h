@@ -26,20 +26,20 @@ const char *pattern_of(DashboardItemType type);
                            (((uint32_t)(x) << 8) & 0x00FF0000) | \
                            (((uint32_t)(x) << 24) & 0xFF000000)
 
+typedef float (*ExtractionFuncPtr)(GlobalState *state, uint8_t *rx_msg_data);
+
+typedef struct
+{
+    uint32_t reqId;
+    uint32_t reqData;
+    uint32_t replyId;
+} CANQuery;
+
 typedef struct
 {
     bool needsQuery;
-    float value;
-    uint32_t reqId;
-    uint8_t reqLen;
-    uint32_t reqData;
-    uint32_t replyId;
-    uint8_t replyLen;
-    uint8_t replyOffset;
-    int32_t replyValOffset;
-    float replyScale;
-    int32_t replyScaleOffset;
-
+    CANQuery query;
+    ExtractionFuncPtr extract;
 } CarValueExtractor;
 
 typedef struct

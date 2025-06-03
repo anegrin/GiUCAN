@@ -23,7 +23,6 @@ void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
 }
 
 #ifdef ENABLE_DASHBOARD
-char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 uint8_t latestCCButtonEvent = 0x10; // no button pressed
 uint32_t resPushedAt = 0;
 
@@ -32,18 +31,15 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
     if (rx_msg_header.DLC >= 4)
     {
         state->car.torque = (rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111);
-        state->car.power.hp = (int)((float)state->car.torque - 500 * (float)state->car.rpm * 0.000142378f);
-        state->car.power.nm = (int)((float)state->car.torque - 500);
-
-        VLOG("%d pow t:%d,h:%d,n:%d\n", state->board.now, state->car.torque, state->car.power.hp, state->car.power.nm);
+        VLOG("%d torque:%d\n", state->board.now, state->car.torque);
     }
 }
 
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
-    state->car.gear = gears[i];
-    VLOG("%d gear %c\n", state->board.now, state->car.gear);
+    state->car.gear = i;
+    VLOG("%d gear %d\n", state->board.now, state->car.gear);
 }
 
 void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -248,12 +244,6 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
-float extract(CarValueExtractor *extractor, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
-{
-    // todo
-    return 12.3f;
-}
-
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (state->board.dashboardState.visible)
@@ -263,9 +253,10 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         {
             CarValueExtractor extractor = extractors.forV0;
 
-            if (extractor.needsQuery && extractor.replyId == rx_msg_header.ExtId)
+            if (extractor.needsQuery && extractor.query.replyId == rx_msg_header.ExtId)
             {
-                float extractedValue = extract(&extractor, rx_msg_header, rx_msg_data);
+                ExtractionFuncPtr extract = extractor.extract;
+                float extractedValue = extract(state, rx_msg_data);
                 if (state->board.dashboardState.values[0] != extractedValue)
                 {
                     state->board.dashboardState.values[0] = extractedValue;

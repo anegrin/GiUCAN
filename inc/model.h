@@ -30,16 +30,9 @@ typedef struct
 
 typedef struct
 {
-    int hp;
-    int nm;
-} Power;
-
-typedef struct
-{
     uint32_t rpm;
     uint16_t torque;
-    Power power;
-    char gear;
+    uint8_t gear;//char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
     bool ccActive;
     DPF dpf;
     Oil oil;

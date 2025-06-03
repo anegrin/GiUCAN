@@ -115,8 +115,6 @@ void state_init(GlobalState *state)
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
-    state->car.power.hp = 0;
-    state->car.power.nm = 0;
     state->car.dpf.regenMode = 0;
     state->car.dpf.regenerating = 0;
 }
