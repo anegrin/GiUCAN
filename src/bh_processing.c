@@ -34,6 +34,8 @@ void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t
     tx_msg_data[6] = 0;
     tx_msg_data[7] = buffer[offset + 2];
 
+    VLOG("%c%c%c\r\n", tx_msg_data[3], tx_msg_data[5] , tx_msg_data[7]);
+
     CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x090, .DLC = 8};
 
     if (can_tx(&tx_msg_header, tx_msg_data) == HAL_OK)
@@ -103,7 +105,7 @@ void state_process(GlobalState *state)
             int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
             int offset = 0;
             int part = 0;
-
+            VLOG("%s\r\n", buffer);
             while (offset < DASHBOARD_MESSAGE_MAX_LENGTH)
             {
                 send_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE);

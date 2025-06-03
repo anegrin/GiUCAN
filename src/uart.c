@@ -119,7 +119,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         {
             if (rx_sync_byte == MSG_START)
             {
-                VLOG("---\nUART_W\n---\n");
                 rx_buffer[0] = MSG_START;
                 rx_index = 1;
                 rx_state = UART_SYNC_RECEIVING;
@@ -128,13 +127,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             else
             {
                 // Still waiting for start byte
-                VLOG("---\nUART_W+\n---\n");
                 HAL_UART_Receive_DMA(&huart2, &rx_sync_byte, 1);
             }
         }
         else if (rx_state == UART_SYNC_RECEIVING)
         {
-            VLOG("---\nUART_R\n---\n");
             rx_state = UART_SYNC_WAIT_START;
             if (uart_enqueue(rx_buffer, MESSAGE_SIZE))
             {
