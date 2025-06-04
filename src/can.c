@@ -198,7 +198,7 @@ void can_process(void)
     if ((txqueue.tail != txqueue.head) && (HAL_CAN_GetTxMailboxesFreeLevel(&can_handle) > 0))
     {
         // Transmit can frame
-        uint32_t mailbox_txed = 0;
+        uint32_t mailbox_txed = CAN_TX_MAILBOX0;
         uint32_t status = HAL_CAN_AddTxMessage(&can_handle, &txqueue.header[txqueue.tail], txqueue.data[txqueue.tail], &mailbox_txed);
         txqueue.tail = (txqueue.tail + 1) % TXQUEUE_LEN;
 
