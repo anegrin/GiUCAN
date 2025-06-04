@@ -8,6 +8,8 @@
 #include "dashboard.h"
 #include "can.h"
 
+#define DASHBOARD_BUFFER_SIZE DASHBOARD_MESSAGE_MAX_LENGTH + 1
+
 static uint32_t dashboardRefreshedAt = 0;
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
@@ -34,7 +36,7 @@ void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t
     tx_msg_data[6] = 0;
     tx_msg_data[7] = buffer[offset + 2];
 
-    VLOG("%c%c%c\n", tx_msg_data[3], tx_msg_data[5] , tx_msg_data[7]);
+    VLOG("%c%c%c\n", tx_msg_data[3], tx_msg_data[5], tx_msg_data[7]);
 
     CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x090, .DLC = 8};
 
@@ -42,6 +44,27 @@ void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t
     {
         led_tx_on();
     }
+}
+
+void render_message(char *buffer, GlobalState *state)
+{
+    const char *pattern = pattern_of(state->board.dashboardState.currentItemIndex);
+
+    int written = -1;
+    if (state->board.dashboardState.currentItemIndex == GEAR_ITEM)
+    {
+        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, (unsigned char)state->board.dashboardState.values[0]);
+    }
+    else
+    {
+        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, state->board.dashboardState.values[0], state->board.dashboardState.values[1]);
+    }
+
+    if (written >= 0 && written < DASHBOARD_MESSAGE_MAX_LENGTH)
+    {
+        memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written);
+    }
+    buffer[DASHBOARD_MESSAGE_MAX_LENGTH] = 0x00;
 }
 
 void state_process(GlobalState *state)
@@ -84,28 +107,24 @@ void state_process(GlobalState *state)
     dashboardLocalState.values[1] = state->board.dashboardState.values[1];
     dpfLocalState.regenerating = state->car.dpf.regenerating;
 
-    /*if (!updateDashboard && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now) {
+#ifdef DASHBOARD_FORCED_REFRESH
+    if (!updateDashboard > 0 && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now)
+    {
         updateDashboard = true;
-    }*/
+    }
+#endif
 
     if (updateDashboard)
     {
         dashboardRefreshedAt = state->board.now;
         if (dashboardLocalState.visible)
         {
-            const char *pattern = pattern_of(state->board.dashboardState.currentItemIndex);
-            char buffer[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-            int written = snprintf_(buffer, DASHBOARD_MESSAGE_MAX_LENGTH + 1, pattern, state->board.dashboardState.values[0], state->board.dashboardState.values[1]);
-            if (written >= 0 && written < DASHBOARD_MESSAGE_MAX_LENGTH)
-            {
-                memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written);
-            }
-            buffer[DASHBOARD_MESSAGE_MAX_LENGTH] = 0x00;
+            char buffer[DASHBOARD_BUFFER_SIZE];
+            render_message(buffer, state);
 
             int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
             int offset = 0;
             int part = 0;
-            VLOG("%s\n", buffer);
             while (offset < DASHBOARD_MESSAGE_MAX_LENGTH)
             {
                 send_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE);

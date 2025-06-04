@@ -35,10 +35,13 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
     }
 }
 
+static char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
-    state->car.gear = i;
+    if (i < sizeof(gears)){
+        state->car.gear = gears[i];
+    }
     VLOG("%d gear %d\n", state->board.now, state->car.gear);
 }
 

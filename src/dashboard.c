@@ -68,6 +68,15 @@ static CarValueExtractors oilPressExtractors = {.hasV0 = true, .hasV1 = false, .
                                                                                   .needsQuery = false,
                                                                                   .extract = extractOilPressure,
                                                                               }};
+float extractGear(GlobalState *state, uint8_t *rx_msg_data)
+{
+    return state->car.gear;
+}
+
+static CarValueExtractors gearExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = false,
+                                                                                  .extract = extractGear,
+                                                                              }};
 CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 {
     switch (type)
@@ -83,6 +92,9 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
         break;
     case OIL_PRESS_ITEM:
         return oilPressExtractors;
+        break;
+    case GEAR_ITEM:
+        return gearExtractors;
         break;
     default:
         return noExtractors;
