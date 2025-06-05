@@ -68,6 +68,15 @@ static CarValueExtractors nmExtractors = {.hasV0 = true, .hasV1 = false, .forV0 
                                                                              .extract = extractNM,
                                                                          }};
 
+float extractDpfStatus(GlobalState *s, uint8_t *_)
+{
+    return (float)s->car.dpf.regenMode;
+}
+static CarValueExtractors dpfStatusExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                             .needsQuery = false,
+                                                                             .extract = extractDpfStatus,
+                                                                         }};
+
 float extractDpfClog(GlobalState *_, uint8_t *r)
 {
     //((A*256)+B)*(1000/65535)
@@ -105,14 +114,14 @@ float extractDpfReg(GlobalState *_, uint8_t *r)
 }
 
 static CarValueExtractors dpfRegExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
-                                                                                  .needsQuery = true,
-                                                                                  .query = {
-                                                                                      .reqId = 0x18DA10F1,
-                                                                                      .reqData = SWAP_UINT32(0x0322380B),
-                                                                                      .replyId = 0x18DAF110,
-                                                                                  },
-                                                                                  .extract = extractDpfReg,
-                                                                              }};
+                                                                                 .needsQuery = true,
+                                                                                 .query = {
+                                                                                     .reqId = 0x18DA10F1,
+                                                                                     .reqData = SWAP_UINT32(0x0322380B),
+                                                                                     .replyId = 0x18DAF110,
+                                                                                 },
+                                                                                 .extract = extractDpfReg,
+                                                                             }};
 float extractDpfDist(GlobalState *_, uint8_t *r)
 {
     //((A*65536)+(B*256)+C)*0.1
@@ -135,23 +144,23 @@ float extractDpfCount(GlobalState *_, uint8_t *r)
 }
 
 static CarValueExtractors dpfCountExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
-                                                                                  .needsQuery = true,
-                                                                                  .query = {
-                                                                                      .reqId = 0x18DA10F1,
-                                                                                      .reqData = SWAP_UINT32(0x032218A4),
-                                                                                      .replyId = 0x18DAF110,
-                                                                                  },
-                                                                                  .extract = extractDpfCount,
-                                                                              }};
+                                                                                   .needsQuery = true,
+                                                                                   .query = {
+                                                                                       .reqId = 0x18DA10F1,
+                                                                                       .reqData = SWAP_UINT32(0x032218A4),
+                                                                                       .replyId = 0x18DAF110,
+                                                                                   },
+                                                                                   .extract = extractDpfCount,
+                                                                               }};
 float extractOilTemp(GlobalState *s, uint8_t *_)
 {
     return (float)s->car.oil.temperature;
 }
 
 static CarValueExtractors oilTempExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
-                                                                                   .needsQuery = false,
-                                                                                   .extract = extractOilTemp,
-                                                                               }};
+                                                                                  .needsQuery = false,
+                                                                                  .extract = extractOilTemp,
+                                                                              }};
 float extractOilPressure(GlobalState *s, uint8_t *_)
 {
     return s->car.oil.pressure;
@@ -163,19 +172,19 @@ static CarValueExtractors oilPressExtractors = {.hasV0 = true, .hasV1 = false, .
                                                                                }};
 float extractGearboxTemp(GlobalState *_, uint8_t *r)
 {
-    //A-40
+    // A-40
     return (float)A(r) - 40.0f;
 }
 
 static CarValueExtractors gearboxTempExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
-                                                                               .needsQuery = true,
-                                                                                  .query = {
-                                                                                      .reqId = 0x18DA18F1,
-                                                                                      .reqData = SWAP_UINT32(0x032204FE),
-                                                                                      .replyId = 0x18DAF118,
-                                                                                  },
-                                                                               .extract = extractGearboxTemp,
-                                                                           }};
+                                                                                      .needsQuery = true,
+                                                                                      .query = {
+                                                                                          .reqId = 0x18DA18F1,
+                                                                                          .reqData = SWAP_UINT32(0x032204FE),
+                                                                                          .replyId = 0x18DAF118,
+                                                                                      },
+                                                                                      .extract = extractGearboxTemp,
+                                                                                  }};
 float extractGear(GlobalState *s, uint8_t *_)
 {
     return (float)s->car.gear;
@@ -195,6 +204,8 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
         return hpExtractors;
     case TORQUE_ITEM:
         return nmExtractors;
+    case DPF_STATUS_ITEM:
+        return dpfStatusExtractors;
     case DPF_CLOG_ITEM:
         return dpfClogExtractors;
     case DPF_TEMP_ITEM:

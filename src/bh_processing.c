@@ -46,6 +46,25 @@ void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t
     }
 }
 
+const char *dpf_state_as_string(uint8_t state)
+{
+    switch (state)
+    {
+    case 1:
+        return "DPF LO";
+    case 2:
+        return "DPF HI";
+    case 3:
+        return "NSC De-NOx";
+    case 4:
+        return "NSC NSC De-SOx";
+    case 5:
+        return "SCR HeatUp";
+    default:
+        return "NONE";
+    }
+}
+
 void render_message(char *buffer, GlobalState *state)
 {
     DashboardItemType type = type_of(state->board.dashboardState.currentItemIndex);
@@ -55,6 +74,10 @@ void render_message(char *buffer, GlobalState *state)
     if (type == GEAR_ITEM)
     {
         written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, (unsigned char)state->board.dashboardState.values[0]);
+    }
+    else if (type == DPF_STATUS_ITEM)
+    {
+        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, dpf_state_as_string((uint8_t)state->board.dashboardState.values[0]));
     }
     else
     {
@@ -135,7 +158,7 @@ void state_process(GlobalState *state)
         }
         else
         {
-            send_dashboard_text(1, 0, "   ", 0, 0x11);//TODO clear icon too
+            send_dashboard_text(1, 0, "   ", 0, 0x11); // TODO clear icon too
         }
     }
 
