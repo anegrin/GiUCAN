@@ -48,10 +48,11 @@ void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t
 
 void render_message(char *buffer, GlobalState *state)
 {
-    const char *pattern = pattern_of(state->board.dashboardState.currentItemIndex);
+    DashboardItemType type = type_of(state->board.dashboardState.currentItemIndex);
+    const char *pattern = pattern_of(type);
 
     int written = -1;
-    if (state->board.dashboardState.currentItemIndex == GEAR_ITEM)
+    if (type == GEAR_ITEM)
     {
         written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, (unsigned char)state->board.dashboardState.values[0]);
     }
@@ -134,7 +135,7 @@ void state_process(GlobalState *state)
         }
         else
         {
-            send_dashboard_text(1, 0, "   ", 0, CLEAR_DISPLAY_INFO_CODE);
+            send_dashboard_text(1, 0, "   ", 0, 0x11);//TODO clear icon too
         }
     }
 

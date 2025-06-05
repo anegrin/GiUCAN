@@ -3,6 +3,8 @@
 
 #include "stm32f0xx_hal.h"
 
+#define PRINTF_INCLUDE_CONFIG_H
+
 #ifdef INCLUDE_USER_CONFIG_H
 #include "user_config.h"
 #endif
@@ -46,13 +48,9 @@
 #ifndef DISPLAY_INFO_CODE
 #define DISPLAY_INFO_CODE 0x09
 #endif
-// must be a multiple of 3
+// must be a multiple of 3; suggested value for 7 inch is 24, for 3.5 inch is 18
 #ifndef DASHBOARD_MESSAGE_MAX_LENGTH
-#ifdef SMALL_TFT
-#define DASHBOARD_MESSAGE_MAX_LENGTH 18
-#else
 #define DASHBOARD_MESSAGE_MAX_LENGTH 24
-#endif
 #endif
 #ifndef DISABLE_DASHBOARD_FORCED_REFRESH
 #define DASHBOARD_FORCED_REFRESH
@@ -60,8 +58,9 @@
 #define DASHBOARD_FORCED_REFRESH_MS 1000
 #endif
 #endif
-#define CLEAR_DISPLAY_INFO_CODE 0x11
+#ifndef CAN_BITRATE
 #define CAN_BITRATE CAN_BITRATE_125K
+#endif
 #endif
 
 #ifdef C1CAN
@@ -117,7 +116,6 @@
 
 #ifdef XCAN
 #ifndef DASHBOARD_ITEMS
-#ifndef GASOLINE_ENGINE
 #define DASHBOARD_ITEMS                            \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)     \
     X(HP_ITEM, "Power: %.1fhp")                    \
@@ -156,12 +154,6 @@
                        "C R.T. %.0f"               \
                        "\xB0"                      \
                        "C")
-#else
-#define DASHBOARD_ITEMS                        \
-    X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION) \
-    X(HP_ITEM, "Power: %.1fhp")                \
-    X(TORQUE_ITEM, "Torque: %.0fnm")
-#endif
 #endif
 #endif
 

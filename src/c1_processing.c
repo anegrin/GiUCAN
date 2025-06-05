@@ -14,10 +14,12 @@ void extract_or_send_request(CarValueExtractor extractor, GlobalState *state, ui
 {
     if (extractor.needsQuery)
     {
-        // CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .DLC = 4};
-        // tx_msg_header.ExtId = extractor.query.reqId;
-        VLOG("%d req %02x%02x%02x%02x\n", state->board.now, extractor.query.reqData[0], extractor.query.reqData[1], extractor.query.reqData[2], extractor.query.reqData[3])
-        // can_tx(&tx_msg_header, &extractor.query.reqData);
+        CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .DLC = 4};
+        tx_msg_header.ExtId = extractor.query.reqId;
+        uint8_t tx_msg_data[8] = {0};
+        memcpy(&tx_msg_data[0], &extractor.query.reqData, 4);
+        VLOG("%d req %02x%02x%02x%02x\n", state->board.now, tx_msg_data[0], tx_msg_data[1], tx_msg_data[2], tx_msg_data[3])
+        can_tx(&tx_msg_header, tx_msg_data);
     }
     else
     {
@@ -60,7 +62,8 @@ void state_process(GlobalState *state)
         {
 
             valuesUpdatedAt = state->board.now;
-            CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
+            DashboardItemType type = type_of(state->board.dashboardState.currentItemIndex);
+            CarValueExtractors extractors = extractor_of(type, state);
             if (extractors.hasV0 && extractors.hasV1)
             {
                 if (valueToExtract == -1)

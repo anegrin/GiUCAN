@@ -108,15 +108,25 @@ int main(void)
 
 void state_init(GlobalState *state)
 {
-    state->car.sns.active = 1;
-    state->board.snsRequestOffAt = 0;
-    state->board.dpfRegenNotificationRequestOffAt = 0;
-    state->board.dashboardState.itemsCount = DASHBOARD_ITEM_COUNT;
+    state->board.dashboardState.itemsCount = count_dashboard_items();
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
+    state->board.dpfRegenNotificationRequestOffAt = 0;
+    state->board.snsRequestOffAt = 0;
+
+    state->car.battery.chargePercent = 0;
+    state->car.battery.current = 0.0f;
+    state->car.ccActive = false;
+    state->car.dpf.regenerating = false;
     state->car.dpf.regenMode = 0;
-    state->car.dpf.regenerating = 0;
+    state->car.gear = '-';
+    state->car.oil.pressure = 0.0f;
+    state->car.oil.temperature = 0;
+    state->car.rpm = 0;
+    state->car.sns.active = true;
+    state->car.sns.snsOffAt = 0;
+    state->car.torque = 0;
 }
 
 /**

@@ -264,7 +264,7 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 {
     if (state->board.dashboardState.visible)
     {
-        CarValueExtractors extractors = extractor_of(state->board.dashboardState.currentItemIndex, state);
+        CarValueExtractors extractors = extractor_of(type_of(state->board.dashboardState.currentItemIndex), state);
         if (extractors.hasV0)
         {
             apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);

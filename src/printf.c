@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "printf.h"
 
 
