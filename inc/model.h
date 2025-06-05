@@ -32,7 +32,7 @@ typedef struct
 {
     uint32_t rpm;
     uint16_t torque;
-    char gear;
+    uint8_t gear;
     bool ccActive;
     DPF dpf;
     Oil oil;

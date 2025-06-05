@@ -1,10 +1,3 @@
-/*
- * printf_config.h
- *
- *  Created on: Apr 5, 2025
- *      Author: alessandro
- */
-
  #ifndef INC_PRINTF_CONFIG_H_
  #define INC_PRINTF_CONFIG_H_
  

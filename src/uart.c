@@ -119,7 +119,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         {
             if (rx_sync_byte == MSG_START)
             {
-                VLOG("---\nUART_W\n---\n");
                 rx_buffer[0] = MSG_START;
                 rx_index = 1;
                 rx_state = UART_SYNC_RECEIVING;
@@ -128,13 +127,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
             else
             {
                 // Still waiting for start byte
-                VLOG("---\nUART_W+\n---\n");
                 HAL_UART_Receive_DMA(&huart2, &rx_sync_byte, 1);
             }
         }
         else if (rx_state == UART_SYNC_RECEIVING)
         {
-            VLOG("---\nUART_R\n---\n");
             rx_state = UART_SYNC_WAIT_START;
             if (uart_enqueue(rx_buffer, MESSAGE_SIZE))
             {
@@ -175,23 +172,6 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
     uint8_t crc_check = calculate_crc8(data, MESSAGE_SIZE - 1);
     uint8_t crc = data[MESSAGE_SIZE - 1];
 
-    /*VLOG("data:%02X,%02X,%02X,%02X,%02X,%02X,",
-        data[0],
-        data[1],
-        data[2],
-        data[3],
-        data[4],
-        data[5]
-    );
-    VLOG("%02X,%02X,%02X,%02X,%02X,%02X,%02X\n",
-        data[6],
-        data[7],
-        data[8],
-        data[9],
-        data[10],
-        data[11],
-        data[12]
-    );*/
     if (type == MSG_START && crc_check == crc)
     {
         update_state(state, visible, currentItemIndex, v0, v1, regenerating);

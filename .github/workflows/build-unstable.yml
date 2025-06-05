@@ -43,12 +43,12 @@ jobs:
           
       - name: Compile BHCAN
         run: |
-          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make all
+          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make clean all
           mv build/GiUCAN*.elf GiUCAN_BHCAN_unstable.elf
           
       - name: Compile SLCAN
         run: |
-          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DSLCAN' make all
+          CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DSLCAN' make clean all
           mv build/GiUCAN*.elf GiUCAN_SLCAN_unstable.elf
           
       - name: Release

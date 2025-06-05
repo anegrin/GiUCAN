@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "processing.h"
 #include "logging.h"
+#include "dashboard.h"
 
 void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
@@ -22,7 +23,6 @@ void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
 }
 
 #ifdef ENABLE_DASHBOARD
-char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 uint8_t latestCCButtonEvent = 0x10; // no button pressed
 uint32_t resPushedAt = 0;
 
@@ -30,16 +30,19 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
 {
     if (rx_msg_header.DLC >= 4)
     {
-        state->car.torque = (state->car.rpm * ((rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111))) - 500;
+        state->car.torque = (rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111);
         VLOG("%d torque:%d\n", state->board.now, state->car.torque);
     }
 }
 
+static char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
-    state->car.gear = gears[i];
-    VLOG("%d gear %c\n", state->board.now, state->car.gear);
+    if (i < sizeof(gears)){
+        state->car.gear = gears[i];
+    }
+    VLOG("%d gear %d\n", state->board.now, state->car.gear);
 }
 
 void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -136,6 +139,8 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 
         if (sendEvent)
         {
+            state->board.dashboardState.values[0] = 0.0f;
+            state->board.dashboardState.values[1] = 0.0f;
             send_state(state);
         }
     }
@@ -164,7 +169,8 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
         memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
         disableSNSHeader.DLC = rx_msg_header.DLC;
         disableSNSFrame[5] = (disableSNSFrame[5] & 0b11000111) | (0x01 << 3);
-        if (can_tx(&disableSNSHeader, disableSNSFrame) == HAL_OK){
+        if (can_tx(&disableSNSHeader, disableSNSFrame) == HAL_OK)
+        {
             led_tx_on();
         }
         state->car.sns.snsOffAt = state->board.now;
@@ -241,7 +247,33 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
+void apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data, uint8_t valueIndex)
+{
+    if (extractor.needsQuery && extractor.query.replyId == rx_msg_header->ExtId)
+    {
+        float extractedValue = extractor.extract(state, rx_msg_data);
+        if (state->board.dashboardState.values[valueIndex] != extractedValue)
+        {
+            state->board.dashboardState.values[valueIndex] = extractedValue;
+            send_state(state);
+        }
+    }
+}
+
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
+    if (state->board.dashboardState.visible)
+    {
+        CarValueExtractors extractors = extractor_of(type_of(state->board.dashboardState.currentItemIndex), state);
+        if (extractors.hasV0)
+        {
+            apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);
+        }
+
+        if (extractors.hasV1)
+        {
+            apply_extractor(extractors.forV1, state, &rx_msg_header, rx_msg_data, 1);
+        }
+    }
 }
 #endif
