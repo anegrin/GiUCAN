@@ -98,6 +98,60 @@ static CarValueExtractors dpfTempExtractors = {.hasV0 = true, .hasV1 = false, .f
                                                                                   },
                                                                                   .extract = extractDpfTemp,
                                                                               }};
+float extractDpfReg(GlobalState *_, uint8_t *r)
+{
+    //((A*256)+B)*(100/65535)
+    return ((float)((A(r) * 256) + B(r))) * 0.001525902f;
+}
+
+static CarValueExtractors dpfRegExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = true,
+                                                                                  .query = {
+                                                                                      .reqId = 0x18DA10F1,
+                                                                                      .reqData = SWAP_UINT32(0x0322380B),
+                                                                                      .replyId = 0x18DAF110,
+                                                                                  },
+                                                                                  .extract = extractDpfReg,
+                                                                              }};
+float extractDpfDist(GlobalState *_, uint8_t *r)
+{
+    //((A*65536)+(B*256)+C)*0.1
+    return ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) * 0.1;
+}
+
+static CarValueExtractors dpfDistExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = true,
+                                                                                  .query = {
+                                                                                      .reqId = 0x18DA10F1,
+                                                                                      .reqData = SWAP_UINT32(0x03223807),
+                                                                                      .replyId = 0x18DAF110,
+                                                                                  },
+                                                                                  .extract = extractDpfDist,
+                                                                              }};
+float extractDpfCount(GlobalState *_, uint8_t *r)
+{
+    //(A*256)+B
+    return (float)((A(r) * 256) + B(r));
+}
+
+static CarValueExtractors dpfCountExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                  .needsQuery = true,
+                                                                                  .query = {
+                                                                                      .reqId = 0x18DA10F1,
+                                                                                      .reqData = SWAP_UINT32(0x032218A4),
+                                                                                      .replyId = 0x18DAF110,
+                                                                                  },
+                                                                                  .extract = extractDpfCount,
+                                                                              }};
+float extractOilTemp(GlobalState *s, uint8_t *_)
+{
+    return (float)s->car.oil.temperature;
+}
+
+static CarValueExtractors oilTempExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                                   .needsQuery = false,
+                                                                                   .extract = extractOilTemp,
+                                                                               }};
 float extractOilPressure(GlobalState *s, uint8_t *_)
 {
     return s->car.oil.pressure;
@@ -107,6 +161,21 @@ static CarValueExtractors oilPressExtractors = {.hasV0 = true, .hasV1 = false, .
                                                                                    .needsQuery = false,
                                                                                    .extract = extractOilPressure,
                                                                                }};
+float extractGearboxTemp(GlobalState *_, uint8_t *r)
+{
+    //A-40
+    return (float)A(r) - 40.0f;
+}
+
+static CarValueExtractors gearboxTempExtractors = {.hasV0 = true, .hasV1 = false, .forV0 = {
+                                                                               .needsQuery = true,
+                                                                                  .query = {
+                                                                                      .reqId = 0x18DA18F1,
+                                                                                      .reqData = SWAP_UINT32(0x032204FE),
+                                                                                      .replyId = 0x18DAF118,
+                                                                                  },
+                                                                               .extract = extractGearboxTemp,
+                                                                           }};
 float extractGear(GlobalState *s, uint8_t *_)
 {
     return (float)s->car.gear;
@@ -131,11 +200,11 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
     case DPF_TEMP_ITEM:
         return dpfTempExtractors;
     case DPF_REG_ITEM:
-        return noExtractors;
+        return dpfRegExtractors;
     case DPF_DIST_ITEM:
-        return noExtractors;
+        return dpfDistExtractors;
     case DPF_COUNT_ITEM:
-        return noExtractors;
+        return dpfCountExtractors;
     case DPF_MEAN_DIST_ITEM:
         return noExtractors;
     case DPF_MEAN_DURATION_ITEM:
@@ -149,7 +218,7 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
     case OIL_QUALITY_ITEM:
         return noExtractors;
     case OIL_TEMP_ITEM:
-        return noExtractors;
+        return oilTempExtractors;
     case OIL_PRESS_ITEM:
         return oilPressExtractors;
     case AIR_IN_ITEM:
@@ -157,7 +226,7 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
     case GEAR_ITEM:
         return gearExtractors;
     case GEARBOX_TEMP_ITEM:
-        return noExtractors;
+        return gearboxTempExtractors;
     case FRONT_TIRES_TEMP_ITEM:
         return noExtractors;
     case REAR_TIRES_TEMP:
