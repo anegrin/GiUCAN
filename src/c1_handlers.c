@@ -39,7 +39,8 @@ static const char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
-    if (i < sizeof(gears)){
+    if (i < sizeof(gears))
+    {
         state->car.gear = gears[i];
     }
     VLOG("%d gear %d\n", state->board.now, state->car.gear);
@@ -189,6 +190,10 @@ void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_head
         {
             state->car.dpf.regenerating = 1;
             LOG("%d start DPF r\n", state->board.now);
+#ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATIION
+state->board.dashboardState.currentItemIndex = index_of(DPF_STATUS_ITEM);
+state->board.dashboardState.visible = true;
+#endif
         }
 
         if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating == 1)

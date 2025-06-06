@@ -19,10 +19,11 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     switch (rx_msg_header.StdId)
     {
     case 0x000005AC:
-        if (state->board.dpfRegenNotificationRequestOffAt != 0)
+        if (state->board.dpfRegenNotificationRequestAt != 0)
         {
-            state->board.dpfRegenNotificationRequestOffAt = 0;
+            state->board.dpfRegenNotificationRequestAt = 0;
 
+#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
             memcpy(dpfSoundAlertFrame, &rx_msg_data, rx_msg_header.DLC);
 
             dpfSoundAlertHeader.DLC = rx_msg_header.DLC;
@@ -33,6 +34,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
             {
                 led_tx_on();
             }
+#endif
         }
         break;
     }

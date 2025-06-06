@@ -112,7 +112,7 @@ void state_init(GlobalState *state)
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
-    state->board.dpfRegenNotificationRequestOffAt = 0;
+    state->board.dpfRegenNotificationRequestAt = 0;
     state->board.snsRequestOffAt = 0;
 
     state->car.battery.chargePercent = 0;

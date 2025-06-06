@@ -10,61 +10,83 @@
 #endif
 
 #ifndef GIUCAN_VERSION
+
 #ifdef GIT_VERSION
 #define GIUCAN_VERSION GIT_VERSION
 #else
 #define GIUCAN_VERSION "dev"
 #endif
+
 #endif
 
 #ifdef SLCAN
+
 #ifdef BHCAN
 #error "Can't build SLCAN+BHCAN"
 #endif
+
 #ifdef C1CAN
 #error "Can't build SLCAN+C1CAN"
 #endif
+
 #ifdef DEBUG_MODE
 #error "Can't build SLCAN+DEBUG_MODE"
 #endif
 
 #define LEDS_ON_CAN_RX
 #define LEDS_ON_CAN_TX
+
 #endif
 
 #ifdef BHCAN
+
 #define XCAN
+
 #ifdef C1CAN
 #error "Can't build BHCAN+C1CAN"
 #endif
-#ifndef GASOLINE_ENGINE
-#ifndef DISABLE_DPF_REGEN_NOTIFICATIION
-#define ENABLE_DPF_REGEN_NOTIFICATIION
-#endif
-#endif
+
 // 0x02=FM radio, 0x03=AM Radio, 0x05=Aux, 0x06=left USB, 0x07=Right USB,
 // 0x08=Center USB, 0x09=Bluetooth, 0x12=phone connected, 0x13=phone disconnected,
 // 0x15=call in progress, 0x17=call in wait, 0x18=call terminated, 0x11=clear display, ...
 #ifndef DISPLAY_INFO_CODE
 #define DISPLAY_INFO_CODE 0x09
 #endif
+
 // must be a multiple of 3; suggested value for 7 inch is 24, for 3.5 inch is 18
 #ifndef DASHBOARD_MESSAGE_MAX_LENGTH
+#ifdef SMALL_DISPLAY
+#define DASHBOARD_MESSAGE_MAX_LENGTH 18
+#else
 #define DASHBOARD_MESSAGE_MAX_LENGTH 24
 #endif
+#endif
+
 #ifndef DISABLE_DASHBOARD_FORCED_REFRESH
 #define DASHBOARD_FORCED_REFRESH
 #ifndef DASHBOARD_FORCED_REFRESH_MS
 #define DASHBOARD_FORCED_REFRESH_MS 1000
 #endif
 #endif
+
+#ifndef DISABLE_DPF_REGEN_NOTIFICATIION
+#define ENABLE_DPF_REGEN_NOTIFICATIION
+
+#ifndef DISABLE_DPF_REGEN_SOUND_NOTIFICATIION
+#define ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
+#endif
+
+#endif
+
 #ifndef CAN_BITRATE
 #define CAN_BITRATE CAN_BITRATE_125K
 #endif
+
 #endif
 
 #ifdef C1CAN
 #define XCAN
+
 #ifndef DISABLE_DASHBOARD
 #define ENABLE_DASHBOARD
 #ifndef RES_LONG_PRESS_DURATION_MS
@@ -74,6 +96,7 @@
 #define DASHBOARD_PAGE_SIZE 10
 #endif
 #endif
+
 #ifndef DISABLE_SNS_AUTO_OFF
 #define ENABLE_SNS_AUTO_OFF
 #ifndef SNS_AUTO_OFF_DELAY_MS
@@ -83,14 +106,26 @@
 #define SNS_AUTO_OFF_MIN_RPM 400
 #endif
 #endif
+
 #ifndef ENABLE_DASHBOARD
 #ifndef ENABLE_SNS_AUTO_OFF
 #error "You're building a C1CAN without any active feature :/"
 #endif
 #endif
+
 #ifndef VALUES_REFRESH_MS
 #define VALUES_REFRESH_MS 250
 #endif
+
+#ifndef DISABLE_DPF_REGEN_NOTIFICATIION
+#define ENABLE_DPF_REGEN_NOTIFICATIION
+
+#ifndef DISABLE_DPF_REGEN_VISUAL_NOTIFICATIION
+#define ENABLE_DPF_REGEN_VISUAL_NOTIFICATIION
+#endif
+
+#endif
+
 #endif
 
 #ifndef USART2_BAUD_RATE

@@ -121,7 +121,7 @@ void state_process(GlobalState *state)
         if (state->car.dpf.regenerating != dpfLocalState.regenerating)
         {
             LOGS(state->car.dpf.regenerating ? "regen started\n" : "regen ended\n");
-            state->board.dpfRegenNotificationRequestOffAt = state->car.dpf.regenerating ? state->board.now : 0;
+            state->board.dpfRegenNotificationRequestAt = state->car.dpf.regenerating ? state->board.now : 0;
         }
     }
 

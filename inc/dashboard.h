@@ -30,11 +30,14 @@ typedef enum
     AIR_IN_ITEM,
     GEAR_ITEM,
     GEARBOX_TEMP_ITEM,
-    FRONT_TIRES_TEMP_ITEM,
-    REAR_TIRES_TEMP,
+    /* composite */
+    HP_TORQUE_ITEM,              // HP_ITEM+TORQUE_ITEM
+    DPF_MEAN_DIST_DURATION_ITEM, // DPF_MEAN_DIST_ITEM+DPF_MEAN_DURATION_ITEM
+    BATTERY_V_A_ITEM,            // BATTERY_V_ITEM+BATTERY_A_ITEM
 } DashboardItemType;
 
 const DashboardItemType type_of(uint8_t index);
+uint8_t index_of(DashboardItemType type);
 
 #endif
 
@@ -44,10 +47,10 @@ const char *pattern_of(DashboardItemType type);
 
 uint8_t count_dashboard_items(void);
 
-#define SWAP_UINT32(x) (((uint32_t)(x) >> 24) & 0x000000FF) |    \
-                           (((uint32_t)(x) >> 8) & 0x0000FF00) | \
-                           (((uint32_t)(x) << 8) & 0x00FF0000) | \
-                           (((uint32_t)(x) << 24) & 0xFF000000)
+#define SWAP_ENDIAN32(x) (((uint32_t)(x) >> 24) & 0x000000FF) |    \
+                             (((uint32_t)(x) >> 8) & 0x0000FF00) | \
+                             (((uint32_t)(x) << 8) & 0x00FF0000) | \
+                             (((uint32_t)(x) << 24) & 0xFF000000)
 
 #define A(x) x[4]
 #define B(x) x[5]
@@ -85,6 +88,7 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state);
 
 #ifdef XCAN
 #ifndef DASHBOARD_ITEMS
+#ifdef SMALL_DISPLAY
 #define DASHBOARD_ITEMS                            \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)     \
     X(HP_ITEM, "Power: %.1fhp")                    \
@@ -113,17 +117,35 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state);
     X(GEAR_ITEM, "Current gear: %c")               \
     X(GEARBOX_TEMP_ITEM, "Gearbox: %.0f"           \
                          "\xB0"                    \
-                         "C")                      \
-    X(FRONT_TIRES_TEMP_ITEM, "%.0f"                \
-                             "\xB0"                \
-                             "C F.T. %.0f"         \
-                             "\xB0"                \
-                             "C")                  \
-    X(REAR_TIRES_TEMP, "%.0f"                      \
-                       "\xB0"                      \
-                       "C R.T. %.0f"               \
-                       "\xB0"                      \
-                       "C")
+                         "C")
+#else
+#define DASHBOARD_ITEMS                                        \
+    X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)                 \
+    X(HP_TORQUE_ITEM, "Power: %.1fhp/%.0fnm")                  \
+    X(DPF_STATUS_ITEM, "DPF status: %s")                       \
+    X(DPF_CLOG_ITEM, "DPF clogging: %.0f%%")                   \
+    X(DPF_TEMP_ITEM, "DPF temperature: %.0f"                   \
+                     "\xB0"                                    \
+                     "C")                                      \
+    X(DPF_REG_ITEM, "DPF regeneration: %.0f%%")                \
+    X(DPF_DIST_ITEM, "DPF distance: %.0fkm")                   \
+    X(DPF_COUNT_ITEM, "DPF count: %.0f")                       \
+    X(DPF_MEAN_DIST_DURATION_ITEM, "DPF mean: %.0fkm/%.0fmin") \
+    X(BATTERY_V_A_ITEM, "Battery: %.1fV/%.2fA")                \
+    X(BATTERY_P_ITEM, "Battery charge: %.0f%%")                \
+    X(OIL_QUALITY_ITEM, "Oil quality: %.0f%%")                 \
+    X(OIL_TEMP_ITEM, "Oil temperature: %.0f"                   \
+                     "\xB0"                                    \
+                     "C")                                      \
+    X(OIL_PRESS_ITEM, "Oil pressure: %.1fbar")                 \
+    X(AIR_IN_ITEM, "Air in temperature: %.0f"                  \
+                   "\xB0"                                      \
+                   "C")                                        \
+    X(GEAR_ITEM, "Current gear: %c")                           \
+    X(GEARBOX_TEMP_ITEM, "Gearbox temperature: %.0f"           \
+                         "\xB0"                                \
+                         "C")
+#endif
 #endif
 #endif
 #endif // _DASHBOARD_H

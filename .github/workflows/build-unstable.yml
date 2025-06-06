@@ -36,16 +36,21 @@ jobs:
       - name: Echo GITHUB_ENV
         run: echo ${{ env.CFLAGS }}
 
-      - name: Compile C1CAN
+      - name: Compile C1CAN for Diesel
         run: |
           CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DC1CAN' make all
-          mv build/GiUCAN*.elf GiUCAN_C1CAN_unstable.elf
+          mv build/GiUCAN*.elf GiUCAN_C1CAN_diesel_unstable.elf
           
-      - name: Compile BHCAN
+      - name: Compile BHCAN 3.5 inches TFT
+        run: |
+          CFLAGS='${{ env.CFLAGS }} -DSMALL_DISPLAY -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make clean all
+          mv build/GiUCAN*.elf GiUCAN_BHCAN_small_unstable.elf
+          
+      - name: Compile BHCAN 7 inches TFT
         run: |
           CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make clean all
-          mv build/GiUCAN*.elf GiUCAN_BHCAN_unstable.elf
-          
+          mv build/GiUCAN*.elf GiUCAN_BHCAN_large_unstable.elf
+
       - name: Compile SLCAN
         run: |
           CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DSLCAN' make clean all
@@ -58,6 +63,7 @@ jobs:
           tag_name: ${{github.event.inputs.TAG_NAME}}
           name: Unstable ${{ env.COMMIT_SHORT_SHA }}
           files: |
-            ./GiUCAN_C1CAN_unstable.elf
-            ./GiUCAN_BHCAN_unstable.elf
+            ./GiUCAN_C1CAN_diesel_unstable.elf
+            ./GiUCAN_BHCAN_small_unstable.elf
+            ./GiUCAN_BHCAN_large_unstable.elf
             ./GiUCAN_SLCAN_unstable.elf
