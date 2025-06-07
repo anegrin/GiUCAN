@@ -11,8 +11,10 @@
 #include "processing.h"
 #include "logging.h"
 
+#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
 static uint8_t dpfSoundAlertFrame[8];
 static CAN_TxHeaderTypeDef dpfSoundAlertHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x5AC, .DLC = 8};
+#endif
 
 void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
