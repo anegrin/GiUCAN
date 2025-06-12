@@ -47,7 +47,7 @@ int8_t slcan_parse_frame(uint8_t *buf, CAN_RxHeaderTypeDef *frame_header, uint8_
     for(uint8_t j = id_len; j > 0; j--)
     {
         // Add nybble to buffer
-        buf[j] = (can_id & 0xF);
+        buf[j] = (can_id & 0x0F);
         can_id = can_id >> 4;
         msg_position++;
     }
@@ -65,7 +65,7 @@ int8_t slcan_parse_frame(uint8_t *buf, CAN_RxHeaderTypeDef *frame_header, uint8_
     // Convert to ASCII (2nd character to end)
     for (uint8_t j = 1; j < msg_position; j++)
     {
-        if (buf[j] < 0xA) {
+        if (buf[j] < 0x0A) {
             buf[j] += 0x30;
         } else {
             buf[j] += 0x37;

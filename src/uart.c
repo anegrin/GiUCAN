@@ -7,7 +7,7 @@
 #include "led.h"
 #include "error.h"
 
-#define QUEUE_SIZE 16
+#define UART_QUEUE_SIZE 16
 
 const uint8_t MSG_START = 0xFE; // rare first byte for floats, Large negative NaNs
 
@@ -28,14 +28,14 @@ static size_t rx_index = 0;
 
 typedef struct
 {
-    uint8_t buffer[QUEUE_SIZE][MESSAGE_SIZE];
+    uint8_t buffer[UART_QUEUE_SIZE][MESSAGE_SIZE];
     uint8_t head;
     uint8_t tail;
     uint8_t count;
-} Queue;
+} UARTQueue;
 
-static Queue queue = {0};
-static Queue *rx_tx_queue = &queue;
+static UARTQueue queue = {0};
+static UARTQueue *rx_tx_queue = &queue;
 
 void fill_buffer(uint8_t *buffer, uint8_t bufferLength, const uint8_t *data, uint8_t dataLength)
 {
@@ -50,10 +50,10 @@ void fill_buffer(uint8_t *buffer, uint8_t bufferLength, const uint8_t *data, uin
 
 bool uart_enqueue(const uint8_t *data, uint8_t size)
 {
-    if (rx_tx_queue->count < QUEUE_SIZE)
+    if (rx_tx_queue->count < UART_QUEUE_SIZE)
     {
         fill_buffer(rx_tx_queue->buffer[rx_tx_queue->tail], MESSAGE_SIZE, data, size);
-        rx_tx_queue->tail = (rx_tx_queue->tail + 1) % QUEUE_SIZE;
+        rx_tx_queue->tail = (rx_tx_queue->tail + 1) % UART_QUEUE_SIZE;
         rx_tx_queue->count++;
         return true;
     }
@@ -183,7 +183,7 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
 #endif
 
 #ifdef XCAN
-const int QUEUE_POLLING_INTERVAL = 10 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
+const int UART_QUEUE_POLLING_INTERVAL = 10 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
 static uint32_t queuePolledAt = 0;
 void uart_init(void)
 {
@@ -219,7 +219,7 @@ void uart_process(GlobalState *state)
         return;
     }
 
-    if (state->board.now - queuePolledAt > QUEUE_POLLING_INTERVAL)
+    if (state->board.now - queuePolledAt > UART_QUEUE_POLLING_INTERVAL)
     {
 #ifdef C1CAN
         bool success = uart_tx(rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
@@ -229,7 +229,7 @@ void uart_process(GlobalState *state)
 #endif
         if (success)
         {
-            rx_tx_queue->head = (rx_tx_queue->head + 1) % QUEUE_SIZE;
+            rx_tx_queue->head = (rx_tx_queue->head + 1) % UART_QUEUE_SIZE;
             rx_tx_queue->count--;
             queuePolledAt = state->board.now;
         }

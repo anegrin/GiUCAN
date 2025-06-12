@@ -40,12 +40,7 @@ jobs:
         run: |
           CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DC1CAN' make all
           mv build/GiUCAN*.elf GiUCAN_C1CAN_diesel_unstable.elf
-          
-      - name: Compile BHCAN 3.5 inches TFT
-        run: |
-          CFLAGS='${{ env.CFLAGS }} -DSMALL_DISPLAY -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make clean all
-          mv build/GiUCAN*.elf GiUCAN_BHCAN_small_unstable.elf
-          
+                    
       - name: Compile BHCAN 7 inches TFT
         run: |
           CFLAGS='${{ env.CFLAGS }} -DBUILD_VERSION=\"${{ env.COMMIT_SHORT_SHA }}\" -DBHCAN' make clean all
@@ -64,6 +59,5 @@ jobs:
           name: Unstable ${{ env.COMMIT_SHORT_SHA }}
           files: |
             ./GiUCAN_C1CAN_diesel_unstable.elf
-            ./GiUCAN_BHCAN_small_unstable.elf
             ./GiUCAN_BHCAN_large_unstable.elf
             ./GiUCAN_SLCAN_unstable.elf

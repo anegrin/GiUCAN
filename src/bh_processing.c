@@ -1,94 +1,95 @@
 #include "config.h"
 #ifdef BHCAN
 #include <stdbool.h>
-#include "printf.h"
 #include "processing.h"
 #include "led.h"
 #include "logging.h"
 #include "dashboard.h"
 #include "can.h"
 
-#define DASHBOARD_BUFFER_SIZE DASHBOARD_MESSAGE_MAX_LENGTH + 1
+#define SEND_DASHBOARD_FRAME_DELAY 29
 
-static uint32_t dashboardRefreshedAt = 0;
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
 static DPF dpfLocalState;
+static uint32_t queuePolledAt = 0;
 
-void send_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t offset, uint8_t infoCode)
+#define FRAME_QUEUE_POLLING_INTERVAL 29
+#define FRAME_QUEUE_SIZE 128
+
+typedef struct
+{
+    uint8_t partsCount;
+    uint8_t part;
+    uint8_t byte3;
+    uint8_t byte5;
+    uint8_t byte7;
+    uint8_t infoCode;
+} DashboardFrame;
+
+typedef struct
+{
+    DashboardFrame buffer[FRAME_QUEUE_SIZE];
+    uint8_t head;
+    uint8_t tail;
+    uint8_t count;
+} FrameQueue;
+
+static FrameQueue queue = {0};
+static FrameQueue *tx_queue = &queue;
+
+static uint8_t previousPart = 0;
+
+bool buffer_dashboard_text(uint8_t partsCount, uint8_t part, char *buffer, uint8_t offset, uint8_t infoCode)
+{
+    if (part == 0 || previousPart < part)
+    {
+
+        if (tx_queue->count < FRAME_QUEUE_SIZE)
+        {
+            previousPart = part;
+            tx_queue->buffer[tx_queue->tail].partsCount = partsCount;
+            tx_queue->buffer[tx_queue->tail].part = part;
+            tx_queue->buffer[tx_queue->tail].byte3 = buffer[offset];
+            tx_queue->buffer[tx_queue->tail].byte5 = buffer[offset + 1];
+            tx_queue->buffer[tx_queue->tail].byte7 = buffer[offset + 2];
+            tx_queue->buffer[tx_queue->tail].infoCode = infoCode;
+            tx_queue->tail = (tx_queue->tail + 1) % FRAME_QUEUE_SIZE;
+            tx_queue->count++;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void send_dashboard_text(DashboardFrame *frame)
 {
     uint8_t tx_msg_data[8] = {0};
 
     // Num frames - 1, byte[0] bit[7..3]
-    tx_msg_data[0] = ((partsCount - 1) << 3) & 0b11111000;
+    tx_msg_data[0] = ((frame->partsCount - 1) << 3) & 0b11111000;
 
     // InfoCode, byte[1] bit[5..0]
-    tx_msg_data[1] = infoCode & 0b00111111;
+    tx_msg_data[1] = frame->infoCode & 0b00111111;
 
     // Current frame, byte[0] bit[2..0] and byte[1] bit[7..6]
-    tx_msg_data[0] |= (part >> 2) & 0b00000111;
-    tx_msg_data[1] |= (part << 6) & 0b11000000;
+    tx_msg_data[0] |= (frame->part >> 2) & 0b00000111;
+    tx_msg_data[1] |= (frame->part << 6) & 0b11000000;
 
     tx_msg_data[2] = 0;
-    tx_msg_data[3] = buffer[offset];
+    tx_msg_data[3] = frame->byte3;
     tx_msg_data[4] = 0;
-    tx_msg_data[5] = buffer[offset + 1];
+    tx_msg_data[5] = frame->byte5;
     tx_msg_data[6] = 0;
-    tx_msg_data[7] = buffer[offset + 2];
+    tx_msg_data[7] = frame->byte7;
 
-    VLOG("%c%c%c\n", tx_msg_data[3], tx_msg_data[5], tx_msg_data[7]);
-
-    CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x090, .DLC = 8};
+    CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x90, .DLC = 8};
 
     if (can_tx(&tx_msg_header, tx_msg_data) == HAL_OK)
     {
         led_tx_on();
     }
-}
-
-const char *dpf_state_as_string(uint8_t state)
-{
-    switch (state)
-    {
-    case 1:
-        return "DPF LO";
-    case 2:
-        return "DPF HI";
-    case 3:
-        return "NSC De-NOx";
-    case 4:
-        return "NSC NSC De-SOx";
-    case 5:
-        return "SCR HeatUp";
-    default:
-        return "NONE";
-    }
-}
-
-void render_message(char *buffer, GlobalState *state)
-{
-    DashboardItemType type = type_of(state->board.dashboardState.currentItemIndex);
-    const char *pattern = pattern_of(type);
-
-    int written = -1;
-    if (type == GEAR_ITEM)
-    {
-        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, (unsigned char)state->board.dashboardState.values[0]);
-    }
-    else if (type == DPF_STATUS_ITEM)
-    {
-        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, dpf_state_as_string((uint8_t)state->board.dashboardState.values[0]));
-    }
-    else
-    {
-        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, state->board.dashboardState.values[0], state->board.dashboardState.values[1]);
-    }
-
-    if (written >= 0 && written < DASHBOARD_MESSAGE_MAX_LENGTH)
-    {
-        memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written);
-    }
-    buffer[DASHBOARD_MESSAGE_MAX_LENGTH] = 0x00;
 }
 
 void state_process(GlobalState *state)
@@ -131,16 +132,24 @@ void state_process(GlobalState *state)
     dashboardLocalState.values[1] = state->board.dashboardState.values[1];
     dpfLocalState.regenerating = state->car.dpf.regenerating;
 
-#ifdef DASHBOARD_FORCED_REFRESH
-    if (!updateDashboard > 0 && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now)
+    localStateSet = true;
+
+    if (tx_queue->count != 0)
     {
-        updateDashboard = true;
+        if (state->board.now - queuePolledAt > FRAME_QUEUE_POLLING_INTERVAL)
+        {
+            DashboardFrame frame = tx_queue->buffer[tx_queue->head];
+
+            send_dashboard_text(&frame);
+
+            tx_queue->head = (tx_queue->head + 1) % FRAME_QUEUE_SIZE;
+            tx_queue->count--;
+            queuePolledAt = state->board.now;
+        }
     }
-#endif
 
     if (updateDashboard)
     {
-        dashboardRefreshedAt = state->board.now;
         if (dashboardLocalState.visible)
         {
             char buffer[DASHBOARD_BUFFER_SIZE];
@@ -149,19 +158,16 @@ void state_process(GlobalState *state)
             int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
             int offset = 0;
             int part = 0;
-            while (offset < DASHBOARD_MESSAGE_MAX_LENGTH)
+            while (offset < DASHBOARD_MESSAGE_MAX_LENGTH && buffer_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE))
             {
-                send_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE);
                 offset += 3;
                 part += 1;
             }
         }
         else
         {
-            send_dashboard_text(1, 0, "   ", 0, 0x11); // TODO clear icon too
+            buffer_dashboard_text(1, 0, "   ", 0, 0x11); // TODO clear icon too
         }
     }
-
-    localStateSet = true;
 }
 #endif

@@ -17,8 +17,7 @@ void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
 {
     if (rx_msg_header.DLC >= 2)
     {
-        state->car.rpm = (rx_msg_data[0] * 256 + (rx_msg_data[1] & ~0x3)) / 4;
-        VLOG("%d RPM:%d\n", state->board.now, state->car.rpm);
+        state->car.rpm = (rx_msg_data[0] * 256 + (rx_msg_data[1] & ~0x03)) / 4;
     }
 }
 
@@ -31,19 +30,17 @@ void handle_torque(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_
     if (rx_msg_header.DLC >= 4)
     {
         state->car.torque = (rx_msg_data[2] & 0b01111111) << 4 | ((rx_msg_data[3] >> 4) & 0b00001111);
-        VLOG("%d torque:%d\n", state->board.now, state->car.torque);
     }
 }
 
 static const char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '9'};
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
-    uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0xF) >> 4);
+    uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0x0F) >> 4);
     if (i < sizeof(gears))
     {
         state->car.gear = gears[i];
     }
-    VLOG("%d gear %d\n", state->board.now, state->car.gear);
 }
 
 void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -52,7 +49,6 @@ void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8
     {
         state->car.battery.chargePercent = (rx_msg_data[1] & 0b01111111);
         state->car.battery.current = (0.1f * (rx_msg_data[4] << 4 | ((rx_msg_data[5] >> 4) & 0b00001111))) - 250.0f;
-        VLOG("%d Battery p:%d,c:%.1f\n", state->board.now, state->car.battery.chargePercent, state->car.battery.current);
     }
 }
 void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -61,7 +57,6 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
     {
         state->car.oil.pressure = 0.1f * ((rx_msg_data[0] & 0b00000001) << 7 | ((rx_msg_data[1] >> 1) & 0b01111111));
         state->car.oil.temperature = ((rx_msg_data[2] & 0b00111111) << 2 | ((rx_msg_data[3] >> 6) & 0b00000011)) - 40;
-        VLOG("%d Oil p:%.1f,t:%d\n", state->board.now, state->car.oil.pressure, state->car.oil.temperature);
     }
 }
 
@@ -78,27 +73,27 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
         {
             switch (ccButtonEvent)
             {
-            case 0x20: // speed hard down
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE) % itemsCount;
-                LOG("%d speed vv:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
-                knownEvent = true;
-                sendEvent = true;
-                break;
             case 0x00: // speed hard up
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE) % itemsCount;
                 LOG("%d speed ^^:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
-            case 0x18: // speed down
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + 1) % itemsCount;
-                LOG("%d speed v:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
+            case 0x20: // speed hard down
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE) % itemsCount;
+                LOG("%d speed vv:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
             case 0x08: // speed up
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - 1) % itemsCount;
                 LOG("%d speed ^:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
+                knownEvent = true;
+                sendEvent = true;
+                break;
+            case 0x18: // speed down
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + 1) % itemsCount;
+                LOG("%d speed v:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
@@ -128,7 +123,7 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
             break;
         case 0x90: // RES button was pressed
         case 0x50: // distance selector, used like RES, to manage the menu
-            VLOG("%d res v\n", state->board.now);
+            LOG("%d res v\n", state->board.now);
             resPushedAt = state->board.now;
             knownEvent = true;
             break;
@@ -149,7 +144,7 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 #endif
 
 #ifdef ENABLE_SNS_AUTO_OFF
-static CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x4B1, .DLC = 8};
+static CAN_TxHeaderTypeDef disableSNSHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x04B1, .DLC = 8};
 static uint8_t disableSNSFrame[8] = {0x04, 0x00, 0x00, 0x10, 0xA0, 0x08, 0x08, 0x00}; // byte 5 shall be set to 0x08
 
 void handle_sns_status(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
@@ -191,8 +186,8 @@ void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_head
             state->car.dpf.regenerating = 1;
             LOG("%d start DPF r\n", state->board.now);
 #ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATIION
-state->board.dashboardState.currentItemIndex = index_of(DPF_STATUS_ITEM);
-state->board.dashboardState.visible = true;
+            state->board.dashboardState.currentItemIndex = DPF_STATUS_ITEM;
+            state->board.dashboardState.visible = true;
 #endif
         }
 
@@ -209,42 +204,42 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 {
     switch (rx_msg_header.StdId)
     {
-    case 0x000000FC:
+    case 0xFC:
         handle_rpm(state, rx_msg_header, rx_msg_data);
         break;
 #ifdef ENABLE_SNS_AUTO_OFF
-    case 0x00000226:
+    case 0x0226:
         handle_sns_status(state, rx_msg_header, rx_msg_data);
         break;
 #endif
 #ifdef ENABLE_DASHBOARD
-    case 0x000000FB:
+    case 0xFB:
         handle_torque(state, rx_msg_header, rx_msg_data);
         break;
-    case 0x000002EF:
+    case 0x02EF:
         handle_gear(state, rx_msg_header, rx_msg_data);
         break;
-    case 0x000002FA:
+    case 0x02FA:
         handle_cc_buttons(state, rx_msg_header, rx_msg_data);
         break;
-    case 0x000005A5:
+    case 0x05A5:
         state->car.ccActive = ((rx_msg_data[0] >> 7) == 1);
         VLOG("%d CC active:%d\n", state->board.now, state->car.ccActive);
         break;
-    case 0x0000041A:
+    case 0x041A:
         handle_battery(state, rx_msg_header, rx_msg_data);
         break;
-    case 0x000004B2:
+    case 0x04B2:
         handle_oil(state, rx_msg_header, rx_msg_data);
         break;
 #endif
 #ifdef ENABLE_SNS_AUTO_OFF
-    case 0x000004B1:
+    case 0x04B1:
         handle_sns_request(state, rx_msg_header, rx_msg_data);
         break;
 #endif
 #ifdef ENABLE_DPF_REGEN_NOTIFICATIION
-    case 0x000005AE:
+    case 0x05AE:
         handle_dpf_regeneration(state, rx_msg_header, rx_msg_data);
         break;
 #endif
@@ -252,32 +247,54 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
-void apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data, uint8_t valueIndex)
+bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data, uint8_t valueIndex)
 {
+    bool extracted = false;
     if (extractor.needsQuery && extractor.query.replyId == rx_msg_header->ExtId)
     {
-        float extractedValue = extractor.extract(state, rx_msg_data);
-        if (state->board.dashboardState.values[valueIndex] != extractedValue)
+        VLOG("%d res %02X %02X %02X %02X\n", state->board.now, rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3]);
+        uint8_t success = rx_msg_data[1] == 0x62;
+        if (success)
         {
-            state->board.dashboardState.values[valueIndex] = extractedValue;
-            send_state(state);
+            uint16_t resData = rx_msg_data[3] * 256 + rx_msg_data[2];
+            VLOG("%d rd %02X%02X", state->board.now, rx_msg_data[3], rx_msg_data[2]);
+            VLOG("->%d vs %d\n", resData, (extractor.query.reqData >> 16));
+            if (resData == (extractor.query.reqData >> 16))
+            {
+                float extractedValue = extractor.extract(state, rx_msg_data);
+                if (state->board.dashboardState.values[valueIndex] != extractedValue)
+                {
+                    state->board.dashboardState.values[valueIndex] = extractedValue;
+                    extracted = true;
+                }
+            }
         }
     }
+
+    return extracted;
 }
 
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (state->board.dashboardState.visible)
     {
-        CarValueExtractors extractors = extractor_of(type_of(state->board.dashboardState.currentItemIndex), state);
+        bool v0Extracted = false;
+        bool v1Extracted = false;
+        DashboardItemType type = state->board.dashboardState.currentItemIndex;
+        CarValueExtractors extractors = extractor_of(type, state);
         if (extractors.hasV0)
         {
-            apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);
+            v0Extracted = apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);
         }
 
         if (extractors.hasV1)
         {
-            apply_extractor(extractors.forV1, state, &rx_msg_header, rx_msg_data, 1);
+            v1Extracted = apply_extractor(extractors.forV1, state, &rx_msg_header, rx_msg_data, 1);
+        }
+
+        if (v0Extracted || v1Extracted)
+        {
+            send_state(state);
         }
     }
 }

@@ -3,8 +3,6 @@
 
 #include "stm32f0xx_hal.h"
 
-#define PRINTF_INCLUDE_CONFIG_H
-
 #ifdef INCLUDE_USER_CONFIG_H
 #include "user_config.h"
 #endif
@@ -55,18 +53,7 @@
 
 // must be a multiple of 3; suggested value for 7 inch is 24, for 3.5 inch is 18
 #ifndef DASHBOARD_MESSAGE_MAX_LENGTH
-#ifdef SMALL_DISPLAY
-#define DASHBOARD_MESSAGE_MAX_LENGTH 18
-#else
 #define DASHBOARD_MESSAGE_MAX_LENGTH 24
-#endif
-#endif
-
-#ifndef DISABLE_DASHBOARD_FORCED_REFRESH
-#define DASHBOARD_FORCED_REFRESH
-#ifndef DASHBOARD_FORCED_REFRESH_MS
-#define DASHBOARD_FORCED_REFRESH_MS 1000
-#endif
 #endif
 
 #ifndef DISABLE_DPF_REGEN_NOTIFICATIION
@@ -114,7 +101,7 @@
 #endif
 
 #ifndef VALUES_REFRESH_MS
-#define VALUES_REFRESH_MS 250
+#define VALUES_REFRESH_MS 300
 #endif
 
 #ifndef DISABLE_DPF_REGEN_NOTIFICATIION
@@ -126,6 +113,10 @@
 
 #endif
 
+#endif
+
+#ifdef XCAN
+#define PRINTF_INCLUDE_CONFIG_H
 #endif
 
 #ifndef USART2_BAUD_RATE

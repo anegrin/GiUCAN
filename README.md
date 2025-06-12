@@ -8,7 +8,7 @@ This repository contains sources for GiUCAN, a minimalistic version of [BACCAble
 
 - Smart Start and Stop disabling ✔
 - DPF regeneration warnings ✘
-- Dashboard info dispaly ✘
+- Dashboard info dispaly ✔
 
 It's tested using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**.
 

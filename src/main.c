@@ -108,7 +108,7 @@ int main(void)
 
 void state_init(GlobalState *state)
 {
-    state->board.dashboardState.itemsCount = count_dashboard_items();
+    state->board.dashboardState.itemsCount = DASHBOARD_ITEMS_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;

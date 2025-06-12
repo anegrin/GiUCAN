@@ -1,46 +1,18 @@
 #include "dashboard.h"
-
-#ifdef XCAN
-static const DashboardItemType types[] = {
-#define X(name, str) name,
-    DASHBOARD_ITEMS
-#undef X
-};
-
-static const uint8_t types_count = sizeof(types);
-
-const DashboardItemType type_of(uint8_t index)
-{
-    if (index < types_count)
-    {
-        return types[index];
-    }
-    else
-    {
-        return UNKNOWN_ITEM;
-    }
-}
-uint8_t index_of(DashboardItemType type)
-{
-    for (int i = 0; i < types_count; i++)
-    {
-        if (type == types[i]) {
-            return i;
-        }
-    }
-    return 0;
-}
-
-#else
-static const uint8_t types_count = 0;
-#endif
-
-uint8_t count_dashboard_items(void)
-{
-    return types_count;
-}
+#include "printf.h"
 
 #ifdef BHCAN
+#define X(item_type, forV0_return_type, forV0_convert_function_code, forV1_return_type, forV1_convert_function_code) \
+    forV0_return_type item_type##_V0Converter(float value)                                                         \
+    {                                                                                                                \
+        return forV0_convert_function_code;                                                                          \
+    }                                                                                                                \
+    forV1_return_type item_type##_V1Converter(float value)                                                         \
+    {                                                                                                                \
+        return forV1_convert_function_code;                                                                          \
+    }
+CONVERTERS
+#undef X
 
 const char *pattern_of(DashboardItemType type)
 {
@@ -55,430 +27,82 @@ const char *pattern_of(DashboardItemType type)
         return "<unknown>";
     }
 }
+
+void render_message(char *buffer, GlobalState *state)
+{
+    DashboardItemType type = state->board.dashboardState.currentItemIndex;
+    const char *pattern = pattern_of(type);
+
+    int written = -1;
+
+    switch (type)
+    {
+#define X(item_type, _1, _2, _3, _4)                                                                                                                                                                 \
+    case item_type:                                                                                                                                                                                  \
+        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, item_type##_V0Converter(state->board.dashboardState.values[0]), item_type##_V1Converter(state->board.dashboardState.values[1])); \
+        break;
+        CONVERTERS
+#undef X
+    default:
+        written = snprintf_(buffer, DASHBOARD_BUFFER_SIZE, pattern, state->board.dashboardState.values[0], state->board.dashboardState.values[1]);
+    }
+
+    if (written >= 0 && written < DASHBOARD_MESSAGE_MAX_LENGTH)
+    {
+        memset(buffer + written, ' ', DASHBOARD_MESSAGE_MAX_LENGTH - written);
+    }
+    buffer[DASHBOARD_MESSAGE_MAX_LENGTH] = 0x00;
+}
 #endif
 
 #ifdef C1CAN
+inline float noopExtract(GlobalState *s, uint8_t *r) { return 0; }
+#define X(name, code)                      \
+    float name(GlobalState *s, uint8_t *r) \
+    {                                      \
+        return code;                       \
+    }
+EXTRACTION_FUNCTIONS
+#undef X
 
 static CarValueExtractors noExtractors = {
     .hasV0 = false,
     .hasV1 = false};
 
-float extractHP(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.torque - 500 * (float)s->car.rpm * 0.000142378f;
-}
-
-static CarValueExtractors hpExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractHP,
-    }};
-
-float extractNM(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.torque - 500;
-}
-
-static CarValueExtractors nmExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractNM,
-    }};
-
-static CarValueExtractors hpTorqueExtractors = {
-    .hasV0 = true,
-    .hasV1 = true,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractHP,
-    },
-    .forV1 = {
-        .needsQuery = false,
-        .extract = extractNM,
-    }};
-
-float extractDpfStatus(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.dpf.regenMode;
-}
-
-static CarValueExtractors dpfStatusExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractDpfStatus,
-    }};
-
-float extractDpfClog(GlobalState *_, uint8_t *r)
-{
-    //((A*256)+B)*(1000/65535)
-    return ((float)((A(r) * 256) + B(r))) * 0.01525902f;
-}
-
-static CarValueExtractors dpfClogExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x032218E4),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfClog,
-    }};
-
-float extractDpfTemp(GlobalState *_, uint8_t *r)
-{
-    //(((A*256)+B)*0.02)-40
-    return ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f;
-}
-
-static CarValueExtractors dpfTempExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x032218DE),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfTemp,
-    }};
-
-float extractDpfReg(GlobalState *_, uint8_t *r)
-{
-    //((A*256)+B)*(100/65535)
-    return ((float)((A(r) * 256) + B(r))) * 0.001525902f;
-}
-
-static CarValueExtractors dpfRegExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x0322380B),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfReg,
-    }};
-
-float extractDpfDist(GlobalState *_, uint8_t *r)
-{
-    //((A*65536)+(B*256)+C)*0.1
-    return ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) * 0.1;
-}
-
-static CarValueExtractors dpfDistExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03223807),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfDist,
-    }};
-
-float extractDpfCount(GlobalState *_, uint8_t *r)
-{
-    //(A*256)+B
-    return (float)((A(r) * 256) + B(r));
-}
-
-static CarValueExtractors dpfCountExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x032218A4),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfCount,
-    }};
-
-float extractDpfMeanDist(GlobalState *_, uint8_t *r)
-{
-    //(A*256)+B
-    return (float)((A(r) * 256) + B(r));
-}
-
-static CarValueExtractors dpfMeanDistExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03223809),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfMeanDist,
-    }};
-
-float extractDpfMeanDuration(GlobalState *_, uint8_t *r)
-{
-    //((A*256)+B)/60
-    return (float)((A(r) * 256) + B(r)) / 60.0f;
-}
-
-static CarValueExtractors dpfMeanDurationExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x0322380A),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfMeanDuration,
-    }};
-
-static CarValueExtractors dpfMeanDistDurationExtractors = {
-    .hasV0 = true,
-    .hasV1 = true,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03223809),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfMeanDist,
-    },
-    .forV1 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x0322380A),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractDpfMeanDuration,
-    }
-
-};
-
-float extractBatteryVolt(GlobalState *_, uint8_t *r)
-{
-    //((A*256)+B)*(0.5/1000)
-    return (float)((A(r) * 256) + B(r)) * 0.0005f;
-}
-
-static CarValueExtractors batteryVoltExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03221955),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractBatteryVolt,
-    }};
-
-float extractBatteryPerc(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.battery.chargePercent;
-}
-
-static CarValueExtractors batteryPercExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractBatteryPerc,
-    }};
-
-float extractBatteryApere(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.battery.current;
-}
-
-static CarValueExtractors batteryAmpereExtractors = {.hasV0 = true,
-                                                     .hasV1 = false,
-                                                     .forV0 = {
-                                                         .needsQuery = false,
-                                                         .extract = extractBatteryApere,
-                                                     }};
-
-static CarValueExtractors batteryVoltAmpereExtractors = {
-    .hasV0 = true,
-    .hasV1 = true,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03221955),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractBatteryVolt,
-    },
-    .forV1 = {
-        .needsQuery = false,
-        .extract = extractBatteryApere,
-    }};
-
-float extractOilQuality(GlobalState *_, uint8_t *r)
-{
-
-    //((A*256)+B)*(100/65535)
-    return ((float)((A(r) * 256) + B(r))) * 0.001525902f;
-}
-
-static CarValueExtractors oilQualityExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03223813),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractOilQuality,
-    }};
-
-float extractOilTemp(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.oil.temperature;
-}
-
-static CarValueExtractors oilTempExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractOilTemp,
-    }};
-
-float extractOilPressure(GlobalState *s, uint8_t *_)
-{
-    return s->car.oil.pressure;
-}
-
-static CarValueExtractors oilPressExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractOilPressure,
-    }};
-
-float extractGearboxTemp(GlobalState *_, uint8_t *r)
-{
-    // A-40
-    return (float)A(r) - 40.0f;
-}
-
-static CarValueExtractors gearboxTempExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA18F1,
-            .reqData = SWAP_ENDIAN32(0x032204FE),
-            .replyId = 0x18DAF118,
-        },
-        .extract = extractGearboxTemp,
-    }};
-
-float extractGear(GlobalState *s, uint8_t *_)
-{
-    return (float)s->car.gear;
-}
-
-static CarValueExtractors gearExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = false,
-        .extract = extractGear,
-    }};
-
-float extractAirInTemp(GlobalState *_, uint8_t *r)
-{
-    //(((A*256)+B)*0.02)-40
-    return ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f;
-}
-
-static CarValueExtractors airInTempExtractors = {
-    .hasV0 = true,
-    .hasV1 = false,
-    .forV0 = {
-        .needsQuery = true,
-        .query = {
-            .reqId = 0x18DA10F1,
-            .reqData = SWAP_ENDIAN32(0x03221935),
-            .replyId = 0x18DAF110,
-        },
-        .extract = extractAirInTemp,
-    }};
+#define X(item_type, has_V0, V0_needsQuery, V0_query_reqId, V0_query_reqData, V0_query_replyId, V0_extraction_function, has_V1, V1_needsQuery, V1_query_reqId, V1_query_reqData, V1_query_replyId, V1_extraction_function) \
+    static CarValueExtractors item_type##_extractors = {                                                                                                                                                                   \
+        .hasV0 = has_V0,                                                                                                                                                                                                   \
+        .forV0 = {                                                                                                                                                                                                         \
+            .needsQuery = V0_needsQuery,                                                                                                                                                                                   \
+            .query = {                                                                                                                                                                                                     \
+                .reqId = V0_query_reqId,                                                                                                                                                                                   \
+                .reqData = SWAP_ENDIAN32(V0_query_reqData),                                                                                                                                                                \
+                .replyId = V0_query_replyId,                                                                                                                                                                               \
+            },                                                                                                                                                                                                             \
+            .extract = V0_extraction_function,                                                                                                                                                                             \
+        },                                                                                                                                                                                                                 \
+        .hasV1 = has_V1,                                                                                                                                                                                                   \
+        .forV1 = {                                                                                                                                                                                                         \
+            .needsQuery = V1_needsQuery,                                                                                                                                                                                   \
+            .query = {                                                                                                                                                                                                     \
+                .reqId = V1_query_reqId,                                                                                                                                                                                   \
+                .reqData = SWAP_ENDIAN32(V1_query_reqData),                                                                                                                                                                \
+                .replyId = V1_query_replyId,                                                                                                                                                                               \
+            },                                                                                                                                                                                                             \
+            .extract = V1_extraction_function,                                                                                                                                                                             \
+        }};
+EXTRACTORS
+#undef X
 
 CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 {
     switch (type)
     {
-    case FIRMWARE_ITEM:
-        return noExtractors;
-    case HP_ITEM:
-        return hpExtractors;
-    case TORQUE_ITEM:
-        return nmExtractors;
-    case DPF_STATUS_ITEM:
-        return dpfStatusExtractors;
-    case DPF_CLOG_ITEM:
-        return dpfClogExtractors;
-    case DPF_TEMP_ITEM:
-        return dpfTempExtractors;
-    case DPF_REG_ITEM:
-        return dpfRegExtractors;
-    case DPF_DIST_ITEM:
-        return dpfDistExtractors;
-    case DPF_COUNT_ITEM:
-        return dpfCountExtractors;
-    case DPF_MEAN_DIST_ITEM:
-        return dpfMeanDistExtractors;
-    case DPF_MEAN_DURATION_ITEM:
-        return dpfMeanDurationExtractors;
-    case BATTERY_V_ITEM:
-        return batteryVoltExtractors;
-    case BATTERY_P_ITEM:
-        return batteryPercExtractors;
-    case BATTERY_A_ITEM:
-        return batteryAmpereExtractors;
-    case OIL_QUALITY_ITEM:
-        return oilQualityExtractors;
-    case OIL_TEMP_ITEM:
-        return oilTempExtractors;
-    case OIL_PRESS_ITEM:
-        return oilPressExtractors;
-    case AIR_IN_ITEM:
-        return airInTempExtractors;
-    case GEAR_ITEM:
-        return gearExtractors;
-    case GEARBOX_TEMP_ITEM:
-        return gearboxTempExtractors;
-    case HP_TORQUE_ITEM:
-        return hpTorqueExtractors;
-    case DPF_MEAN_DIST_DURATION_ITEM:
-        return dpfMeanDistDurationExtractors;
-    case BATTERY_V_A_ITEM:
-        return batteryVoltAmpereExtractors;
+#define X(item_type, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12) \
+    case item_type:                                                     \
+        return item_type##_extractors;
+        EXTRACTORS
+#undef X
     default:
         return noExtractors;
     }
