@@ -9,6 +9,7 @@
 
 #define SEND_DASHBOARD_FRAME_DELAY 29
 
+static uint32_t dashboardRefreshedAt = 0;
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
 static DPF dpfLocalState;
@@ -148,24 +149,33 @@ void state_process(GlobalState *state)
         }
     }
 
+#ifdef DASHBOARD_FORCED_REFRESH
+    if (!updateDashboard && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now)
+    {
+        updateDashboard = true;
+    }
+#endif
+
     if (updateDashboard)
     {
-        char buffer[DASHBOARD_BUFFER_SIZE];
+        dashboardRefreshedAt = state->board.now;
         if (dashboardLocalState.visible)
         {
+            char buffer[DASHBOARD_BUFFER_SIZE];
             render_message(buffer, state);
+            int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
+            int offset = 0;
+            int part = 0;
+            while (offset < DASHBOARD_MESSAGE_MAX_LENGTH && buffer_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE))
+            {
+                offset += 3;
+                part += 1;
+            }
         }
         else
         {
-            memset(&buffer[0], 0x20, DASHBOARD_MESSAGE_MAX_LENGTH);
-        }
-        int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
-        int offset = 0;
-        int part = 0;
-        while (offset < DASHBOARD_MESSAGE_MAX_LENGTH && buffer_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE))
-        {
-            offset += 3;
-            part += 1;
+            //00 01 00 00 00 00 00 00
+            buffer_dashboard_text(1, 0, "\0\0\0", 0, 0x01);
         }
     }
 }
