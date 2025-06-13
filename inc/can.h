@@ -3,6 +3,11 @@
 
 #include "stm32f0xx_hal.h"
 
+#ifdef BHCAN
+#define SOUND_FRAME_STD_ID 0x05AC
+#define DASHBOARD_FRAME_STD_ID 0x90
+#endif
+
 enum can_bitrate {
     CAN_BITRATE_10K = 0,
     CAN_BITRATE_20K,

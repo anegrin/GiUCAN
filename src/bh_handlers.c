@@ -20,7 +20,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 {
     switch (rx_msg_header.StdId)
     {
-    case 0x05AC:
+    case SOUND_FRAME_STD_ID:
         if (state->board.dpfRegenNotificationRequestAt != 0)
         {
             state->board.dpfRegenNotificationRequestAt = 0;
@@ -39,7 +39,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 #endif
         }
         break;
-    case 0x90:
+    case DASHBOARD_FRAME_STD_ID:
         // message from infotainment
         break;
     }

@@ -84,7 +84,7 @@ void send_dashboard_text(DashboardFrame *frame)
     tx_msg_data[6] = 0;
     tx_msg_data[7] = frame->byte7;
 
-    CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x90, .DLC = 8};
+    CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = DASHBOARD_FRAME_STD_ID, .DLC = 8};
 
     if (can_tx(&tx_msg_header, tx_msg_data) == HAL_OK)
     {
@@ -150,23 +150,22 @@ void state_process(GlobalState *state)
 
     if (updateDashboard)
     {
+        char buffer[DASHBOARD_BUFFER_SIZE];
         if (dashboardLocalState.visible)
         {
-            char buffer[DASHBOARD_BUFFER_SIZE];
             render_message(buffer, state);
-
-            int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
-            int offset = 0;
-            int part = 0;
-            while (offset < DASHBOARD_MESSAGE_MAX_LENGTH && buffer_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE))
-            {
-                offset += 3;
-                part += 1;
-            }
         }
         else
         {
-            buffer_dashboard_text(1, 0, "   ", 0, 0x11); // TODO clear icon too
+            memset(&buffer[0], 0x20, DASHBOARD_MESSAGE_MAX_LENGTH);
+        }
+        int partsCount = DASHBOARD_MESSAGE_MAX_LENGTH / 3;
+        int offset = 0;
+        int part = 0;
+        while (offset < DASHBOARD_MESSAGE_MAX_LENGTH && buffer_dashboard_text(partsCount, part, buffer, offset, DISPLAY_INFO_CODE))
+        {
+            offset += 3;
+            part += 1;
         }
     }
 }

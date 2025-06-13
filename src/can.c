@@ -44,13 +44,19 @@ void can_enable(void)
     if (bus_state == OFF_BUS)
     {
         MX_CAN_Init();
+    #ifdef BHCAN
+        filter.FilterIdHigh = (SOUND_FRAME_STD_ID << 5);
+        filter.FilterIdLow = (DASHBOARD_FRAME_STD_ID << 5);
+        filter.FilterMode = CAN_FILTERMODE_IDLIST;
+    #else
         filter.FilterIdHigh = 0;
         filter.FilterIdLow = 0;
+        filter.FilterMode = CAN_FILTERMODE_IDMASK;
+    #endif
         filter.FilterMaskIdHigh = 0;
         filter.FilterMaskIdLow = 0;
         filter.FilterFIFOAssignment = CAN_RX_FIFO0;
         filter.FilterBank = 0;
-        filter.FilterMode = CAN_FILTERMODE_IDMASK;
         filter.FilterScale = CAN_FILTERSCALE_32BIT;
         filter.FilterActivation = ENABLE;
         HAL_CAN_ConfigFilter(&can_handle, &filter);

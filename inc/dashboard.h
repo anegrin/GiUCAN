@@ -149,7 +149,7 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
     X(extractOilTemp, (float)s->car.oil.temperature)                              \
     X(extractGearboxTemp, (float)A(r) - 40.0f)                                    \
     X(extractGear, (float)s->car.gear)                                            \
-    X(extractSteeringAngle, ((float)((((int)A(r)) * 256) + B(r))) / 16.0f)
+    X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)
 #endif
 
 #ifndef EXTRACTORS
