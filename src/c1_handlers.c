@@ -220,7 +220,9 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         handle_gear(state, rx_msg_header, rx_msg_data);
         break;
     case 0x02FA:
-        handle_cc_buttons(state, rx_msg_header, rx_msg_data);
+        if (!state->car.ccActive) {
+            handle_cc_buttons(state, rx_msg_header, rx_msg_data);
+        }
         break;
     case 0x05A5:
         state->car.ccActive = ((rx_msg_data[0] >> 7) == 1);
@@ -252,13 +254,10 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
     bool extracted = false;
     if (extractor.needsQuery && extractor.query.replyId == rx_msg_header->ExtId)
     {
-        VLOG("%d res %02X %02X %02X %02X\n", state->board.now, rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3]);
         uint8_t success = rx_msg_data[1] == 0x62;
         if (success)
         {
             uint16_t resData = rx_msg_data[3] * 256 + rx_msg_data[2];
-            VLOG("%d rd %02X%02X", state->board.now, rx_msg_data[3], rx_msg_data[2]);
-            VLOG("->%d vs %d\n", resData, (extractor.query.reqData >> 16));
             if (resData == (extractor.query.reqData >> 16))
             {
                 float extractedValue = extractor.extract(state, rx_msg_data);

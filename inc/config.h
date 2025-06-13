@@ -48,7 +48,7 @@
 // 0x08=Center USB, 0x09=Bluetooth, 0x12=phone connected, 0x13=phone disconnected,
 // 0x15=call in progress, 0x17=call in wait, 0x18=call terminated, 0x11=clear display, ...
 #ifndef DISPLAY_INFO_CODE
-#define DISPLAY_INFO_CODE 0x09
+#define DISPLAY_INFO_CODE 0x08
 #endif
 
 // must be a multiple of 3; suggested value for 7 inch is 24, for 3.5 inch is 18
@@ -120,7 +120,7 @@
 #endif
 
 #ifndef USART2_BAUD_RATE
-#define USART2_BAUD_RATE 9600
+#define USART2_BAUD_RATE 38400
 #endif
 
 #ifndef CAN_BITRATE

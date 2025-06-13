@@ -3,11 +3,11 @@
 
 #ifdef BHCAN
 #define X(item_type, forV0_return_type, forV0_convert_function_code, forV1_return_type, forV1_convert_function_code) \
-    forV0_return_type item_type##_V0Converter(float value)                                                         \
+    forV0_return_type item_type##_V0Converter(float value)                                                           \
     {                                                                                                                \
         return forV0_convert_function_code;                                                                          \
     }                                                                                                                \
-    forV1_return_type item_type##_V1Converter(float value)                                                         \
+    forV1_return_type item_type##_V1Converter(float value)                                                           \
     {                                                                                                                \
         return forV1_convert_function_code;                                                                          \
     }
@@ -25,6 +25,25 @@ const char *pattern_of(DashboardItemType type)
 #undef X
     default:
         return "<unknown>";
+    }
+}
+
+const char *dpf_status_as_string(float value)
+{
+    switch ((uint8_t)value)
+    {
+    case 1:
+        return "DPF Low";
+    case 2:
+        return "DPF High";
+    case 3:
+        return "De-NOx";
+    case 4:
+        return "De-SOx";
+    case 5:
+        return "SCR HeatUp";
+    default:
+        return "Idle";
     }
 }
 
@@ -56,7 +75,7 @@ void render_message(char *buffer, GlobalState *state)
 #endif
 
 #ifdef C1CAN
-inline float noopExtract(GlobalState *s, uint8_t *r) { return 0; }
+inline float noop_extract(GlobalState *s, uint8_t *r) { return 0; }
 #define X(name, code)                      \
     float name(GlobalState *s, uint8_t *r) \
     {                                      \
