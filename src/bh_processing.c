@@ -135,17 +135,20 @@ void state_process(GlobalState *state)
 
     localStateSet = true;
 
-    if (tx_queue->count != 0)
+    if (state->board.dashboardExternallyUpdatedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now)
     {
-        if (state->board.now - queuePolledAt > FRAME_QUEUE_POLLING_INTERVAL)
+        if (tx_queue->count != 0)
         {
-            DashboardFrame frame = tx_queue->buffer[tx_queue->head];
+            if (state->board.now - queuePolledAt > FRAME_QUEUE_POLLING_INTERVAL)
+            {
+                DashboardFrame frame = tx_queue->buffer[tx_queue->head];
 
-            send_dashboard_text(&frame);
+                send_dashboard_text(&frame);
 
-            tx_queue->head = (tx_queue->head + 1) % FRAME_QUEUE_SIZE;
-            tx_queue->count--;
-            queuePolledAt = state->board.now;
+                tx_queue->head = (tx_queue->head + 1) % FRAME_QUEUE_SIZE;
+                tx_queue->count--;
+                queuePolledAt = state->board.now;
+            }
         }
     }
 
@@ -174,7 +177,7 @@ void state_process(GlobalState *state)
         }
         else
         {
-            //00 01 00 00 00 00 00 00
+            // 00 01 00 00 00 00 00 00
             buffer_dashboard_text(1, 0, "\0\0\0", 0, 0x01);
         }
     }

@@ -41,6 +41,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         break;
     case DASHBOARD_FRAME_STD_ID:
         // message from infotainment
+        state->board.dashboardExternallyUpdatedAt = state->board.now;
         break;
     }
 }
