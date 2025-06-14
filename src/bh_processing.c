@@ -9,7 +9,6 @@
 
 #define SEND_DASHBOARD_FRAME_DELAY 29
 
-static uint32_t dashboardRefreshedAt = 0;
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
 static DPF dpfLocalState;
@@ -150,18 +149,13 @@ void state_process(GlobalState *state)
                 queuePolledAt = state->board.now;
             }
         }
+    } else {
+        dashboardLocalState.visible = false;
+        updateDashboard = false;
     }
-
-#ifdef DASHBOARD_FORCED_REFRESH
-    if (!updateDashboard && dashboardLocalState.visible && dashboardRefreshedAt + DASHBOARD_FORCED_REFRESH_MS < state->board.now)
-    {
-        updateDashboard = true;
-    }
-#endif
 
     if (updateDashboard)
     {
-        dashboardRefreshedAt = state->board.now;
         if (dashboardLocalState.visible)
         {
             char buffer[DASHBOARD_BUFFER_SIZE];

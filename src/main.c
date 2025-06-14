@@ -79,6 +79,7 @@ int main(void)
         {
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
             {
+                state.board.latestMessageReceivedAt = state.board.now;
                 uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
                 if (msg_len)
                 {
@@ -114,6 +115,7 @@ void state_init(GlobalState *state)
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
     state->board.dpfRegenNotificationRequestAt = 0;
+    state->board.latestMessageReceivedAt = 0;
     state->board.snsRequestOffAt = 0;
 
     state->car.battery.chargePercent = 0;

@@ -55,6 +55,13 @@ void state_process(GlobalState *state)
 #endif
 #ifdef ENABLE_DASHBOARD
 
+    if (state->board.dashboardState.visible && state->board.latestMessageReceivedAt + VALUES_TIMEOUT_MS < state->board.now) 
+    {
+        VLOG("%d no msg", state->board.now);
+        state->board.dashboardState.visible = false;
+        send_state(state);
+    }
+
     if (state->board.dashboardState.visible)
     {
         if (valuesUpdatedAt + VALUES_REFRESH_MS < state->board.now)
