@@ -48,16 +48,17 @@ void can_enable(void)
         filter.FilterIdHigh = (SOUND_FRAME_STD_ID << 5);
         filter.FilterIdLow = (DASHBOARD_FRAME_STD_ID << 5);
         filter.FilterMode = CAN_FILTERMODE_IDLIST;
+        filter.FilterScale = CAN_FILTERSCALE_16BIT;
     #else
         filter.FilterIdHigh = 0;
         filter.FilterIdLow = 0;
         filter.FilterMode = CAN_FILTERMODE_IDMASK;
+        filter.FilterScale = CAN_FILTERSCALE_32BIT;
     #endif
         filter.FilterMaskIdHigh = 0;
         filter.FilterMaskIdLow = 0;
         filter.FilterFIFOAssignment = CAN_RX_FIFO0;
         filter.FilterBank = 0;
-        filter.FilterScale = CAN_FILTERSCALE_32BIT;
         filter.FilterActivation = ENABLE;
         HAL_CAN_ConfigFilter(&can_handle, &filter);
         HAL_CAN_Start(&can_handle);

@@ -25,7 +25,7 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
 /* item_type, pattern */
 #define DASHBOARD_ITEMS                                        \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)                 \
-    X(UPTIME_ITEM, "Uptime: %.0fmin")                          \
+    X(UPTIME_ITEM, "Uptime: %.0fmin/%.0fmin")                  \
     X(HP_NM_ITEM, "Power: %.1fhp/%.0fnm")                      \
     X(DPF_STATUS_ITEM, "DPF status: %s")                       \
     X(DPF_CLOG_ITEM, "DPF clogging: %.0f%%")                   \
@@ -131,7 +131,8 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
 */
 #define EXTRACTION_FUNCTIONS                                                      \
     X(extractTempCommon, ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f)        \
-    X(extractUptime, ((float)((A(r) * 256) + B(r)) / 4.0f))                       \
+    X(extractCarUptime, ((float)((A(r) * 256) + B(r)) / 4.0f))                    \
+    X(extractBoardUptime, (((float)s->board.now) / 60000.0f))                      \
     X(extractHP, ((float)s->car.torque - 500) * (float)s->car.rpm * 0.000142378f) \
     X(extractNM, (float)s->car.torque - 500)                                      \
     X(extractDpfStatus, (float)s->car.dpf.regenMode)                              \
@@ -169,7 +170,7 @@ forV1_query_replyId,
 forV1_extraction_function
 */
 #define EXTRACTORS                                                                                                                                                             \
-    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, 0x18DAF110, extractUptime, false, false, 0, 0, 0, noop_extract)                                                         \
+    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, 0x18DAF110, extractCarUptime, true, false, 0, 0, 0, extractBoardUptime)                                                 \
     X(HP_NM_ITEM, true, false, 0, 0, 0, extractHP, true, false, 0, 0, 0, extractNM)                                                                                            \
     X(DPF_STATUS_ITEM, true, false, 0, 0, 0, extractDpfStatus, false, false, 0, 0, 0, noop_extract)                                                                            \
     X(DPF_CLOG_ITEM, true, true, 0x18DA10F1, 0x032218E4, 0x18DAF110, extractDpfClog, false, false, 0, 0, 0, noop_extract)                                                      \
