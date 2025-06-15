@@ -77,7 +77,7 @@ void render_message(char *buffer, GlobalState *state);
 // utility fn to optimize crazy nested ternary
 const char *dpf_status_as_string(float value);
 
-#ifndef CONVERTER
+#ifndef CONVERTERS
 /*
 item_type, forV0_return_type, forV0_convert_function_code, forV1_return_type, forV1_convert_function_code
 

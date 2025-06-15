@@ -1,0 +1,7 @@
+remote_theme: pages-themes/hacker@v0.2.0
+plugins:
+- jekyll-remote-theme
+title: GiUCAN
+description: >
+  a minimalistic version of <a href="https://github.com/gaucho1978/BACCAble">BACCAble</a> providing a subset of functionalities:
+  Smart Start and Stop disabling, DPF regeneration warnings, Dashboard info dispaly

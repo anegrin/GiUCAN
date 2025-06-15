@@ -1,16 +1,12 @@
-# WIP
-
-**No stable release available yet**
-
 # GiUCAN Firmware
 
-This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Diesel engines; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
+This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Diesel engines with 7 inches dashboard; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
 
 - Smart Start and Stop disabling ✔
-- DPF regeneration warnings ✘
+- DPF regeneration warnings ✔
 - Dashboard info dispaly ✔
 
-It's tested using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**.
+It's tested and documented using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**; as it's derived from [Canable-fw](https://github.com/normaldotcom/canable-fw) it should work with 
 
 ## DISCLAIMER
 
@@ -54,8 +50,31 @@ This firmware currently does not provide any ACK/NACK feedback for serial comman
 
 ## Building, Flashing  and Debugging
 
-Please check [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md)
+Please read [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md) as make will build SLCAN firmware by default.
+
+Plaese read [GiUCAN GitHub Pages](https://anegrin.github.io/GiUCAN/) to learn about:
+
+- Hardware and connections
+- Building for SLCAN, C1CAN and BHCAN
+- Flashing using [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)
+- Customizing build for small displays, gasoline etc.
 
 ## License
 
-See LICENSE.md
+Creative Commons Attribution-NonCommercial 4.0 International License
+
+Copyright (c) 2025 Claude Marais
+
+This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. 
+To view a copy of this license, visit https://creativecommons.org/licenses/by-nc/4.0/.
+
+You are free to:
+- Share: Copy and redistribute the material in any medium or format
+- Adapt: Remix, transform, and build upon the material
+
+Under the following terms:
+- NonCommercial: You may not use the material for commercial purposes.
+
+No additional restrictions: You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+
+See LICENSE.md for licenses about other software this one is derived from.
