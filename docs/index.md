@@ -176,22 +176,20 @@ hasV0,
 forV0_needsQuery,
 forV0_query_reqId,
 forV0_query_reqData,
-forV0_query_replyId,
 forV0_extraction_function
 hasV1,
 forV1_needsQuery,
 forV1_query_reqId,
 forV1_query_reqData,
-forV1_query_replyId,
 forV1_extraction_function
 ```
 
-and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L113-L120); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see Extracion functions)
+and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L108-L115); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see Extracion functions)
 
 for example
 
 ```c
-X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, 0x18DAF110, extractCarUptime, true, false, 0, 0, 0, extractBoardUptime)
+X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, extractCarUptime, true, false, 0, 0, extractBoardUptime)
 ```
 
 renders to:
@@ -204,7 +202,7 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
         .query = {
             .reqId = 0x18DA10F1,
             .reqData = SWAP_ENDIAN32(0x03221009),
-            .replyId = 0x18DAF110,
+            .replyId = REQ_RES_ID_CONVERSION(0x18DAF110),
         },
         .extract = extractCarUptime,
     },
@@ -214,15 +212,17 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
         .query = {
             .reqId = 0,
             .reqData = SWAP_ENDIAN32(0),
-            .replyId = 0
+            .replyId = REQ_RES_ID_CONVERSION(0)
         },
         .extract = extractBoardUptime,
     }};
 ```
 
-GiUCAN will use extractors to send queries - if needed - the consume the reponse and extract first and second float values using extracion functions (`noop_extract` is provided in the codebase for convenience)
+GiUCAN will use extractors to send queries - if needed - the consume the reponse and extract first and second float values using extracion functions (`noop_extract` is provided in the codebase for convenience).
 
 ### user config examples
 
 - Diesel 3.5 inches display [user_config.h](samples/diesel_small_config.md)
 - Gasoline 7 inches display [user_config.h](samples/gasoline_large_config.md)
+
+Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/danardi78/Alfaromeo-Giulia-Stelvio-PIDs) for all know PIDs

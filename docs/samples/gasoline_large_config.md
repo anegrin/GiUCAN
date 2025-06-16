@@ -39,15 +39,15 @@
     X(extractGear, (float)s->car.gear)                                            \
     X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)
 
-#define EXTRACTORS                                                                                                                     \
-    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, 0x18DAF110, extractCarUptime, true, false, 0, 0, 0, extractBoardUptime)         \
-    X(HP_NM_ITEM, true, false, 0, 0, 0, extractHP, true, false, 0, 0, 0, extractNM)                                                    \
-    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, 0x18DAF110, extractBatteryVolt, true, false, 0, 0, 0, extractBatteryApere) \
-    X(BATTERY_P_ITEM, true, false, 0, 0, 0, extractBatteryPerc, false, false, 0, 0, 0, noop_extract)                                   \
-    X(OIL_TEMP_ITEM, true, false, 0, 0, 0, extractOilTemp, false, false, 0, 0, 0, noop_extract)                                        \
-    X(COOLANT_TEMP_ITEM, true, true, 0x18DA10F1, 0x03221003, 0x18DAF110, extractTempCommon, false, false, 0, 0, 0, noop_extract)       \
-    X(AIR_IN_ITEM, true, true, 0x18DA10F1, 0x03221935, 0x18DAF110, extractTempCommon, false, false, 0, 0, 0, noop_extract)             \
-    X(GEAR_ITEM, true, false, 0, 0, 0, extractGear, false, false, 0, 0, 0, noop_extract)                                               \
-    X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, 0x18DAF118, extractGearboxTemp, false, false, 0, 0, 0, noop_extract)      \
-    X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, 0x18DAF12A, extractSteeringAngle, false, false, 0, 0, 0, noop_extract)
+#define EXTRACTORS                                                                                                      \
+    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, extractCarUptime, true, false, 0, 0, extractBoardUptime)         \
+    X(HP_NM_ITEM, true, false, 0, 0, extractHP, true, false, 0, 0, extractNM)                                           \
+    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, extractBatteryVolt, true, false, 0, 0, extractBatteryApere) \
+    X(BATTERY_P_ITEM, true, false, 0, 0, extractBatteryPerc, false, false, 0, 0, noop_extract)                          \
+    X(OIL_TEMP_ITEM, true, false, 0, 0, extractOilTemp, false, false, 0, 0, noop_extract)                               \
+    X(COOLANT_TEMP_ITEM, true, true, 0x18DA10F1, 0x03221003, extractTempCommon, false, false, 0, 0, noop_extract)       \
+    X(AIR_IN_ITEM, true, true, 0x18DA10F1, 0x03221935, extractTempCommon, false, false, 0, 0, noop_extract)             \
+    X(GEAR_ITEM, true, false, 0, 0, extractGear, false, false, 0, 0, noop_extract)                                      \
+    X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)      \
+    X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)
 ```

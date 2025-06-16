@@ -6,11 +6,6 @@
 #include "config.h"
 #include "model.h"
 
-#define SWAP_ENDIAN32(x) (((uint32_t)(x) >> 24) & 0x000000FF) |    \
-                             (((uint32_t)(x) >> 8) & 0x0000FF00) | \
-                             (((uint32_t)(x) << 8) & 0x00FF0000) | \
-                             (((uint32_t)(x) << 24) & 0xFF000000)
-
 #define A(x) x[4]
 #define B(x) x[5]
 #define C(x) x[6]
@@ -160,35 +155,33 @@ hasV0,
 forV0_needsQuery,
 forV0_query_reqId,
 forV0_query_reqData,
-forV0_query_replyId,
 forV0_extraction_function
 hasV1,
 forV1_needsQuery,
 forV1_query_reqId,
 forV1_query_reqData,
-forV1_query_replyId,
 forV1_extraction_function
 */
 #define EXTRACTORS                                                                                                                                                             \
-    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, 0x18DAF110, extractCarUptime, true, false, 0, 0, 0, extractBoardUptime)                                                 \
-    X(HP_NM_ITEM, true, false, 0, 0, 0, extractHP, true, false, 0, 0, 0, extractNM)                                                                                            \
-    X(DPF_STATUS_ITEM, true, false, 0, 0, 0, extractDpfStatus, false, false, 0, 0, 0, noop_extract)                                                                            \
-    X(DPF_CLOG_ITEM, true, true, 0x18DA10F1, 0x032218E4, 0x18DAF110, extractDpfClog, false, false, 0, 0, 0, noop_extract)                                                      \
-    X(DPF_TEMP_ITEM, true, true, 0x18DA10F1, 0x032218DE, 0x18DAF110, extractTempCommon, false, false, 0, 0, 0, noop_extract)                                                   \
-    X(DPF_REG_ITEM, true, true, 0x18DA10F1, 0x0322380B, 0x18DAF110, extractDpfReg, false, false, 0, 0, 0, noop_extract)                                                        \
-    X(DPF_DIST_ITEM, true, true, 0x18DA10F1, 0x03223807, 0x18DAF110, extractDpfDist, false, false, 0, 0, 0, noop_extract)                                                      \
-    X(DPF_COUNT_ITEM, true, true, 0x18DA10F1, 0x032218A4, 0x18DAF110, extractDpfCount, false, false, 0, 0, 0, noop_extract)                                                    \
-    X(DPF_MEAN_DIST_DURATION_ITEM, true, true, 0x18DA10F1, 0x03223809, 0x18DAF110, extractDpfMeanDist, true, true, 0x18DA10F1, 0x0322380A, 0x18DAF110, extractDpfMeanDuration) \
-    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, 0x18DAF110, extractBatteryVolt, true, false, 0, 0, 0, extractBatteryApere)                                         \
-    X(BATTERY_P_ITEM, true, false, 0, 0, 0, extractBatteryPerc, false, false, 0, 0, 0, noop_extract)                                                                           \
-    X(OIL_PRESS_ITEM, true, false, 0, 0, 0, extractOilPressure, false, false, 0, 0, 0, noop_extract)                                                                           \
-    X(OIL_QUALITY_ITEM, true, true, 0x18DA10F1, 0x03223813, 0x18DAF110, extractOilQuality, false, false, 0, 0, 0, noop_extract)                                                \
-    X(OIL_TEMP_ITEM, true, false, 0, 0, 0, extractOilTemp, false, false, 0, 0, 0, noop_extract)                                                                                \
-    X(COOLANT_TEMP_ITEM, true, true, 0x18DA10F1, 0x03221003, 0x18DAF110, extractTempCommon, false, false, 0, 0, 0, noop_extract)                                               \
-    X(AIR_IN_ITEM, true, true, 0x18DA10F1, 0x03221935, 0x18DAF110, extractTempCommon, false, false, 0, 0, 0, noop_extract)                                                     \
-    X(GEAR_ITEM, true, false, 0, 0, 0, extractGear, false, false, 0, 0, 0, noop_extract)                                                                                       \
-    X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, 0x18DAF118, extractGearboxTemp, false, false, 0, 0, 0, noop_extract)                                              \
-    X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, 0x18DAF12A, extractSteeringAngle, false, false, 0, 0, 0, noop_extract)
+    X(UPTIME_ITEM, true, true, 0x18DA10F1, 0x03221009, extractCarUptime, true, false, 0, 0, extractBoardUptime)                                                 \
+    X(HP_NM_ITEM, true, false, 0, 0, extractHP, true, false, 0, 0, extractNM)                                                                                            \
+    X(DPF_STATUS_ITEM, true, false, 0, 0, extractDpfStatus, false, false, 0, 0, noop_extract)                                                                            \
+    X(DPF_CLOG_ITEM, true, true, 0x18DA10F1, 0x032218E4, extractDpfClog, false, false, 0, 0, noop_extract)                                                      \
+    X(DPF_TEMP_ITEM, true, true, 0x18DA10F1, 0x032218DE, extractTempCommon, false, false, 0, 0, noop_extract)                                                   \
+    X(DPF_REG_ITEM, true, true, 0x18DA10F1, 0x0322380B, extractDpfReg, false, false, 0, 0, noop_extract)                                                        \
+    X(DPF_DIST_ITEM, true, true, 0x18DA10F1, 0x03223807, extractDpfDist, false, false, 0, 0, noop_extract)                                                      \
+    X(DPF_COUNT_ITEM, true, true, 0x18DA10F1, 0x032218A4, extractDpfCount, false, false, 0, 0, noop_extract)                                                    \
+    X(DPF_MEAN_DIST_DURATION_ITEM, true, true, 0x18DA10F1, 0x03223809, extractDpfMeanDist, true, true, 0x18DA10F1, 0x0322380A, extractDpfMeanDuration) \
+    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, extractBatteryVolt, true, false, 0, 0, extractBatteryApere)                                         \
+    X(BATTERY_P_ITEM, true, false, 0, 0, extractBatteryPerc, false, false, 0, 0, noop_extract)                                                                           \
+    X(OIL_PRESS_ITEM, true, false, 0, 0, extractOilPressure, false, false, 0, 0, noop_extract)                                                                           \
+    X(OIL_QUALITY_ITEM, true, true, 0x18DA10F1, 0x03223813, extractOilQuality, false, false, 0, 0, noop_extract)                                                \
+    X(OIL_TEMP_ITEM, true, false, 0, 0, extractOilTemp, false, false, 0, 0, noop_extract)                                                                                \
+    X(COOLANT_TEMP_ITEM, true, true, 0x18DA10F1, 0x03221003, extractTempCommon, false, false, 0, 0, noop_extract)                                               \
+    X(AIR_IN_ITEM, true, true, 0x18DA10F1, 0x03221935, extractTempCommon, false, false, 0, 0, noop_extract)                                                     \
+    X(GEAR_ITEM, true, false, 0, 0, extractGear, false, false, 0, 0, noop_extract)                                                                                       \
+    X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)                                              \
+    X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)
 #endif
 #endif
 

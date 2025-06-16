@@ -1,6 +1,15 @@
 #include "dashboard.h"
 #include "printf.h"
 
+#define SWAP_ENDIAN32(x) (((uint32_t)(x) >> 24) & 0x000000FF) |    \
+                             (((uint32_t)(x) >> 8) & 0x0000FF00) | \
+                             (((uint32_t)(x) << 8) & 0x00FF0000) | \
+                             (((uint32_t)(x) << 24) & 0xFF000000)
+
+#define REQ_RES_ID_CONVERSION(x) ((x & 0xFFFF0000) |        \
+                                  ((x & 0x000000FF) << 8) | \
+                                  ((x & 0x0000FF00) >> 8))
+
 #ifdef BHCAN
 #define X(item_type, forV0_return_type, forV0_convert_function_code, forV1_return_type, forV1_convert_function_code) \
     forV0_return_type item_type##_V0Converter(float value)                                                           \
@@ -88,7 +97,7 @@ static CarValueExtractors noExtractors = {
     .hasV0 = false,
     .hasV1 = false};
 
-#define X(item_type, has_V0, V0_needsQuery, V0_query_reqId, V0_query_reqData, V0_query_replyId, V0_extraction_function, has_V1, V1_needsQuery, V1_query_reqId, V1_query_reqData, V1_query_replyId, V1_extraction_function) \
+#define X(item_type, has_V0, V0_needsQuery, V0_query_reqId, V0_query_reqData, V0_extraction_function, has_V1, V1_needsQuery, V1_query_reqId, V1_query_reqData, V1_extraction_function) \
     static CarValueExtractors item_type##_extractors = {                                                                                                                                                                   \
         .hasV0 = has_V0,                                                                                                                                                                                                   \
         .forV0 = {                                                                                                                                                                                                         \
@@ -96,7 +105,7 @@ static CarValueExtractors noExtractors = {
             .query = {                                                                                                                                                                                                     \
                 .reqId = V0_query_reqId,                                                                                                                                                                                   \
                 .reqData = SWAP_ENDIAN32(V0_query_reqData),                                                                                                                                                                \
-                .replyId = V0_query_replyId,                                                                                                                                                                               \
+                .replyId = REQ_RES_ID_CONVERSION(V0_query_reqId),                                                                                                                                                                               \
             },                                                                                                                                                                                                             \
             .extract = V0_extraction_function,                                                                                                                                                                             \
         },                                                                                                                                                                                                                 \
@@ -106,7 +115,7 @@ static CarValueExtractors noExtractors = {
             .query = {                                                                                                                                                                                                     \
                 .reqId = V1_query_reqId,                                                                                                                                                                                   \
                 .reqData = SWAP_ENDIAN32(V1_query_reqData),                                                                                                                                                                \
-                .replyId = V1_query_replyId,                                                                                                                                                                               \
+                .replyId = REQ_RES_ID_CONVERSION(V1_query_reqId),                                                                                                                                                                               \
             },                                                                                                                                                                                                             \
             .extract = V1_extraction_function,                                                                                                                                                                             \
         }};
@@ -117,8 +126,8 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 {
     switch (type)
     {
-#define X(item_type, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12) \
-    case item_type:                                                     \
+#define X(item_type, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10) \
+    case item_type:                                           \
         return item_type##_extractors;
         EXTRACTORS
 #undef X

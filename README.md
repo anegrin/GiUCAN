@@ -4,7 +4,7 @@ This repository contains sources for GiUCAN, a minimalistic version of [BACCAble
 
 - Smart Start and Stop disabling ✔
 - DPF regeneration warnings ✔
-- Dashboard info dispaly ✔
+- Dashboard info display ✔
 
 It's tested and documented using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**; as it's derived from [Canable-fw](https://github.com/normaldotcom/canable-fw) it should work with 
 

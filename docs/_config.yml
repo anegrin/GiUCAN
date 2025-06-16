@@ -4,4 +4,4 @@ plugins:
 title: GiUCAN
 description: >
   a minimalistic version of <a href="https://github.com/gaucho1978/BACCAble">BACCAble</a> providing a subset of functionalities:
-  Smart Start and Stop disabling, DPF regeneration warnings, Dashboard info dispaly
+  Smart Start and Stop disabling, DPF regeneration warnings, Dashboard info display
