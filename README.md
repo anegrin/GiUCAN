@@ -63,7 +63,7 @@ Plaese read [GiUCAN GitHub Pages](https://anegrin.github.io/GiUCAN/) to learn ab
 
 Creative Commons Attribution-NonCommercial 4.0 International License
 
-Copyright (c) 2025 Claude Marais
+Copyright (c) 2025 Alessandro Negrin
 
 This work is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. 
 To view a copy of this license, visit https://creativecommons.org/licenses/by-nc/4.0/.
