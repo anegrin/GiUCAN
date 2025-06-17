@@ -7,6 +7,10 @@
 #include "user_config.h"
 #endif
 
+#ifndef DISABLE_EXTERNAL_OSCILLATOR
+#define ENABLE_EXTERNAL_OSCILLATOR
+#endif
+
 #ifndef GIUCAN_VERSION
 
 #ifdef GIT_VERSION

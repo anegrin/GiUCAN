@@ -72,6 +72,7 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 
 ### Features and behaviors
 
+- `#define DISABLE_EXTERNAL_OSCILLATOR`: UCAN has and external 8Mhz oscillator, GiUCAN use it by default; you can disable it and use internal.
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
 - `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h#L47-L49)
 - `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every 29ms so a full message takes 29*DASHBOARD_MESSAGE_MAX_LENGTH/3 milliseconds to be rendered
