@@ -8,6 +8,11 @@ The developer of GiUCAN assumes no liability for any damages, malfunctions, lega
 
 Do not use this project in real-world vehicle control or autonomous driving applications.
 
+## Rationale
+
+I'm contributing to the [BACCAble](https://github.com/gaucho1978/BACCAble) repository, I'm keeping this one strictly target to my needs; the goal is to use it as a learning playground.
+Please check the amazing [BACCAble](https://github.com/gaucho1978/BACCAble) project!
+
 ## What you need and how to connect
 
 ### Premise
@@ -35,13 +40,13 @@ GiUCAN has been developed and tested for [FYSETC UCAN](https://github.com/FYSETC
 
 Boards must be powered with 5V, you can get the power from the USB connector below the AC; if your ETM has a free USB HSD connector you can use that one to keep the power connection hidden
 
-**DO NOT** connect boards to 12V OBD2 pin with a power converter: OBD2 12V is always providing power even when the car is off and in deepsleep mode, GiUCAN relys on ETM powering off USB for shutdown of boards; **NO LOW CONSUMPTION MODE HAS BEEN IMPLEMENTED.**
+**DO NOT** connect boards to 12V OBD2 pin with a power converter: OBD2 12V is always providing power even when the car is off and in deep sleep mode, GiUCAN relays on ETM powering off USB for shutdown of boards; **NO LOW CONSUMPTION MODE HAS BEEN IMPLEMENTED.**
 
 ## Building
 
-Just run [build.sh](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmwares under `dist` folder:
+Just run [build.sh](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmware files under `dist` folder:
 
-- GiUCAN_SLCAN.elf: it's badically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for exaple with [SavvyCan](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with savvycan
+- GiUCAN_SLCAN.elf: it's badically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for exaple with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
 - GiUCAN_BHCAN.elf: firmware for BHCAN board
 - GiUCAN_C1CAN.elf: firmware for C1CAN board
 
@@ -49,17 +54,17 @@ By default builds are for Diesel and 7 inch dashboard display
 
 ## Flashing
 
-You can use [dfu-util](https://github.com/anegrin/GiUCAN/blob/main/Makefile#L102C7-L102C15) or [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html); connect boards via USB in boot mode by shortcutting BO and 3V3 pins then flash the firmware you like via DFU (Erasing & Programming -> USB from the dropdown on the left).
+You can use [dfu-util](https://github.com/anegrin/GiUCAN/blob/main/Makefile#L102C7-L102C15) or [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html); connect boards via USB in boot mode by short cutting BO and 3V3 pins then flash the firmware you like via DFU (Erasing & Programming -> USB from the dropdown on the left).
 
 ## Usage
 
 Once flashed and connected power on your car; after few seconds you'll see the SNS led on the left active and it means that the SNS has been disabled.
 
-To view messages on the dashboard just keep the cruise control RES button pressed for a couple of seconds, keep it pressed again to hide; you can use cruise control speed joistick to move across dashboard items (1 by 1 or 10 by 10 using "hard press").
+To view messages on the dashboard just keep the cruise control RES button pressed for a couple of seconds, keep it pressed again to hide; you can use cruise control speed joystick to move across dashboard items (1 by 1 or 10 by 10 using "hard press").
 
 If ETM need to show something it will stay on the dashboard for a little bit ore than a second, then GiUCAN will display the item again.
 
-If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will fire a sound notification (seatbelts alarm) and display the "DPF status" item on the dashboard (even if you havent enable messages by long press of RES button).
+If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will fire a sound notification (seat belts alarm) and display the "DPF status" item on the dashboard (even if you haven't enabled messages by long press of RES button).
 
 ## Customization
 
@@ -69,20 +74,20 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
 - `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h#L47-L49)
-- `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dasboard every 29ms so a full message takes 29*DASHBOARD_MESSAGE_MAX_LENGTH/3 millis to be rendered
+- `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every 29ms so a full message takes 29*DASHBOARD_MESSAGE_MAX_LENGTH/3 milliseconds to be rendered
 - `#define DISABLE_DASHBOARD_FORCED_REFRESH`: GiUCAN will refresh items only when their values change
 - `#define DASHBOARD_FORCED_REFRESH_MS 1000`: if GiUCAN can refresh items even if no values have changed this controls how often to do so, in milliseconds. default is 1.5s
 - `#define DISABLE_DPF_REGEN_NOTIFICATIION`: completely disable the DPF regeneration notification feature
 - `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATIION`: disable the sound notification when DPF regeneration starts
 - `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATIION`: disable visual notification (dashboard item display) when DPF regeneration starts
 - `#define DISABLE_DASHBOARD`: disable the dashboard feature, not items will be displayed
-- `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, dafault is 2s
-- `#define DASHBOARD_PAGE_SIZE`: how many items to skip when "hard pressing" speed control joistick
+- `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, default is 2s
+- `#define  5`: how many items to skip when "hard pressing" speed control joystick; default is 10
 - `#define DISABLE_SNS_AUTO_OFF`: disable Start and Stop auto off
 - `#define SNS_AUTO_OFF_DELAY_MS 30000`: if GiUCAN can disable Start and Stop this controls after how many milliseconds to do so. default is 10s
-- `#define CAR_IS_ON_MIN_RPM 800`: the minimum value for Revolutions Per Minute for considering the enigne on; it's used by Start and Stop auto off and by dashboard feature to stop sending messages on BH (if you power off the car and the dashboard items feature was on)
-- `#define VALUES_REFRESH_MS 1000`: how often to refresh values of the visibile dashboard item in milliseconds, default is 0.5s
-- `#define VALUES_TIMEOUT_MS 30000`: after how many milissieconds GiUCAN should stop refreshing items (as the car is off), default is 60s
+- `#define CAR_IS_ON_MIN_RPM 800`: the minimum value for Revolutions Per Minute for considering the engine on, default is 400; it's used by Start and Stop auto off and by dashboard feature to stop sending messages on BH (if you power off the car and the dashboard items feature was on)
+- `#define VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.5s
+- `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
 
 ### Customize items
 
@@ -128,9 +133,9 @@ bool item_type_V1Converter(float value)  {return false;}
 
 so you might wanna then use it for an item with a pattern like `"Current gear: %c"` (it's expecting a char, not a float) and no second value is expected.
 
-#### Extracion functions
+#### Extraction functions
 
-Yuo can extract values from the [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from a CAN response dending on how extractors are defined; a function is defined as
+Yuo can extract values from the [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from a CAN response depending on how extractors are defined; a function is defined as
 
 `function_name, code`
 
@@ -184,7 +189,7 @@ forV1_query_reqData,
 forV1_extraction_function
 ```
 
-and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L108-L115); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see Extracion functions)
+and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L108-L115); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see [Extraction functions](#extraction-functions))
 
 for example
 
@@ -202,7 +207,7 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
         .query = {
             .reqId = 0x18DA10F1,
             .reqData = SWAP_ENDIAN32(0x03221009),
-            .replyId = REQ_RES_ID_CONVERSION(0x18DAF110),
+            .replyId = REQ_RES_ID_CONVERSION(0x18DA10F1),
         },
         .extract = extractCarUptime,
     },
@@ -218,11 +223,11 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
     }};
 ```
 
-GiUCAN will use extractors to send queries - if needed - the consume the reponse and extract first and second float values using extracion functions (`noop_extract` is provided in the codebase for convenience).
+GiUCAN will use extractors to send queries - if needed - the consume the response and extract first and second float values using extraction functions (`noop_extract` is provided in the codebase for convenience).
 
 ### user config examples
 
 - Diesel 3.5 inches display [user_config.h](samples/diesel_small_config.md)
 - Gasoline 7 inches display [user_config.h](samples/gasoline_large_config.md)
 
-Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/danardi78/Alfaromeo-Giulia-Stelvio-PIDs) for all know PIDs
+Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/danardi78/Alfaromeo-Giulia-Stelvio-PIDs) for all known PIDs
