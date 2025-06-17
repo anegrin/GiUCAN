@@ -54,7 +54,7 @@
     X(extractDpfMeanDuration, (float)((A(r) * 256) + B(r)) / 60.0f)               \
     X(extractBatteryVolt, (float)((A(r) * 256) + B(r)) * 0.0005f)                 \
     X(extractBatteryPerc, (float)s->car.battery.chargePercent)                    \
-    X(extractBatteryApere, (float)s->car.battery.current)                         \
+    X(extractBatteryAmpere, (float)s->car.battery.current)                        \
     X(extractOilPressure, s->car.oil.pressure)                                    \
     X(extractOilQuality, ((float)((A(r) * 256) + B(r))) * 0.001525902f)           \
     X(extractOilTemp, (float)s->car.oil.temperature)                              \
@@ -75,7 +75,7 @@
     X(DPF_MEAN_DIST_ITEM, true, true, 0x18DA10F1, 0x03223809, extractDpfMeanDist, false, false, 0, 0, noop_extract)         \
     X(DPF_MEAN_DURATION_ITEM, true, true, 0x18DA10F1, 0x0322380A, extractDpfMeanDuration, false, false, 0, 0, noop_extract) \
     X(BATTERY_V_ITEM, true, true, 0x18DA10F1, 0x03221955, extractBatteryVolt, false, false, 0, 0, noop_extract)             \
-    X(BATTERY_A_ITEM, true, false, 0, 0, extractBatteryApere, false, false, 0, 0, noop_extract)                             \
+    X(BATTERY_A_ITEM, true, false, 0, 0, extractBatteryAmpere, false, false, 0, 0, noop_extract)                            \
     X(BATTERY_P_ITEM, true, false, 0, 0, extractBatteryPerc, false, false, 0, 0, noop_extract)                              \
     X(OIL_PRESS_ITEM, true, false, 0, 0, extractOilPressure, false, false, 0, 0, noop_extract)                              \
     X(OIL_QUALITY_ITEM, true, true, 0x18DA10F1, 0x03223813, extractOilQuality, false, false, 0, 0, noop_extract)            \

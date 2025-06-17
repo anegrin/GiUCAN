@@ -51,7 +51,7 @@ void handle_battery(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8
     if (rx_msg_header.DLC >= 6)
     {
         state->car.battery.chargePercent = (rx_msg_data[1] & 0b01111111);
-        state->car.battery.current = (0.1f * (rx_msg_data[4] << 4 | ((rx_msg_data[5] >> 4) & 0b00001111))) - 250.0f;
+        state->car.battery.current = ((float)(rx_msg_data[4] << 4 | ((rx_msg_data[5] >> 4) & 0b00001111))) * 0.1f - 250.0f;
     }
 }
 void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)

@@ -139,7 +139,7 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
     X(extractDpfMeanDuration, (float)((A(r) * 256) + B(r)) / 60.0f)               \
     X(extractBatteryVolt, (float)((A(r) * 256) + B(r)) * 0.0005f)                 \
     X(extractBatteryPerc, (float)s->car.battery.chargePercent)                    \
-    X(extractBatteryApere, (float)s->car.battery.current)                         \
+    X(extractBatteryAmpere, (float)s->car.battery.current)                        \
     X(extractOilPressure, s->car.oil.pressure)                                    \
     X(extractOilQuality, ((float)((A(r) * 256) + B(r))) * 0.001525902f)           \
     X(extractOilTemp, (float)s->car.oil.temperature)                              \
@@ -172,7 +172,7 @@ forV1_extraction_function
     X(DPF_DIST_ITEM, true, true, 0x18DA10F1, 0x03223807, extractDpfDist, false, false, 0, 0, noop_extract)                                                      \
     X(DPF_COUNT_ITEM, true, true, 0x18DA10F1, 0x032218A4, extractDpfCount, false, false, 0, 0, noop_extract)                                                    \
     X(DPF_MEAN_DIST_DURATION_ITEM, true, true, 0x18DA10F1, 0x03223809, extractDpfMeanDist, true, true, 0x18DA10F1, 0x0322380A, extractDpfMeanDuration) \
-    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, extractBatteryVolt, true, false, 0, 0, extractBatteryApere)                                         \
+    X(BATTERY_V_A_ITEM, true, true, 0x18DA10F1, 0x03221955, extractBatteryVolt, true, false, 0, 0, extractBatteryAmpere)                                         \
     X(BATTERY_P_ITEM, true, false, 0, 0, extractBatteryPerc, false, false, 0, 0, noop_extract)                                                                           \
     X(OIL_PRESS_ITEM, true, false, 0, 0, extractOilPressure, false, false, 0, 0, noop_extract)                                                                           \
     X(OIL_QUALITY_ITEM, true, true, 0x18DA10F1, 0x03223813, extractOilQuality, false, false, 0, 0, noop_extract)                                                \
