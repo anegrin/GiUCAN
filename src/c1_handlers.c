@@ -189,7 +189,7 @@ void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_head
             state->car.dpf.regenerating = 1;
             LOG("%d start DPF r\n", state->board.now);
 #ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATIION
-            state->board.dashboardState.currentItemIndex = DPF_STATUS_ITEM;
+            state->board.dashboardState.currentItemIndex = DPF_REGEN_VISUAL_NOTIFICATIION_ITEM;
             state->board.dashboardState.visible = true;
 #endif
         }

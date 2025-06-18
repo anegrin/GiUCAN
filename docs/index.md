@@ -80,7 +80,8 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DASHBOARD_FORCED_REFRESH_MS 1000`: if GiUCAN can refresh items even if no values have changed this controls how often to do so, in milliseconds. default is 1.5s
 - `#define DISABLE_DPF_REGEN_NOTIFICATIION`: completely disable the DPF regeneration notification feature
 - `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATIION`: disable the sound notification when DPF regeneration starts
-- `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATIION`: disable visual notification (dashboard item display) when DPF regeneration starts
+- `#define DISABLE_DPF_REGEN_VISUAL_NOTIFICATIION`: disable visual notification (dashboard item display) when DPF regeneration starts
+- `#define DPF_REGEN_VISUAL_NOTIFICATIION_ITEM`: what dashboard item to show as visual notification, default is `DPF_STATUS_ITEM`
 - `#define DISABLE_DASHBOARD`: disable the dashboard feature, not items will be displayed
 - `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, default is 2s
 - `#define  5`: how many items to skip when "hard pressing" speed control joystick; default is 10
