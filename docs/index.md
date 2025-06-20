@@ -75,7 +75,10 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DISABLE_EXTERNAL_OSCILLATOR`: UCAN has and external 8Mhz oscillator, GiUCAN use it by default; you can disable it and use internal.
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
 - `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h#L47-L49)
-- `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every 29ms so a full message takes 29*DASHBOARD_MESSAGE_MAX_LENGTH/3 milliseconds to be rendered
+- `#define VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.333s
+- `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
+- `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS` milliseconds so a full message takes `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS*DASHBOARD_MESSAGE_MAX_LENGTH/3` milliseconds to be rendered
+- `#define DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS 50`: messages are sent do dashboard in frames of 3 characters; this controls the pace, default is 30 milliseconds.
 - `#define DISABLE_DASHBOARD_FORCED_REFRESH`: GiUCAN will refresh items only when their values change
 - `#define DASHBOARD_FORCED_REFRESH_MS 1000`: if GiUCAN can refresh items even if no values have changed this controls how often to do so, in milliseconds. default is 1.5s
 - `#define DISABLE_DPF_REGEN_NOTIFICATIION`: completely disable the DPF regeneration notification feature
@@ -86,10 +89,8 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, default is 2s
 - `#define  5`: how many items to skip when "hard pressing" speed control joystick; default is 10
 - `#define DISABLE_SNS_AUTO_OFF`: disable Start and Stop auto off
-- `#define SNS_AUTO_OFF_DELAY_MS 30000`: if GiUCAN can disable Start and Stop this controls after how many milliseconds to do so. default is 10s
+- `#define SNS_AUTO_OFF_DELAY_MS 30000`: if GiUCAN can disable Start and Stop this controls after how many milliseconds to do so. default is 20s
 - `#define CAR_IS_ON_MIN_RPM 800`: the minimum value for Revolutions Per Minute for considering the engine on, default is 400; it's used by Start and Stop auto off and by dashboard feature to stop sending messages on BH (if you power off the car and the dashboard items feature was on)
-- `#define VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.5s
-- `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
 
 ### Customize items
 

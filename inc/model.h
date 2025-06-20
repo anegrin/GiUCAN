@@ -7,7 +7,7 @@
 typedef struct
 {
     bool active;
-    uint32_t snsOffAt;
+    volatile uint32_t snsOffAt;
 } SNSState;
 
 typedef struct
@@ -50,9 +50,9 @@ typedef struct
 
 typedef struct
 {
-    uint32_t now;
-    uint32_t snsRequestOffAt;
-    uint32_t dpfRegenNotificationRequestAt;
+    volatile uint32_t now;
+    volatile uint32_t snsRequestOffAt;
+    volatile uint32_t dpfRegenNotificationRequestAt;
     uint32_t latestMessageReceivedAt;
     uint32_t dashboardExternallyUpdatedAt;
     DashboardState dashboardState;

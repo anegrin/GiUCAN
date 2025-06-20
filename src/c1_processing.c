@@ -42,9 +42,9 @@ void state_process(GlobalState *state)
     {
         if (state->car.sns.active)
         {
+            state->board.snsRequestOffAt = state->board.now;
             // sns was on, we request for off
             LOG("%d SNS req off\n", state->board.now);
-            state->board.snsRequestOffAt = state->board.now;
         }
         else
         {

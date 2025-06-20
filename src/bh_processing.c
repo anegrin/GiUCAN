@@ -7,14 +7,11 @@
 #include "dashboard.h"
 #include "can.h"
 
-#define SEND_DASHBOARD_FRAME_DELAY 29
-
 static bool localStateSet = false;
 static DashboardState dashboardLocalState;
 static DPF dpfLocalState;
 static uint32_t queuePolledAt = 0;
 
-#define FRAME_QUEUE_POLLING_INTERVAL 29
 #define FRAME_QUEUE_SIZE 128
 
 typedef struct
@@ -121,8 +118,8 @@ void state_process(GlobalState *state)
 
         if (state->car.dpf.regenerating != dpfLocalState.regenerating)
         {
-            LOGS(state->car.dpf.regenerating ? "regen started\n" : "regen ended\n");
             state->board.dpfRegenNotificationRequestAt = state->car.dpf.regenerating ? state->board.now : 0;
+            LOGS(state->car.dpf.regenerating ? "regen started\n" : "regen ended\n");
         }
     }
 
@@ -138,7 +135,7 @@ void state_process(GlobalState *state)
     {
         if (tx_queue->count != 0)
         {
-            if (state->board.now - queuePolledAt > FRAME_QUEUE_POLLING_INTERVAL)
+            if (state->board.now - queuePolledAt > DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS)
             {
                 DashboardFrame frame = tx_queue->buffer[tx_queue->head];
 

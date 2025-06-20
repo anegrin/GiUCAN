@@ -67,6 +67,10 @@
 #endif
 #endif
 
+#ifndef DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS
+#define DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS 30
+#endif
+
 #ifndef DISABLE_DPF_REGEN_NOTIFICATIION
 #define ENABLE_DPF_REGEN_NOTIFICATIION
 
@@ -98,7 +102,7 @@
 #ifndef DISABLE_SNS_AUTO_OFF
 #define ENABLE_SNS_AUTO_OFF
 #ifndef SNS_AUTO_OFF_DELAY_MS
-#define SNS_AUTO_OFF_DELAY_MS 10000
+#define SNS_AUTO_OFF_DELAY_MS 20000
 #endif
 #endif
 
@@ -108,12 +112,12 @@
 
 #ifndef ENABLE_DASHBOARD
 #ifndef ENABLE_SNS_AUTO_OFF
-#error "You're building a C1CAN without any active feature :/"
+#warning "You're building a C1CAN without any active feature :/"
 #endif
 #endif
 
 #ifndef VALUES_REFRESH_MS
-#define VALUES_REFRESH_MS 500
+#define VALUES_REFRESH_MS 333
 #endif
 
 #ifndef VALUES_TIMEOUT_MS

@@ -164,6 +164,7 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
     bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0;
     if (shouldDisableSNS)
     {
+        state->car.sns.snsOffAt = state->board.now;
         LOG("%d disable SNS\n", state->board.now);
         memcpy(&disableSNSFrame, &rx_msg_data, rx_msg_header.DLC);
         disableSNSHeader.DLC = rx_msg_header.DLC;
@@ -172,7 +173,6 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
         {
             led_tx_on();
         }
-        state->car.sns.snsOffAt = state->board.now;
     }
 }
 #endif
