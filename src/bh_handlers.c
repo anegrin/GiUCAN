@@ -26,7 +26,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
             state->board.dpfRegenNotificationRequestAt = 0;
 
 #ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
-            memcpy(dpfSoundAlertFrame, &rx_msg_data, rx_msg_header.DLC);
+            memcpy(dpfSoundAlertFrame, rx_msg_data, rx_msg_header.DLC);
 
             dpfSoundAlertHeader.DLC = rx_msg_header.DLC;
             dpfSoundAlertFrame[0] = (dpfSoundAlertFrame[0] & 0b00111111);              // set bit 7 and 6 to zero (chime type 0)
