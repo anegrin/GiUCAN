@@ -6,11 +6,15 @@
 #include "config.h"
 #include "model.h"
 
+//single and multiple frames resp
 #define A(x) x[4]
 #define B(x) x[5]
 #define C(x) x[6]
 #define D(x) x[7]
+//only for multiple frames resp
 #define E(x) x[8]
+#define F(x) x[9]
+#define G(x) x[10]
 
 typedef float (*ExtractionFuncPtr)(GlobalState *state, uint8_t *rx_msg_data);
 
@@ -53,12 +57,12 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
                      "\xB0")                                   \
     X(TIRES_TEMP_FRONT_ITEM, "%.0f"                            \
                              "\xB0"                            \
-                             "C F.T. temp %.0f"                \
+                             "C ^ tires ^ %.0f"                \
                              "\xB0"                            \
                              "C")                              \
     X(TIRES_TEMP_REAR_ITEM, "%.0f"                             \
                             "\xB0"                             \
-                            "C R.T. temp %.0f"                 \
+                            "C v tires v %.0f"                 \
                             "\xB0"                             \
                             "C")
 #endif
@@ -195,7 +199,7 @@ forV1_extraction_function
     X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)                                     \
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)                                       \
     X(TIRES_TEMP_FRONT_ITEM, true, true, 0x18DAC7F1, 0x032240B1, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B2, extractTireTemp)                 \
-    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B5, extractTireTemp)
+    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp)
 #endif
 #endif
 

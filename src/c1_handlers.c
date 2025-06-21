@@ -256,9 +256,9 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
 
 #define CONSECUTIVE_FRAME_LIMIT 0x0F
 static uint8_t multiframe_rx_msg_data_index = 0;
-#define MULTIFRAME_RX_MSG_DATA_SIZE (CONSECUTIVE_FRAME_LIMIT * 7) + 6
-static uint8_t multiframe_rx_msg_data_payload_size = 0;
-static uint8_t multiframe_rx_msg_data[MULTIFRAME_RX_MSG_DATA_SIZE];
+#define MULTIFRAME_RX_MSG_DATA_SIZE 127
+static int8_t multiframe_rx_msg_data_pending_bytes = 0;
+static uint8_t multiframe_rx_msg_data[2][MULTIFRAME_RX_MSG_DATA_SIZE];
 static uint8_t flow_control_tx_msg_data[8] = {0x30, CONSECUTIVE_FRAME_LIMIT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data, uint8_t valueIndex)
@@ -275,25 +275,37 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
 
         if (consecutive_frame)
         {
-            for (uint8_t i = 1; i <= 7; i++)
+            VLOG("multiframe size %d\n", multiframe_rx_msg_data_pending_bytes);
+            VLOG("c_f %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3], rx_msg_data[4], rx_msg_data[5], rx_msg_data[6], rx_msg_data[7]);
+            for (uint8_t i = 1; i <= 7 && multiframe_rx_msg_data_pending_bytes >= 0; i++)
             {
                 if (multiframe_rx_msg_data_index < MULTIFRAME_RX_MSG_DATA_SIZE)
                 {
-                    multiframe_rx_msg_data[multiframe_rx_msg_data_index] = rx_msg_data[i];
+                    multiframe_rx_msg_data[valueIndex][multiframe_rx_msg_data_index] = rx_msg_data[i];
                 }
                 multiframe_rx_msg_data_index++;
-                multiframe_rx_msg_data_payload_size--;
+                multiframe_rx_msg_data_pending_bytes--;
             }
+            VLOG("multiframe size %d\n", multiframe_rx_msg_data_pending_bytes);
 
-            if (multiframe_rx_msg_data_payload_size <= 0)
+            if (multiframe_rx_msg_data_pending_bytes <= 0)
             {
-                float extractedValue = extractor.extract(state, multiframe_rx_msg_data);
+                float extractedValue = extractor.extract(state, multiframe_rx_msg_data[valueIndex]);
+                VLOG("v %.2f\n", extractedValue);
+                VLOG("m_d1 %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3], rx_msg_data[4], rx_msg_data[5], rx_msg_data[6], rx_msg_data[7]);
+                VLOG("m_d2 %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[8], rx_msg_data[9], rx_msg_data[10], rx_msg_data[11], rx_msg_data[12], rx_msg_data[13], rx_msg_data[14], rx_msg_data[15]);
+
                 if (state->board.dashboardState.values[valueIndex] != extractedValue)
                 {
                     state->board.dashboardState.values[valueIndex] = extractedValue;
                     extracted = true;
                 }
+                state->board.collectingMultiframeResponse = false;
             }
+        }
+        else if (state->board.collectingMultiframeResponse)
+        {
+            return false;
         }
         else
         {
@@ -306,17 +318,23 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
                 {
                     if (first_frame)
                     {
-                        multiframe_rx_msg_data[0] = 0x10;
-                        multiframe_rx_msg_data[1] = MULTIFRAME_RX_MSG_DATA_SIZE;
-                        multiframe_rx_msg_data[2] = (extractor.query.reqData >> 16 & 0xff);
-                        multiframe_rx_msg_data[3] = extractor.query.reqData >> 24;
-                        multiframe_rx_msg_data[4] = rx_msg_data[5];
-                        multiframe_rx_msg_data[5] = rx_msg_data[6];
-                        multiframe_rx_msg_data[6] = rx_msg_data[7];
+                        state->board.collectingMultiframeResponse = true;
+                        VLOG("f_f %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3], rx_msg_data[4], rx_msg_data[5], rx_msg_data[6], rx_msg_data[7]);
+                        //2 bytes for fake init frame
+                        multiframe_rx_msg_data[valueIndex][0] = 0x10;
+                        multiframe_rx_msg_data[valueIndex][1] = MULTIFRAME_RX_MSG_DATA_SIZE;
+                        //2 bytes for fake command
+                        multiframe_rx_msg_data[valueIndex][2] = (extractor.query.reqData >> 16 & 0xff);
+                        multiframe_rx_msg_data[valueIndex][3] = extractor.query.reqData >> 24;
+                        //3 data bytes
+                        multiframe_rx_msg_data[valueIndex][4] = rx_msg_data[5];
+                        multiframe_rx_msg_data[valueIndex][5] = rx_msg_data[6];
+                        multiframe_rx_msg_data[valueIndex][6] = rx_msg_data[7];
                         multiframe_rx_msg_data_index = 7;
                         CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .DLC = 3};
                         tx_msg_header.ExtId = extractor.query.reqId;
-                        multiframe_rx_msg_data_payload_size = (rx_msg_data[0] & 0x0f) * 256 + rx_msg_data[1] - 3;
+                        //pending bytes is total - 2 cmd bytes - 3 data bytes
+                        multiframe_rx_msg_data_pending_bytes = (rx_msg_data[0] & 0x0f) * 256 + rx_msg_data[1] - 5;
                         can_tx(&tx_msg_header, flow_control_tx_msg_data);
                     }
                     else
@@ -337,8 +355,16 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
     return extracted;
 }
 
+static uint8_t localCurrentDashboardItemIndex = 0;
 void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
+
+    if (localCurrentDashboardItemIndex != state->board.dashboardState.currentItemIndex)
+    {
+        localCurrentDashboardItemIndex = state->board.dashboardState.currentItemIndex;
+        state->board.collectingMultiframeResponse = false;
+    }
+
     if (state->board.dashboardState.visible)
     {
         bool v0Extracted = false;

@@ -62,7 +62,7 @@ void state_process(GlobalState *state)
         send_state(state);
     }
 
-    if (state->board.dashboardState.visible)
+    if (state->board.dashboardState.visible && !state->board.collectingMultiframeResponse)
     {
         if (valuesUpdatedAt + VALUES_REFRESH_MS < state->board.now)
         {

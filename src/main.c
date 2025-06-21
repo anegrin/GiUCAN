@@ -108,6 +108,7 @@ int main(void)
 
 void state_init(GlobalState *state)
 {
+    state->board.collectingMultiframeResponse = false;
     state->board.dashboardExternallyUpdatedAt = 0;
     state->board.dashboardState.itemsCount = DASHBOARD_ITEMS_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
