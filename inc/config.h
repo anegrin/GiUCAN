@@ -116,8 +116,8 @@
 #endif
 #endif
 
-#ifndef VALUES_REFRESH_MS
-#define VALUES_REFRESH_MS 333
+#ifndef DEFAULT_VALUES_REFRESH_MS
+#define DEFAULT_VALUES_REFRESH_MS 333
 #endif
 
 #ifndef VALUES_TIMEOUT_MS

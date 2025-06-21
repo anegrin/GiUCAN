@@ -33,6 +33,8 @@ void extract_or_send_request(CarValueExtractor extractor, GlobalState *state, ui
 
 static uint32_t valuesUpdatedAt = 0;
 static int valueToExtract = 0;
+static uint8_t localCurrentDashboardItemIndex = 0;
+static uint32_t refreshOperations = 0;
 void state_process(GlobalState *state)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
@@ -55,7 +57,7 @@ void state_process(GlobalState *state)
 #endif
 #ifdef ENABLE_DASHBOARD
 
-    if (state->board.dashboardState.visible && state->board.latestMessageReceivedAt + VALUES_TIMEOUT_MS < state->board.now) 
+    if (state->board.dashboardState.visible && state->board.latestMessageReceivedAt + VALUES_TIMEOUT_MS < state->board.now)
     {
         VLOG("%d no msg", state->board.now);
         state->board.dashboardState.visible = false;
@@ -64,11 +66,33 @@ void state_process(GlobalState *state)
 
     if (state->board.dashboardState.visible && !state->board.collectingMultiframeResponse)
     {
-        if (valuesUpdatedAt + VALUES_REFRESH_MS < state->board.now)
-        {
+        DashboardItemType type = state->board.dashboardState.currentItemIndex;
 
+        if (localCurrentDashboardItemIndex != type)
+        {
+            valueToExtract = -1;
+            refreshOperations = 0;
+            localCurrentDashboardItemIndex = type;
+        }
+
+        uint32_t values_refresh_ms = values_refresh_rate_of(type);
+
+        //first 2 iterations for an item (v0 and optional v1)
+        //must be done ASAP, then we'll honor values_refresh_rate_of
+        if (refreshOperations == 0)
+        {
+            values_refresh_ms = 0;
+        }
+
+        if (refreshOperations == 1)
+        {
+            values_refresh_ms = DEFAULT_VALUES_REFRESH_MS / 2;
+        }
+
+        if (valuesUpdatedAt + values_refresh_ms < state->board.now)
+        {
+            refreshOperations++;
             valuesUpdatedAt = state->board.now;
-            DashboardItemType type = state->board.dashboardState.currentItemIndex;
             CarValueExtractors extractors = extractor_of(type, state);
             if (extractors.hasV0 && extractors.hasV1)
             {

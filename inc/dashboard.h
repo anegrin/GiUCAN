@@ -6,12 +6,12 @@
 #include "config.h"
 #include "model.h"
 
-//single and multiple frames resp
+// single and multiple frames resp
 #define A(x) x[4]
 #define B(x) x[5]
 #define C(x) x[6]
 #define D(x) x[7]
-//only for multiple frames resp
+// only for multiple frames resp
 #define E(x) x[8]
 #define F(x) x[9]
 #define G(x) x[10]
@@ -130,6 +130,7 @@ typedef struct
 } CarValueExtractors;
 
 CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state);
+uint32_t values_refresh_rate_of(DashboardItemType type);
 
 #ifndef EXTRACTION_FUNCTIONS
 /*
@@ -201,6 +202,26 @@ forV1_extraction_function
     X(TIRES_TEMP_FRONT_ITEM, true, true, 0x18DAC7F1, 0x032240B1, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B2, extractTireTemp)                 \
     X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp)
 #endif
+#endif
+
+#ifndef VALUES_REFRESH_MS
+/* item_type, values_refresh_ms */
+#define VALUES_REFRESH_MS                 \
+    X(FIRMWARE_ITEM, 60000)               \
+    X(UPTIME_ITEM, 1000)                  \
+    X(DPF_STATUS_ITEM, 1000)              \
+    X(DPF_CLOG_ITEM, 5000)                \
+    X(DPF_TEMP_ITEM, 5000)                \
+    X(DPF_REG_ITEM, 1000)                 \
+    X(DPF_DIST_ITEM, 60000)               \
+    X(DPF_COUNT_ITEM, 60000)              \
+    X(DPF_MEAN_DIST_DURATION_ITEM, 60000) \
+    X(BATTERY_V_A_ITEM, 1000)             \
+    X(BATTERY_P_ITEM, 10000)              \
+    X(OIL_QUALITY_ITEM, 60000)            \
+    X(GEARBOX_TEMP_ITEM, 10000)           \
+    X(TIRES_TEMP_FRONT_ITEM, 60000)       \
+    X(TIRES_TEMP_REAR_ITEM, 60000)
 #endif
 
 #endif // _DASHBOARD_H

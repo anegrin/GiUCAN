@@ -98,26 +98,26 @@ static CarValueExtractors noExtractors = {
     .hasV1 = false};
 
 #define X(item_type, has_V0, V0_needsQuery, V0_query_reqId, V0_query_reqData, V0_extraction_function, has_V1, V1_needsQuery, V1_query_reqId, V1_query_reqData, V1_extraction_function) \
-    static CarValueExtractors item_type##_extractors = {                                                                                                                                                                   \
-        .hasV0 = has_V0,                                                                                                                                                                                                   \
-        .forV0 = {                                                                                                                                                                                                         \
-            .needsQuery = V0_needsQuery,                                                                                                                                                                                   \
-            .query = {                                                                                                                                                                                                     \
-                .reqId = V0_query_reqId,                                                                                                                                                                                   \
-                .reqData = SWAP_ENDIAN32(V0_query_reqData),                                                                                                                                                                \
-                .replyId = REQ_RES_ID_CONVERSION(V0_query_reqId),                                                                                                                                                                               \
-            },                                                                                                                                                                                                             \
-            .extract = V0_extraction_function,                                                                                                                                                                             \
-        },                                                                                                                                                                                                                 \
-        .hasV1 = has_V1,                                                                                                                                                                                                   \
-        .forV1 = {                                                                                                                                                                                                         \
-            .needsQuery = V1_needsQuery,                                                                                                                                                                                   \
-            .query = {                                                                                                                                                                                                     \
-                .reqId = V1_query_reqId,                                                                                                                                                                                   \
-                .reqData = SWAP_ENDIAN32(V1_query_reqData),                                                                                                                                                                \
-                .replyId = REQ_RES_ID_CONVERSION(V1_query_reqId),                                                                                                                                                                               \
-            },                                                                                                                                                                                                             \
-            .extract = V1_extraction_function,                                                                                                                                                                             \
+    static CarValueExtractors item_type##_extractors = {                                                                                                                               \
+        .hasV0 = has_V0,                                                                                                                                                               \
+        .forV0 = {                                                                                                                                                                     \
+            .needsQuery = V0_needsQuery,                                                                                                                                               \
+            .query = {                                                                                                                                                                 \
+                .reqId = V0_query_reqId,                                                                                                                                               \
+                .reqData = SWAP_ENDIAN32(V0_query_reqData),                                                                                                                            \
+                .replyId = REQ_RES_ID_CONVERSION(V0_query_reqId),                                                                                                                      \
+            },                                                                                                                                                                         \
+            .extract = V0_extraction_function,                                                                                                                                         \
+        },                                                                                                                                                                             \
+        .hasV1 = has_V1,                                                                                                                                                               \
+        .forV1 = {                                                                                                                                                                     \
+            .needsQuery = V1_needsQuery,                                                                                                                                               \
+            .query = {                                                                                                                                                                 \
+                .reqId = V1_query_reqId,                                                                                                                                               \
+                .reqData = SWAP_ENDIAN32(V1_query_reqData),                                                                                                                            \
+                .replyId = REQ_RES_ID_CONVERSION(V1_query_reqId),                                                                                                                      \
+            },                                                                                                                                                                         \
+            .extract = V1_extraction_function,                                                                                                                                         \
         }};
 EXTRACTORS
 #undef X
@@ -133,6 +133,20 @@ CarValueExtractors extractor_of(DashboardItemType type, GlobalState *state)
 #undef X
     default:
         return noExtractors;
+    }
+}
+
+uint32_t values_refresh_rate_of(DashboardItemType type)
+{
+    switch (type)
+    {
+#define X(item_type, ms) \
+    case item_type:      \
+        return ms;
+        VALUES_REFRESH_MS
+#undef X
+    default:
+        return DEFAULT_VALUES_REFRESH_MS;
     }
 }
 #endif
