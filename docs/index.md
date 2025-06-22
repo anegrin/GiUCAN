@@ -75,7 +75,7 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DISABLE_EXTERNAL_OSCILLATOR`: UCAN has and external 8Mhz oscillator, GiUCAN use it by default; you can disable it and use internal.
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
 - `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h#L47-L49)
-- `#define VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.333s
+- `#define DEFAULT_VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.333s
 - `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
 - `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS` milliseconds so a full message takes `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS*DASHBOARD_MESSAGE_MAX_LENGTH/3` milliseconds to be rendered
 - `#define DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS 50`: messages are sent do dashboard in frames of 3 characters; this controls the pace, default is 29 milliseconds.
@@ -100,12 +100,13 @@ You can customize what items are displayed, how they are rendered and how they a
 - `CONVERTERS` defines how to convert a value from float to any other type before rendering
 - `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from CAN message (8 bytes)
 - `EXTRACTORS`: defines how extract first and second value for each item, defines if it needs to send a query to the bus and what function to use
+- `VALUES_REFRESH_MS`: defines values extraction rate, by default values are refreshed every `DEFAULT_VALUES_REFRESH_MS`
 
 take a look at [inc/dashboard.h](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h) for reference
 
 #### Patterns
 
-GiUCAN do render messates using `snprintf` so output is always truncated to `DASHBOARD_MESSAGE_MAX_LENGTH`
+GiUCAN do render messages using `snprintf` so output is always truncated to `DASHBOARD_MESSAGE_MAX_LENGTH`
 
 #### Converters
 
@@ -129,9 +130,9 @@ X(GEAR_ITEM, char, ((unsigned char)value), bool, false)
 renders to 
 
 ```c
-char item_type_V0Converter(float value)  {return ((unsigned char)value);}
+char GEAR_ITEM_V0Converter(float value)  {return ((unsigned char)value);}
 
-bool item_type_V1Converter(float value)  {return false;}
+bool GEAR_ITEM_V1Converter(float value)  {return false;}
 ```
 
 so you might wanna then use it for an item with a pattern like `"Current gear: %c"` (it's expecting a char, not a float) and no second value is expected.
