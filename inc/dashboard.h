@@ -26,10 +26,10 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
 #define DASHBOARD_ITEMS                                        \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)                 \
     X(UPTIME_ITEM, "Uptime: %.0fmin/%.0fmin")                  \
-    X(HP_NM_ITEM, "Power: %.1fhp/%.0fnm")                      \
+    X(HP_NM_ITEM, "Power: %.0fhp/%.0fnm")                      \
     X(DPF_STATUS_ITEM, "DPF status: %s")                       \
     X(DPF_CLOG_ITEM, "DPF clogging: %.0f%%")                   \
-    X(DPF_TEMP_ITEM, "DPF temperature: %.0f"                   \
+    X(DPF_TEMP_ITEM, "DPF temp.: %.0f"                         \
                      "\xB0"                                    \
                      "C")                                      \
     X(DPF_REG_ITEM, "DPF regeneration: %.0f%%")                \
@@ -40,17 +40,17 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
     X(BATTERY_P_ITEM, "Battery charge: %.0f%%")                \
     X(OIL_PRESS_ITEM, "Oil pressure: %.1fbar")                 \
     X(OIL_QUALITY_ITEM, "Oil quality: %.0f%%")                 \
-    X(OIL_TEMP_ITEM, "Oil temperature: %.0f"                   \
+    X(OIL_TEMP_ITEM, "Oil temp.: %.0f"                         \
                      "\xB0"                                    \
                      "C")                                      \
-    X(COOLANT_TEMP_ITEM, "Coolant temperature: %.0f"           \
+    X(COOLANT_TEMP_ITEM, "Coolant temp.: %.0f"                 \
                          "\xB0"                                \
                          "C")                                  \
-    X(AIR_IN_ITEM, "Air in temperature: %.0f"                  \
+    X(AIR_IN_ITEM, "Air in temp.: %.0f"                        \
                    "\xB0"                                      \
                    "C")                                        \
     X(GEAR_ITEM, "Current gear: %c")                           \
-    X(GEARBOX_TEMP_ITEM, "Gearbox temperature: %.0f"           \
+    X(GEARBOX_TEMP_ITEM, "Gearbox temp.: %.0f"                 \
                          "\xB0"                                \
                          "C")                                  \
     X(STEERING_ITEM, "Steering angle: %.1f"                    \
@@ -200,7 +200,7 @@ forV1_extraction_function
     X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)                                     \
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)                                       \
     X(TIRES_TEMP_FRONT_ITEM, true, true, 0x18DAC7F1, 0x032240B1, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B2, extractTireTemp)                 \
-    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp)
+    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B4, extractTireTemp)
 #endif
 #endif
 
@@ -220,8 +220,8 @@ forV1_extraction_function
     X(BATTERY_P_ITEM, 10000)              \
     X(OIL_QUALITY_ITEM, 60000)            \
     X(GEARBOX_TEMP_ITEM, 10000)           \
-    X(TIRES_TEMP_FRONT_ITEM, 60000)       \
-    X(TIRES_TEMP_REAR_ITEM, 60000)
+    X(TIRES_TEMP_FRONT_ITEM, 15000)       \
+    X(TIRES_TEMP_REAR_ITEM, 15000)
 #endif
 
 #endif // _DASHBOARD_H

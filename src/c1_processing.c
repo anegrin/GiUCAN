@@ -64,7 +64,7 @@ void state_process(GlobalState *state)
         send_state(state);
     }
 
-    if (state->board.dashboardState.visible && !state->board.collectingMultiframeResponse)
+    if (state->board.dashboardState.visible && state->board.collectingMultiframeResponse == -1)
     {
         DashboardItemType type = state->board.dashboardState.currentItemIndex;
 
@@ -79,14 +79,9 @@ void state_process(GlobalState *state)
 
         //first 2 iterations for an item (v0 and optional v1)
         //must be done ASAP, then we'll honor values_refresh_rate_of
-        if (refreshOperations == 0)
+        if (refreshOperations < 2)
         {
-            values_refresh_ms = 0;
-        }
-
-        if (refreshOperations == 1)
-        {
-            values_refresh_ms = DEFAULT_VALUES_REFRESH_MS / 2;
+            values_refresh_ms = DEFAULT_VALUES_REFRESH_MS / 5;
         }
 
         if (valuesUpdatedAt + values_refresh_ms < state->board.now)

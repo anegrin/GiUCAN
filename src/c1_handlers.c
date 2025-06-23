@@ -300,10 +300,10 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
                     state->board.dashboardState.values[valueIndex] = extractedValue;
                     extracted = true;
                 }
-                state->board.collectingMultiframeResponse = false;
+                state->board.collectingMultiframeResponse = -1;
             }
         }
-        else if (state->board.collectingMultiframeResponse)
+        else if (state->board.collectingMultiframeResponse != -1)
         {
             return false;
         }
@@ -318,7 +318,7 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
                 {
                     if (first_frame)
                     {
-                        state->board.collectingMultiframeResponse = true;
+                        state->board.collectingMultiframeResponse = valueIndex;
                         VLOG("f_f %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3], rx_msg_data[4], rx_msg_data[5], rx_msg_data[6], rx_msg_data[7]);
                         //2 bytes for fake init frame
                         multiframe_rx_msg_data[valueIndex][0] = 0x10;
@@ -362,21 +362,24 @@ void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     if (localCurrentDashboardItemIndex != state->board.dashboardState.currentItemIndex)
     {
         localCurrentDashboardItemIndex = state->board.dashboardState.currentItemIndex;
-        state->board.collectingMultiframeResponse = false;
+        state->board.collectingMultiframeResponse = -1;
     }
 
     if (state->board.dashboardState.visible)
     {
+        bool consumingV0Multiframe = state->board.collectingMultiframeResponse == 0;
+        bool consumingV1Multiframe = state->board.collectingMultiframeResponse == 1;
+        bool notConsuming = state->board.collectingMultiframeResponse == -1;
         bool v0Extracted = false;
         bool v1Extracted = false;
         DashboardItemType type = state->board.dashboardState.currentItemIndex;
         CarValueExtractors extractors = extractor_of(type, state);
-        if (extractors.hasV0)
+        if (extractors.hasV0 && (consumingV0Multiframe || notConsuming))
         {
             v0Extracted = apply_extractor(extractors.forV0, state, &rx_msg_header, rx_msg_data, 0);
         }
 
-        if (extractors.hasV1)
+        if (extractors.hasV1 && (consumingV1Multiframe || notConsuming))
         {
             v1Extracted = apply_extractor(extractors.forV1, state, &rx_msg_header, rx_msg_data, 1);
         }

@@ -1,26 +1,26 @@
 ```c
 #define DISABLE_DPF_REGEN_NOTIFICATIION
 
-#define DASHBOARD_ITEMS                              \
-    X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)       \
-    X(UPTIME_ITEM, "Uptime: %.0fmin/%.0fmin")        \
-    X(HP_NM_ITEM, "Power: %.1fhp/%.0fnm")            \
-    X(BATTERY_V_A_ITEM, "Battery: %.1fV/%.2fA")      \
-    X(BATTERY_P_ITEM, "Battery charge: %.0f%%")      \
-    X(OIL_TEMP_ITEM, "Oil temperature: %.0f"         \
-                     "\xB0"                          \
-                     "C")                            \
-    X(COOLANT_TEMP_ITEM, "Coolant temperature: %.0f" \
-                         "\xB0"                      \
-                         "C")                        \
-    X(AIR_IN_ITEM, "Air in temperature: %.0f"        \
-                   "\xB0"                            \
-                   "C")                              \
-    X(GEAR_ITEM, "Current gear: %c")                 \
-    X(GEARBOX_TEMP_ITEM, "Gearbox temperature: %.0f" \
-                         "\xB0"                      \
-                         "C")                        \
-    X(STEERING_ITEM, "Steering angle: %.1f"          \
+#define DASHBOARD_ITEMS                         \
+    X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)  \
+    X(UPTIME_ITEM, "Uptime: %.0fmin/%.0fmin")   \
+    X(HP_NM_ITEM, "Power: %.1fhp/%.0fnm")       \
+    X(BATTERY_V_A_ITEM, "Battery: %.1fV/%.2fA") \
+    X(BATTERY_P_ITEM, "Battery charge: %.0f%%") \
+    X(OIL_TEMP_ITEM, "Oil temp.: %.0f"          \
+                     "\xB0"                     \
+                     "C")                       \
+    X(COOLANT_TEMP_ITEM, "Coolant temp.: %.0f"  \
+                         "\xB0"                 \
+                         "C")                   \
+    X(AIR_IN_ITEM, "Air in temp.: %.0f"         \
+                   "\xB0"                       \
+                   "C")                         \
+    X(GEAR_ITEM, "Current gear: %c")            \
+    X(GEARBOX_TEMP_ITEM, "Gearbox temp.: %.0f"  \
+                         "\xB0"                 \
+                         "C")                   \
+    X(STEERING_ITEM, "Steering angle: %.1f"     \
                      "\xB0")
 #define CONVERTERS \
     X(GEAR_ITEM, char, ((unsigned char)value), bool, false)
@@ -50,4 +50,11 @@
     X(GEAR_ITEM, true, false, 0, 0, extractGear, false, false, 0, 0, noop_extract)                                       \
     X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)       \
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)
+
+#define VALUES_REFRESH_MS     \
+    X(FIRMWARE_ITEM, 60000)   \
+    X(UPTIME_ITEM, 1000)      \
+    X(BATTERY_V_A_ITEM, 1000) \
+    X(BATTERY_P_ITEM, 10000)  \
+    X(GEARBOX_TEMP_ITEM, 10000)
 ```

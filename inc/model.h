@@ -55,7 +55,7 @@ typedef struct
     uint32_t dpfRegenNotificationRequestAt;
     uint32_t latestMessageReceivedAt;
     uint32_t dashboardExternallyUpdatedAt;
-    bool collectingMultiframeResponse;
+    int8_t collectingMultiframeResponse;
     DashboardState dashboardState;
 } BoardState;
 

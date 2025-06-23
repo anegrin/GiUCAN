@@ -6,9 +6,9 @@
     X(UPTIME_ITEM, "Uptime: %.0fmin")              \
     X(HP_ITEM, "Power: %.1fhp")                    \
     X(NM_ITEM, "Torque: %.0fnm")                   \
-    X(DPF_STATUS_ITEM, "DPF status: %s")           \
+    X(DPF_STATUS_ITEM, "DPF: %s")                  \
     X(DPF_CLOG_ITEM, "DPF clog: %.0f%%")           \
-    X(DPF_TEMP_ITEM, "DPF temp: %.0f"              \
+    X(DPF_TEMP_ITEM, "DPF t: %.0f"                 \
                      "\xB0"                        \
                      "C")                          \
     X(DPF_REG_ITEM, "DPF ref: %.0f%%")             \
@@ -19,23 +19,34 @@
     X(BATTERY_V_ITEM, "Battery: %.1fV")            \
     X(BATTERY_A_ITEM, "Battery: %.2fA")            \
     X(BATTERY_P_ITEM, "Battery: %.0f%%")           \
-    X(OIL_PRESS_ITEM, "Oil press: %.1fbar")        \
+    X(OIL_PRESS_ITEM, "Oil p: %.1fbar")            \
     X(OIL_QUALITY_ITEM, "Oil q: %.0f%%")           \
-    X(OIL_TEMP_ITEM, "Oil temp: %.0f"              \
+    X(OIL_TEMP_ITEM, "Oil t: %.0f"                 \
                      "\xB0"                        \
                      "C")                          \
-    X(COOLANT_TEMP_ITEM, "Coolant temp: %.0f"      \
+    X(COOLANT_TEMP_ITEM, "Coolant t: %.0f"         \
                          "\xB0"                    \
                          "C")                      \
-    X(AIR_IN_ITEM, "Air in temp: %.0f"             \
+    X(AIR_IN_ITEM, "Air in t: %.0f"                \
                    "\xB0"                          \
                    "C")                            \
     X(GEAR_ITEM, "Gear: %c")                       \
-    X(GEARBOX_TEMP_ITEM, "Gbox temp: %.0f"         \
+    X(GEARBOX_TEMP_ITEM, "Gearbox t: %.0f"         \
                          "\xB0"                    \
                          "C")                      \
     X(STEERING_ITEM, "Steering: %.1f"              \
-                     "\xB0")
+                     "\xB0")                       \
+    X(TIRES_TEMP_FRONT_ITEM, "%.0f"                \
+                             "\xB0"                \
+                             "C ^ T ^ %.0f"        \
+                             "\xB0"                \
+                             "C")                  \
+    X(TIRES_TEMP_REAR_ITEM, "%.0f"                 \
+                            "\xB0"                 \
+                            "C v T v %.0f"         \
+                            "\xB0"                 \
+                            "C")
+
 #define CONVERTERS                                                             \
     X(DPF_STATUS_ITEM, const char *, dpf_status_as_string(value), bool, false) \
     X(GEAR_ITEM, char, ((unsigned char)value), bool, false)
@@ -85,4 +96,27 @@
     X(GEAR_ITEM, true, false, 0, 0, extractGear, false, false, 0, 0, noop_extract)                                          \
     X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)          \
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)
+
+#ifndef VALUES_REFRESH_MS
+/* item_type, values_refresh_ms */
+#define VALUES_REFRESH_MS            \
+    X(FIRMWARE_ITEM, 60000)          \
+    X(UPTIME_ITEM, 1000)             \
+    X(DPF_STATUS_ITEM, 1000)         \
+    X(DPF_CLOG_ITEM, 5000)           \
+    X(DPF_TEMP_ITEM, 5000)           \
+    X(DPF_REG_ITEM, 1000)            \
+    X(DPF_DIST_ITEM, 60000)          \
+    X(DPF_COUNT_ITEM, 60000)         \
+    X(DPF_MEAN_DIST_ITEM, 60000)     \
+    X(DPF_MEAN_DURATION_ITEM, 60000) \
+    X(BATTERY_V_ITEM, 1000)          \
+    X(BATTERY_A_ITEM, 1000)          \
+    X(BATTERY_P_ITEM, 10000)         \
+    X(OIL_QUALITY_ITEM, 60000)       \
+    X(GEARBOX_TEMP_ITEM, 10000)      \
+    X(TIRES_TEMP_FRONT_ITEM, 15000)  \
+    X(TIRES_TEMP_REAR_ITEM, 15000)
+
+#endif
 ```
