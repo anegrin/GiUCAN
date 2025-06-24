@@ -146,7 +146,9 @@ void state_process(GlobalState *state)
                 queuePolledAt = state->board.now;
             }
         }
-    } else {
+    }
+    else
+    {
         dashboardLocalState.visible = false;
         updateDashboard = false;
     }

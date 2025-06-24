@@ -38,13 +38,13 @@ static uint32_t refreshOperations = 0;
 void state_process(GlobalState *state)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
-    bool shouldHandleSNSAutoOff = state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && state->board.now > SNS_AUTO_OFF_DELAY_MS && state->car.rpm > CAR_IS_ON_MIN_RPM;
+    bool shouldHandleSNSAutoOff = state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && state->board.now > (SNS_AUTO_OFF_DELAY_MS / 2) && state->car.rpm > CAR_IS_ON_MIN_RPM;
 
     if (shouldHandleSNSAutoOff)
     {
         if (state->car.sns.active)
         {
-            state->board.snsRequestOffAt = state->board.now;
+            state->board.snsRequestOffAt = state->board.now + (SNS_AUTO_OFF_DELAY_MS / 2);
             // sns was on, we request for off
             LOG("%d SNS req off\n", state->board.now);
         }

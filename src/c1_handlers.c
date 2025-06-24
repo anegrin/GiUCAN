@@ -162,7 +162,7 @@ void handle_sns_status(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 
 void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
-    bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0;
+    bool shouldDisableSNS = state->car.sns.snsOffAt == 0 && state->car.sns.active && state->board.snsRequestOffAt > 0 && state->board.snsRequestOffAt < state->board.now;
     if (shouldDisableSNS)
     {
         state->car.sns.snsOffAt = state->board.now;
