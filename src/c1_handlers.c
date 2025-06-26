@@ -64,6 +64,10 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
     }
 }
 
+#define SPEED_HARD_UP 0x00
+#define SPEED_HARD_DOWN 0x20
+#define SPEED_UP 0x08
+#define SPEED_DOWN 0x18
 void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t ccButtonEvent = rx_msg_data[0];
@@ -77,25 +81,35 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
         {
             switch (ccButtonEvent)
             {
-            case 0x00: // speed hard up
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE) % itemsCount;
+            case SPEED_HARD_UP:
+                uint8_t adjustUp = latestCCButtonEvent == SPEED_UP ? 1 : 0;
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - DASHBOARD_PAGE_SIZE + adjustUp) % itemsCount;
                 LOG("%d speed ^^:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
-            case 0x20: // speed hard down
-                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE) % itemsCount;
+            case SPEED_HARD_DOWN:
+                uint8_t adjustDown = latestCCButtonEvent == SPEED_DOWN ? 1 : 0;
+                state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + DASHBOARD_PAGE_SIZE - adjustDown) % itemsCount;
                 LOG("%d speed vv:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
-            case 0x08: // speed up
+            case SPEED_UP:
+                if (latestCCButtonEvent == SPEED_HARD_UP)
+                {
+                    break;
+                }
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + itemsCount - 1) % itemsCount;
                 LOG("%d speed ^:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
                 sendEvent = true;
                 break;
-            case 0x18: // speed down
+            case SPEED_DOWN:
+                if (latestCCButtonEvent == SPEED_HARD_DOWN)
+                {
+                    break;
+                }
                 state->board.dashboardState.currentItemIndex = (state->board.dashboardState.currentItemIndex + 1) % itemsCount;
                 LOG("%d speed v:%d\n", state->board.now, state->board.dashboardState.currentItemIndex);
                 knownEvent = true;
@@ -320,20 +334,20 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
                     {
                         state->board.collectingMultiframeResponse = valueIndex;
                         VLOG("f_f %02X%02X%02X%02X%02X%02X%02X%02X\n", rx_msg_data[0], rx_msg_data[1], rx_msg_data[2], rx_msg_data[3], rx_msg_data[4], rx_msg_data[5], rx_msg_data[6], rx_msg_data[7]);
-                        //2 bytes for fake init frame
+                        // 2 bytes for fake init frame
                         multiframe_rx_msg_data[valueIndex][0] = 0x10;
                         multiframe_rx_msg_data[valueIndex][1] = MULTIFRAME_RX_MSG_DATA_SIZE;
-                        //2 bytes for fake command
+                        // 2 bytes for fake command
                         multiframe_rx_msg_data[valueIndex][2] = (extractor.query.reqData >> 16 & 0xff);
                         multiframe_rx_msg_data[valueIndex][3] = extractor.query.reqData >> 24;
-                        //3 data bytes
+                        // 3 data bytes
                         multiframe_rx_msg_data[valueIndex][4] = rx_msg_data[5];
                         multiframe_rx_msg_data[valueIndex][5] = rx_msg_data[6];
                         multiframe_rx_msg_data[valueIndex][6] = rx_msg_data[7];
                         multiframe_rx_msg_data_index = 7;
                         CAN_TxHeaderTypeDef tx_msg_header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .DLC = 3};
                         tx_msg_header.ExtId = extractor.query.reqId;
-                        //pending bytes is total - 2 cmd bytes - 3 data bytes
+                        // pending bytes is total - 2 cmd bytes - 3 data bytes
                         multiframe_rx_msg_data_pending_bytes = (rx_msg_data[0] & 0x0f) * 256 + rx_msg_data[1] - 5;
                         can_tx(&tx_msg_header, flow_control_tx_msg_data);
                     }
