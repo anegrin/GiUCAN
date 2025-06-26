@@ -100,7 +100,7 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 
 You can customize what items are displayed, how they are rendered and how they are extracted
 
-- `DASHBOARD_ITEMS` defines what items to display and how they are rendered (printf pattern); every item can display at most 2 values, both optional
+- `DASHBOARD_ITEMS` defines what items to display, in what order and how they are rendered (printf pattern); every item can display at most 2 values, both optional
 - `CONVERTERS` defines how to convert a value from float to any other type before rendering
 - `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from CAN message (8 bytes)
 - `EXTRACTORS`: defines how extract first and second value for each item, defines if it needs to send a query to the bus and what function to use
