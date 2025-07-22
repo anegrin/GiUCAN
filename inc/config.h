@@ -140,6 +140,9 @@
 
 #ifdef XCAN
 #define PRINTF_INCLUDE_CONFIG_H
+#ifndef DEBUG_MODE
+#define ENABLE_USB_MASS_STORAGE
+#endif
 #endif
 
 #ifndef USART2_BAUD_RATE
@@ -148,10 +151,6 @@
 
 #ifndef CAN_BITRATE
 #define CAN_BITRATE CAN_BITRATE_500K
-#endif
-
-#if defined(SLCAN) || defined(DEBUG_MODE)
-#define ENABLE_USB_PORT
 #endif
 
 #if DEBUG_MODE

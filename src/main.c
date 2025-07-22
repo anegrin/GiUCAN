@@ -8,7 +8,11 @@
 #include "slcan.h"
 #include "processing.h"
 #include "usb_device.h"
+#ifdef ENABLE_USB_MASS_STORAGE
+#include "usbd_storage_if.h"
+#else
 #include "usbd_cdc_if.h"
+#endif
 
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
@@ -38,10 +42,11 @@ int main(void)
     MX_DMA_Init();
     uart_init();
 #endif
-
-#ifdef ENABLE_USB_PORT
-    MX_USB_DEVICE_Init();
+#ifdef ENABLE_USB_MASS_STORAGE
+//fat12_init();
 #endif
+
+    MX_USB_DEVICE_Init();
 
 #ifdef XCAN
     can_set_bitrate(CAN_BITRATE);
