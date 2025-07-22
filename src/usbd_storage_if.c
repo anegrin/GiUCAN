@@ -22,6 +22,7 @@
 #include "usbd_storage_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "led.h"
 #include <stdbool.h>
 /* USER CODE END INCLUDE */
 
@@ -63,12 +64,12 @@
  */
 
 #define STORAGE_LUN_NBR 1
-#define STORAGE_BLK_NBR 0x40
-#define STORAGE_BLK_SIZ 0x200
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 #define USB_FLASH_START_ADDRESS (0x8018000)
-#define TOTAL_USB_DEVICE_SIZE (STORAGE_BLK_NBR * STORAGE_BLK_SIZ)
+#define MSC_IMAGE_SIZE (4 * 1024)
+#define MSC_BLOCK_SIZE 512
+#define MSC_BLOCK_COUNT (MSC_IMAGE_SIZE / MSC_BLOCK_SIZE)
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -115,7 +116,31 @@ const int8_t STORAGE_Inquirydata_FS[] = {
 /* USER CODE END INQUIRY_DATA_FS */
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+uint8_t fat12_disk[MSC_IMAGE_SIZE] = {
+    // Boot sector (sector 0)
+    0xEB, 0x3C, 0x90,                       // JMP instruction
+    'M', 'S', 'D', 'O', 'S', '5', '.', '0', // OEM Name
+    0x00, 0x02,                             // Bytes per sector = 512
+    0x01,                                   // Sectors per cluster
+    0x01, 0x00,                             // Reserved sectors
+    0x01,                                   // Number of FATs
+    0x10, 0x00,                             // Max root dir entries (16)
+    0x40, 0x00,                             // Total sectors (64 * 512 = 32k)
+    0xF0,                                   // Media descriptor
+    0x01, 0x00,                             // Sectors per FAT
+    0x01, 0x00,                             // Sectors per track
+    0x01, 0x00,                             // Number of heads
+    0x00, 0x00, 0x00, 0x00,                 // Hidden sectors
+    0x00, 0x00, 0x00, 0x00,                 // Total sectors (if > 65535)
+    // Drive number, reserved, boot sig
+    0x00, 0x00, 0x29,
+    0x12, 0x34, 0x56, 0x78,                 // Volume ID
+    'G', 'i', 'U', 'C', 'A', 'N', ' ', ' ', // Volume label
+    'F', 'A', 'T', '1', '2', ' ', ' ', ' ', // File system type
+    // Padding to fill sector
+    [62] = 0x55,
+    [63] = 0xAA, // Boot sector signature
+};
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -151,56 +176,25 @@ static int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uin
 static int8_t STORAGE_GetMaxLun_FS(void);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-/**
- * @brief  Writes data into the FLASH.
- * @param  buf: data buffer.
- * @param  blk_addr: Logical block address.
- * @param  blk_len: Blocks number.
- * @retval HAL_StatusTypeDef
- */
-static HAL_StatusTypeDef write_data_to_flash(uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
+// Add FAT tables, root dir, and content in initialization code
+// For brevity, we only fill a root dir entry here:
+void fat12_init(void)
 {
-  HAL_StatusTypeDef ret = HAL_OK;
-  uint8_t data[TOTAL_USB_DEVICE_SIZE];
-  do
-  {
-    /* First copy the data to the local buffer from Flash */
-    memcpy(data, (const void *)USB_FLASH_START_ADDRESS, TOTAL_USB_DEVICE_SIZE);
+  // FAT tables (sector 1)
+  fat12_disk[512 + 0] = 0xF0; // Media descriptor
+  fat12_disk[512 + 1] = 0xFF;
+  fat12_disk[512 + 2] = 0xFF;
 
-    /* Make modifications in the local buffer */
-    memcpy((void *)&data[blk_addr * STORAGE_BLK_SIZ], buf, (blk_len * STORAGE_BLK_SIZ));
+  // Root dir entry (sector 2)
+  const char *filename = "README  TXT";
+  memcpy(&fat12_disk[1024], filename, 11); // Filename
+  fat12_disk[1024 + 11] = 0x20;            // File attr: Archive
+  fat12_disk[1024 + 26] = 0x03;            // Start cluster
+  fat12_disk[1024 + 28] = 0x0C;            // File size (12 bytes)
 
-    ret = HAL_FLASH_Unlock();
-    if (ret != HAL_OK)
-    {
-      break;
-    }
+  // Data sector (cluster 3 = sector 4)
+  memcpy(&fat12_disk[512 * 4], "Hello World\n", 12);
 
-    /* Erase the Flash */
-    FLASH_EraseInitTypeDef EraseInitStruct;
-    uint32_t SectorError;
-    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-    EraseInitStruct.PageAddress = USB_FLASH_START_ADDRESS;
-    EraseInitStruct.NbPages = TOTAL_USB_DEVICE_SIZE / 2048;
-
-    ret = HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError);
-
-    /* Write the data to the Flash */
-    for (uint32_t i = 0; i < TOTAL_USB_DEVICE_SIZE; i++)
-    {
-      ret = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD,
-                              (USB_FLASH_START_ADDRESS + i),
-                              data[i]);
-
-      if (ret != HAL_OK)
-      {
-        break;
-      }
-    }
-
-    HAL_FLASH_Lock();
-  } while (false);
-  return (ret);
 }
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -242,8 +236,8 @@ int8_t STORAGE_Init_FS(uint8_t lun)
 int8_t STORAGE_GetCapacity_FS(uint8_t lun, uint32_t *block_num, uint16_t *block_size)
 {
   /* USER CODE BEGIN 3 */
-  *block_num = STORAGE_BLK_NBR;
-  *block_size = STORAGE_BLK_SIZ;
+  *block_num = MSC_BLOCK_COUNT - 1;
+  *block_size = MSC_BLOCK_SIZE;
   return (USBD_OK);
   /* USER CODE END 3 */
 }
@@ -280,12 +274,7 @@ int8_t STORAGE_IsWriteProtected_FS(uint8_t lun)
 int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 6 */
-  /* We can read directly from the Flash address */
-  memcpy( buf,
-          (const void *)(USB_FLASH_START_ADDRESS + ( blk_addr * STORAGE_BLK_SIZ )),
-          (blk_len * STORAGE_BLK_SIZ)
-        );
-        
+  memcpy(buf, &fat12_disk[blk_addr * MSC_BLOCK_SIZE], blk_len * MSC_BLOCK_SIZE);
   return (USBD_OK);
   /* USER CODE END 6 */
 }
@@ -298,7 +287,8 @@ int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 7 */
-  return write_data_to_flash( buf, blk_addr, blk_len );
+  memcpy(&fat12_disk[blk_addr * MSC_BLOCK_SIZE], buf, blk_len * MSC_BLOCK_SIZE);
+  return (USBD_OK);
   /* USER CODE END 7 */
 }
 

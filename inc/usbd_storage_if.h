@@ -105,7 +105,7 @@ extern USBD_StorageTypeDef USBD_Storage_Interface_fops_FS;
   */
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
-
+void fat12_init(void);
 /* USER CODE END EXPORTED_FUNCTIONS */
 
 /**
@@ -125,4 +125,3 @@ extern USBD_StorageTypeDef USBD_Storage_Interface_fops_FS;
 #endif
 
 #endif /* __USBD_STORAGE_IF_H__ */
-
