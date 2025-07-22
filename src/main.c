@@ -39,9 +39,7 @@ int main(void)
     uart_init();
 #endif
 
-#ifdef ENABLE_USB_PORT
     MX_USB_DEVICE_Init();
-#endif
 
 #ifdef XCAN
     can_set_bitrate(CAN_BITRATE);
