@@ -12,7 +12,10 @@
 
 /* Example: Declarations of the platform and disk functions in the project */
 #include "config.h"
+#include "logging.h"
 #include <string.h>
+
+#define PAGE_SIZE 2048
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -60,6 +63,16 @@ DRESULT disk_read(
 
 #if FF_FS_READONLY == 0
 
+uint32_t find_sector_start(LBA_t sector) {
+    return USB_FLASH_START_ADDRESS + (sector * FF_MIN_SS);
+} 
+
+uint32_t find_page_start(LBA_t sector) {
+    uint32_t sector_start = find_sector_start(sector);
+    uint32_t delta =  sector_start % PAGE_SIZE;
+    return sector_start - delta;
+} 
+
 DRESULT disk_write(
     BYTE pdrv,        /* Physical drive nmuber to identify the drive */
     const BYTE *buff, /* Data to be written */
@@ -74,15 +87,20 @@ DRESULT disk_write(
 
         uint8_t data[FF_MIN_SS];
 
-        memcpy(&data[0], &buff[i * FF_MIN_SS], FF_MIN_SS);
+        memcpy(data, &buff[i * FF_MIN_SS], FF_MIN_SS);
 
         ret = HAL_FLASH_Unlock();
         if (ret != HAL_OK)
         {
-            break;
+            return RES_NOTRDY;
         }
 
-        uint32_t pageAddress = USB_FLASH_START_ADDRESS + ((sector + i) * FF_MIN_SS);
+        LBA_t current_sector = sector + i;
+        uint32_t pageAddress = find_page_start(current_sector);
+
+        uint8_t page_data[PAGE_SIZE];
+        memcpy(page_data, (const void *)pageAddress, PAGE_SIZE);
+        memcpy(&page_data[find_sector_start(current_sector) - pageAddress], data, FF_MIN_SS);
 
         FLASH_EraseInitTypeDef EraseInitStruct;
         uint32_t SectorError;
@@ -91,18 +109,23 @@ DRESULT disk_write(
         EraseInitStruct.NbPages = 1;
 
         ret = HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError);
+        if (ret != HAL_OK)
+        {
+            return RES_NOTRDY;
+        }
 
-        for (uint32_t j = 0; j < FF_MIN_SS / 4; j++)
+        for (uint32_t j = 0; j < PAGE_SIZE / 4; j++)
         {
             uint32_t word;
-            memcpy(&word, &data[j * 4], 4);
-            ;
+            memcpy(&word, &page_data[j * 4], 4);
+
             ret = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, pageAddress + (j * 4), word);
             if (ret != HAL_OK)
             {
                 break;
             }
         }
+
         HAL_FLASH_Lock();
     }
 
@@ -127,13 +150,13 @@ DRESULT disk_ioctl(
     case CTRL_SYNC:
         return RES_OK;
     case GET_SECTOR_COUNT:
-        *(DWORD *)buff = (TOTAL_USB_DEVICE_SIZE / FF_MIN_SS);
+        *((WORD*)buff) = (TOTAL_USB_DEVICE_SIZE / FF_MIN_SS);
         return RES_OK;
     case GET_SECTOR_SIZE:
-        *(DWORD *)buff = FF_MIN_SS;
+        *((WORD*)buff) = FF_MIN_SS;
         return RES_OK;
     case GET_BLOCK_SIZE:
-        *(DWORD *)buff = 1;
+        *((WORD*)buff) = (PAGE_SIZE / FF_MIN_SS);
         return RES_OK;
     default:
         return RES_PARERR;

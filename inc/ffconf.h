@@ -47,7 +47,7 @@
 /  (0:Disable or 1:Enable) Also FF_FS_READONLY needs to be 0 to enable this option. */
 
 
-#define FF_USE_LABEL	0
+#define FF_USE_LABEL	1
 /* This option switches volume label API functions, f_getlabel() and f_setlabel().
 /  (0:Disable or 1:Enable) */
 
@@ -205,8 +205,8 @@
 /  will be available. */
 
 
-#define FF_MIN_SS		2048
-#define FF_MAX_SS		2048
+#define FF_MIN_SS		512
+#define FF_MAX_SS		512
 /* This set of options configures the range of sector size to be supported. (512,
 /  1024, 2048 or 4096) Always set both 512 for most systems, generic memory card and
 /  harddisk, but a larger value may be required for on-board flash memory and some
@@ -250,8 +250,8 @@
 
 
 #define FF_FS_NORTC		1
-#define FF_NORTC_MON	1
-#define FF_NORTC_MDAY	1
+#define FF_NORTC_MON	6
+#define FF_NORTC_MDAY	24
 #define FF_NORTC_YEAR	2025
 /* The option FF_FS_NORTC switches timestamp feature. If the system does not have
 /  an RTC or valid timestamp is not needed, set FF_FS_NORTC = 1 to disable the

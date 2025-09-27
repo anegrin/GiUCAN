@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "led.h"
 #include "error.h"
+#include "printf.h"
 
 #define UART_QUEUE_SIZE 16
 
@@ -99,7 +100,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     tx_done = true;
 }
 
-#ifdef C1CAN
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2)
@@ -108,7 +108,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         led_tx_on();
     }
 }
-#endif
 
 #ifdef BHCAN
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -144,7 +143,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 #endif
 
-#ifdef C1CAN
 bool uart_tx(const uint8_t *data, uint8_t size)
 {
     if (tx_done)
@@ -156,7 +154,6 @@ bool uart_tx(const uint8_t *data, uint8_t size)
 
     return false;
 }
-#endif
 
 #ifdef BHCAN
 bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
@@ -182,7 +179,6 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
 }
 #endif
 
-#ifdef XCAN
 const int UART_QUEUE_POLLING_INTERVAL = 10 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
 static uint32_t queuePolledAt = 0;
 void uart_init(void)
@@ -202,9 +198,7 @@ void uart_init(void)
     {
         Error_Handler();
     }
-#ifdef C1CAN
     HAL_HalfDuplex_EnableTransmitter(&huart2);
-#endif
 #ifdef BHCAN
     HAL_HalfDuplex_EnableReceiver(&huart2);
     rx_state = UART_SYNC_WAIT_START;
@@ -221,7 +215,7 @@ void uart_process(GlobalState *state)
 
     if (state->board.now - queuePolledAt > UART_QUEUE_POLLING_INTERVAL)
     {
-#ifdef C1CAN
+#ifndef BHCAN
         bool success = uart_tx(rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
 #endif
 #ifdef BHCAN
@@ -235,4 +229,26 @@ void uart_process(GlobalState *state)
         }
     }
 }
+
+#ifdef SLCAN
+#ifdef DEBUG_MODE
+uint8_t print_to_uart(char *message)
+{
+    static uint8_t buffer[MESSAGE_SIZE];
+    uint16_t msg_len = strlen(message);
+    msg_len = msg_len < MESSAGE_SIZE ? msg_len : MESSAGE_SIZE;
+    memcpy(buffer, message, msg_len);
+    return uart_enqueue(buffer, msg_len);
+}
+
+uint8_t printf_to_uart(const char *format, ...)
+{
+    static uint8_t buffer[MESSAGE_SIZE];
+    va_list args;
+    va_start(args, format);
+    int written = vsnprintf_((char *)buffer, MESSAGE_SIZE, format, args);
+    va_end(args);
+    return uart_enqueue(buffer, written < MESSAGE_SIZE ? (uint8_t)written : MESSAGE_SIZE);
+}
+#endif
 #endif
