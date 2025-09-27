@@ -64,8 +64,8 @@
   */
 
 #define STORAGE_LUN_NBR                  1
-#define STORAGE_BLK_NBR                  32
-#define STORAGE_BLK_SIZ                  2048
+#define STORAGE_BLK_NBR                  128
+#define STORAGE_BLK_SIZ                  512
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
@@ -218,7 +218,7 @@ int8_t STORAGE_IsReady_FS(uint8_t lun)
 int8_t STORAGE_IsWriteProtected_FS(uint8_t lun)
 {
   /* USER CODE BEGIN 5 */
-  return (USBD_FAIL);
+  return (USBD_OK);
   /* USER CODE END 5 */
 }
 
@@ -247,7 +247,7 @@ int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 7 */
-  return (USBD_OK);
+  return (USBD_FAIL);
   /* USER CODE END 7 */
 }
 

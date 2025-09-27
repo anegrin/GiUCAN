@@ -34,10 +34,6 @@
 #error "Can't build SLCAN+C1CAN"
 #endif
 
-#ifdef DEBUG_MODE
-#error "Can't build SLCAN+DEBUG_MODE"
-#endif
-
 #define LEDS_ON_CAN_RX
 #define LEDS_ON_CAN_TX
 
