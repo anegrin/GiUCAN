@@ -13,6 +13,7 @@
 #else
 #include "usbd_cdc_if.h"
 #endif
+#include "ff.h"
 
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
@@ -43,7 +44,22 @@ int main(void)
     uart_init();
 #endif
 #ifdef ENABLE_USB_MASS_STORAGE
-//fat12_init();
+FATFS fs;
+FIL fil;
+UINT bw;
+FRESULT res;
+BYTE work[FF_MIN_SS];
+
+res = f_mount(&fs, "", 0);
+if (res != FR_OK){
+    res = f_mkfs("", NULL, work, FF_MIN_SS);
+    if (res == FR_OK) {
+        f_write(&fil, "Hello, World!\r\n", 15, &bw);
+        f_close(&fil);
+        f_unmount("");
+    }
+}
+
 #endif
 
     MX_USB_DEVICE_Init();

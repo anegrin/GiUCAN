@@ -3,6 +3,9 @@
 
 #include "stm32f0xx_hal.h"
 
+#define USB_FLASH_START_ADDRESS 0x8010000
+#define TOTAL_USB_DEVICE_SIZE 65536
+
 #ifdef INCLUDE_USER_CONFIG_H
 #include "user_config.h"
 #endif

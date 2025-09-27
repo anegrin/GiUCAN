@@ -23,6 +23,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include <stdbool.h>
+#include "config.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -67,8 +68,6 @@
 #define STORAGE_BLK_SIZ                  2048
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
-#define USB_FLASH_START_ADDRESS   (  0x8010000 )    //USB Flash Address
-#define TOTAL_USB_DEVICE_SIZE   ( STORAGE_BLK_NBR * STORAGE_BLK_SIZ )
 
 /* USER CODE END PRIVATE_DEFINES */
 
