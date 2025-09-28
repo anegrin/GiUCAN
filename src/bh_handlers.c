@@ -10,6 +10,7 @@
 #include "can.h"
 #include "processing.h"
 #include "logging.h"
+#include <string.h>
 
 #ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
 static uint8_t dpfSoundAlertFrame[8];

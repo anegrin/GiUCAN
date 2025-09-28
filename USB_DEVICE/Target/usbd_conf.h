@@ -72,7 +72,11 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1
 /*---------- -----------*/
+#ifdef ENABLE_USB_MASS_STORAGE
+#define MSC_MEDIA_PACKET    2048
+#else
 #define MAX_STATIC_ALLOC_SIZE     512
+#endif
 
 /****************************************/
 /* #define for FS and HS identification */

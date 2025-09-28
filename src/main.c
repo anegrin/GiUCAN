@@ -8,7 +8,13 @@
 #include "slcan.h"
 #include "processing.h"
 #include "usb_device.h"
+#ifdef ENABLE_USB_MASS_STORAGE
+#include "usbd_storage_if.h"
+#else
 #include "usbd_cdc_if.h"
+#endif
+#include "ff.h"
+#include "logging.h"
 
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
@@ -16,9 +22,7 @@ DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
 void state_init(GlobalState *state);
 void SystemClock_Config(void);
-#ifdef XCAN
 static void MX_DMA_Init(void);
-#endif
 
 int main(void)
 {
@@ -34,14 +38,37 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     led_init();
-#ifdef XCAN
     MX_DMA_Init();
     uart_init();
+
+
+#ifdef ENABLE_USB_MASS_STORAGE
+    FATFS fs;
+    FIL fil;
+    UINT bw;
+    FRESULT res;
+    BYTE work[FF_MIN_SS];
+
+    res = f_mount(&fs, "", 1);
+    if (res != FR_OK)
+    {
+        MKFS_PARM opt = {.fmt = FM_FAT | FM_SFD, .n_fat = 1, .align = 0, .n_root = 224, .au_size = FF_MIN_SS};
+        res = f_mkfs("", &opt, work, FF_MIN_SS);
+        if (res == FR_OK)
+        {
+            res = f_setlabel("GIUCAN");
+            res = f_open(&fil, "version.txt", FA_WRITE | FA_OPEN_ALWAYS);
+            if (res == FR_OK)
+            {
+                res = f_write(&fil, GIUCAN_VERSION, strlen(GIUCAN_VERSION), &bw);
+                f_close(&fil);
+            }
+        }
+    }
+    res = f_unmount("");
 #endif
 
-#ifdef ENABLE_USB_PORT
     MX_USB_DEVICE_Init();
-#endif
 
 #ifdef XCAN
     can_set_bitrate(CAN_BITRATE);
@@ -73,8 +100,8 @@ int main(void)
 
 #ifdef XCAN
         state_process(&state);
-        uart_process(&state);
 #endif
+        uart_process(&state);
         if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
         {
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
@@ -192,7 +219,6 @@ void SystemClock_Config(void)
     }
 }
 
-#ifdef XCAN
 /**
  * Enable DMA controller clock
  * Configure DMA for memory to memory transfers
@@ -209,7 +235,6 @@ static void MX_DMA_Init(void)
     HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
 }
-#endif
 
 /**
  * @brief  This function is executed in case of error occurrence.

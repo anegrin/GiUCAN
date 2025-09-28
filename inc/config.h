@@ -3,6 +3,9 @@
 
 #include "stm32f0xx_hal.h"
 
+#define USB_FLASH_START_ADDRESS 0x8010000
+#define TOTAL_USB_DEVICE_SIZE 65536
+
 #ifdef INCLUDE_USER_CONFIG_H
 #include "user_config.h"
 #endif
@@ -29,10 +32,6 @@
 
 #ifdef C1CAN
 #error "Can't build SLCAN+C1CAN"
-#endif
-
-#ifdef DEBUG_MODE
-#error "Can't build SLCAN+DEBUG_MODE"
 #endif
 
 #define LEDS_ON_CAN_RX
@@ -140,6 +139,9 @@
 
 #ifdef XCAN
 #define PRINTF_INCLUDE_CONFIG_H
+#ifndef DEBUG_MODE
+#define ENABLE_USB_MASS_STORAGE
+#endif
 #endif
 
 #ifndef USART2_BAUD_RATE
@@ -148,10 +150,6 @@
 
 #ifndef CAN_BITRATE
 #define CAN_BITRATE CAN_BITRATE_500K
-#endif
-
-#if defined(SLCAN) || defined(DEBUG_MODE)
-#define ENABLE_USB_PORT
 #endif
 
 #if DEBUG_MODE
