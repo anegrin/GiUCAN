@@ -28,12 +28,12 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)                 \
     X(UPTIME_ITEM, "Uptime: %.0fmin/%.0fmin")                  \
     X(GEAR_ITEM, "Current gear: %c")                           \
-    X(HP_NM_ITEM, "Power: %.0fhp/%.0fnm")                      \
+    X(HP_NM_ITEM, "Power: %.0fhp (%.0fnm)")                    \
     X(BOOST_ITEM, "Boost: %.1fbar")                            \
     X(OIL_PRESS_ITEM, "Oil pressure: %.1fbar")                 \
-    X(OIL_TEMP_ITEM, "Oil temp.: %.0f"                         \
-                     "\xB0"                                    \
-                     "C")                                      \
+    X(OIL_TEMP_LV_ITEM, "Oil: %.0f"                            \
+                        "\xB0"                                 \
+                        "C/%.0fmm")                            \
     X(COOLANT_TEMP_ITEM, "Coolant temp.: %.0f"                 \
                          "\xB0"                                \
                          "C")                                  \
@@ -163,6 +163,7 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
     X(extractOilPressure, s->car.oil.pressure)                                                                                                                              \
     X(extractOilQuality, ((float)((A(r) * 256) + B(r))) * 0.001525902f)                                                                                                     \
     X(extractOilTemp, (float)s->car.oil.temperature)                                                                                                                        \
+    X(extractOilLevel, ((float)((A(r) * 256) + B(r))) / 10.0f)                                                                                                              \
     X(extractGearboxTemp, (float)A(r) - 40.0f)                                                                                                                              \
     X(extractGear, (float)s->car.gear)                                                                                                                                      \
     X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)                                                                                               \
@@ -198,7 +199,7 @@ forV1_extraction_function
     X(BATTERY_P_ITEM, true, false, 0, 0, extractBatteryPerc, false, false, 0, 0, noop_extract)                                                         \
     X(OIL_PRESS_ITEM, true, false, 0, 0, extractOilPressure, false, false, 0, 0, noop_extract)                                                         \
     X(OIL_QUALITY_ITEM, true, true, 0x18DA10F1, 0x03223813, extractOilQuality, false, false, 0, 0, noop_extract)                                       \
-    X(OIL_TEMP_ITEM, true, false, 0, 0, extractOilTemp, false, false, 0, 0, noop_extract)                                                              \
+    X(OIL_TEMP_LV_ITEM, true, false, 0, 0, extractOilTemp, true, true, 0x18DA10F1, 0x0322194E, extractOilLevel)                                        \
     X(COOLANT_TEMP_ITEM, true, true, 0x18DA10F1, 0x03221003, extractTempCommon, false, false, 0, 0, noop_extract)                                      \
     X(AIR_IN_ITEM, true, true, 0x18DA10F1, 0x03221935, extractTempCommon, false, false, 0, 0, noop_extract)                                            \
     X(GEAR_ITEM, true, false, 0, 0, extractGear, false, false, 0, 0, noop_extract)                                                                     \
@@ -224,6 +225,8 @@ forV1_extraction_function
     X(DPF_MEAN_DIST_DURATION_ITEM, 60000) \
     X(BATTERY_V_A_ITEM, 1000)             \
     X(BATTERY_P_ITEM, 60000)              \
+    X(OIL_TEMP_LV_ITEM, 15000)            \
+    X(COOLANT_TEMP_ITEM, 15000)           \
     X(OIL_QUALITY_ITEM, 60000)            \
     X(AIR_IN_ITEM, 15000)                 \
     X(GEARBOX_TEMP_ITEM, 15000)           \
