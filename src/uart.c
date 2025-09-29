@@ -29,10 +29,11 @@ static size_t rx_index = 0;
 
 typedef struct
 {
-    uint8_t buffer[UART_QUEUE_SIZE][MESSAGE_SIZE];
     uint8_t head;
     uint8_t tail;
     uint8_t count;
+    uint8_t _pad;
+    uint8_t buffer[UART_QUEUE_SIZE][MESSAGE_SIZE];
 } UARTQueue;
 
 static UARTQueue queue = {0};

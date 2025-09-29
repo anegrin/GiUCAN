@@ -6,14 +6,14 @@
 
 typedef struct
 {
-    bool active;
     uint32_t snsOffAt;
+    bool active;
 } SNSState;
 
 typedef struct
 {
-    uint8_t chargePercent;
     float current;
+    uint8_t chargePercent;
 } Battery;
 
 typedef struct
@@ -31,21 +31,21 @@ typedef struct
 typedef struct
 {
     uint32_t rpm;
-    uint16_t torque;
-    uint8_t gear;
-    bool ccActive;
     DPF dpf;
     Oil oil;
     Battery battery;
     SNSState sns;
+    uint16_t torque;
+    uint8_t gear;
+    bool ccActive;
 } CarState;
 
 typedef struct
 {
-    bool visible;
+    float values[2];
     uint8_t itemsCount;
     uint8_t currentItemIndex;
-    float values[2];
+    bool visible;
 } DashboardState;
 
 typedef struct
@@ -55,8 +55,8 @@ typedef struct
     uint32_t dpfRegenNotificationRequestAt;
     uint32_t latestMessageReceivedAt;
     uint32_t dashboardExternallyUpdatedAt;
-    int8_t collectingMultiframeResponse;
     DashboardState dashboardState;
+    int8_t collectingMultiframeResponse;
 } BoardState;
 
 typedef struct

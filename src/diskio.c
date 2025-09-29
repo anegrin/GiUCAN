@@ -67,10 +67,10 @@ DRESULT disk_read(
 
 typedef struct FlashPage
 {
+    struct FlashPage *next;
     uint32_t page_start;
     LBA_t sectors[SECTORS_PER_PAGE];
     uint32_t sector_data_index[SECTORS_PER_PAGE];
-    struct FlashPage *next;
 } FlashPage;
 
 #ifdef DEBUG_MODE

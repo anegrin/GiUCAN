@@ -117,17 +117,17 @@ typedef struct
 
 typedef struct
 {
-    bool needsQuery;
-    CANQuery query;
     ExtractionFuncPtr extract;
+    CANQuery query;
+    bool needsQuery;
 } CarValueExtractor;
 
 typedef struct
 {
-    bool hasV0;
-    bool hasV1;
     CarValueExtractor forV0;
     CarValueExtractor forV1;
+    bool hasV0;
+    bool hasV1;
 
 } CarValueExtractors;
 
