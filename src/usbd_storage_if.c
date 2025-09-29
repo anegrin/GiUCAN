@@ -24,6 +24,10 @@
 /* USER CODE BEGIN INCLUDE */
 #include <stdbool.h>
 #include "config.h"
+#ifdef ENABLE_RW_USB_MASS_STORAGE
+#include "ff.h"
+#include "diskio.h"
+#endif
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -247,7 +251,12 @@ int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
 int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
   /* USER CODE BEGIN 7 */
-  return (USBD_FAIL);
+#ifdef ENABLE_RW_USB_MASS_STORAGE
+  DRESULT res = disk_write(0, buf, blk_addr, blk_len);
+  return (res == RES_OK ? USBD_OK : USBD_FAIL);
+#else
+  return USBD_FAIL;
+#endif
   /* USER CODE END 7 */
 }
 
