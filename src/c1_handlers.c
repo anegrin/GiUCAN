@@ -41,7 +41,7 @@ static const char gears[] = {'N', '1', '2', '3', '4', '5', '6', 'R', '7', '8', '
 void handle_gear(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t i = ((uint8_t)(rx_msg_data[0] & ~0x0F) >> 4);
-    if (i < sizeof(gears))
+    if (i < sizeof(gears))//sizeof uint8_t is 1
     {
         state->car.gear = gears[i];
     }
@@ -68,6 +68,8 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
 #define SPEED_HARD_DOWN 0x20
 #define SPEED_UP 0x08
 #define SPEED_DOWN 0x18
+static DashboardItemType favDashboardItems[] = {FAV_DASHBOARD_ITEMS};
+static uint8_t favDashboardItemsLength = sizeof(favDashboardItems) / sizeof(DashboardItemType);
 void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t ccButtonEvent = rx_msg_data[0];
@@ -133,7 +135,27 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
                 {
                     // short click
                     LOG("%d res ^ sc\n", state->board.now);
-                    sendEvent = state->board.dashboardState.visible;
+
+                    if (state->board.dashboardState.visible)
+                    {
+                        if (favDashboardItemsLength > 0)
+                        {
+                            DashboardItemType nextFav = favDashboardItems[0];
+                            DashboardItemType current = state->board.dashboardState.currentItemIndex;
+                            for (int i = 0; i < favDashboardItemsLength; i++)
+                            {
+                                if (favDashboardItems[i] > current)
+                                {
+                                    nextFav = favDashboardItems[i];
+                                    break;
+                                }
+                            }
+
+                            state->board.dashboardState.currentItemIndex = nextFav;
+
+                            sendEvent = current != nextFav;
+                        }
+                    }
                 }
                 resPushedAt = 0;
             }

@@ -102,6 +102,7 @@ You can customize what items are displayed, how they are rendered and how they a
 
 - `DASHBOARD_ITEMS` defines what items to display, in what order and how they are rendered (printf pattern); every item can display at most 2 values, both optional
 - `CONVERTERS` defines how to convert a value from float to any other type before rendering
+- `FAV_DASHBOARD_ITEMS` defines a comma separated list of favorite items: pressing RES button when dashboard is visible will jump to the next favorite item; just define it empty to disable the feature
 - `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from CAN message (8 bytes)
 - `EXTRACTORS`: defines how extract first and second value for each item, defines if it needs to send a query to the bus and what function to use
 - `VALUES_REFRESH_MS`: defines values extraction rate, by default values are refreshed every `DEFAULT_VALUES_REFRESH_MS`

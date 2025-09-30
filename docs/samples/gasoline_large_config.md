@@ -25,6 +25,8 @@
 #define CONVERTERS \
     X(GEAR_ITEM, char, ((unsigned char)value), bool, false)
 
+#define FAV_DASHBOARD_ITEMS OIL_TEMP_ITEM,BATTERY_P_ITEM
+
 #define EXTRACTION_FUNCTIONS                                                      \
     X(extractTempCommon, ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f)        \
     X(extractCarUptime, ((float)((A(r) * 256) + B(r)) / 4.0f))                    \

@@ -108,6 +108,12 @@ function render_message in bh_processing.c will call the function if needed
 #endif
 
 #ifdef C1CAN
+
+#ifndef FAV_DASHBOARD_ITEMS
+/* item_type */
+#define FAV_DASHBOARD_ITEMS OIL_PRESS_ITEM,DPF_CLOG_ITEM,BATTERY_P_ITEM
+#endif
+
 typedef struct
 {
     uint32_t reqId;
