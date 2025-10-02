@@ -144,7 +144,7 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
                             DashboardItemType current = state->board.dashboardState.currentItemIndex;
                             for (int i = 0; i < favDashboardItemsLength; i++)
                             {
-                                if (favDashboardItems[i] > current)
+                                if (favDashboardItems[i] < DASHBOARD_ITEMS_COUNT && favDashboardItems[i] > current)
                                 {
                                     nextFav = favDashboardItems[i];
                                     break;
@@ -170,6 +170,7 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
         }
         if (knownEvent)
         {
+            state->board.dashboardState.carouselShowNextItemAt = 0;
             latestCCButtonEvent = ccButtonEvent;
         }
 

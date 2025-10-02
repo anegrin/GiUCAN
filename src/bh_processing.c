@@ -89,7 +89,7 @@ void send_dashboard_text(DashboardFrame *frame)
     }
 }
 
-void state_process(GlobalState *state)
+void state_process(GlobalState *state, Settings *settings)
 {
     bool updateDashboard = false;
     if (localStateSet)

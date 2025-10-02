@@ -189,6 +189,7 @@ DRESULT disk_write(
         ret = HAL_FLASHEx_Erase(&EraseInitStruct, &SectorError);
         if (ret != HAL_OK)
         {
+            HAL_FLASH_Lock();
             ret = RES_NOTRDY;
             break;
         }

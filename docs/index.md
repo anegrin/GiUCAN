@@ -50,7 +50,7 @@ Boards must be powered with 5V, you can get the power from the USB connector bel
 
 Just run [build.sh](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmware files under `dist` folder:
 
-- GiUCAN_SLCAN.elf: it's badically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for exaple with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
+- GiUCAN_SLCAN.elf: it's badically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for example with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
 - GiUCAN_BHCAN.elf: firmware for BHCAN board
 - GiUCAN_C1CAN.elf: firmware for C1CAN board
 
@@ -69,6 +69,12 @@ To view messages on the dashboard just keep the cruise control RES button presse
 If ETM need to show something it will stay on the dashboard for a little bit ore than a second, then GiUCAN will display the item again.
 
 If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will fire a sound notification (seat belts alarm) and display the "DPF status" item on the dashboard (even if you haven't enabled messages by long press of RES button).
+
+## USB behavior
+
+- SLCAN firmware setup board's USB as serial CDC so just connect it to your laptop to sniff CAN Bus messages  
+- BHCAN firmware setup board's USB as storage CDC (read-only); currently not used, it will just contain a file named `giucan.ver` with the version of the firmware that initialized the filesystem
+- C1CAN firmware setup board's USB as storage CDC (read-write); it will just contain a file named `giucan.ver` with the version of the firmware that initialized the filesystem and user can store an optional `settings.ini` (see [Settings](#settings) paragraph)
 
 ## Customization
 
@@ -233,6 +239,20 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
 ```
 
 GiUCAN will use extractors to send queries - if needed - the consume the response and extract first and second float values using extraction functions (`noop_extract` is provided in the codebase for convenience).
+
+## Settings
+
+Connect the board with C1CAN firmware to your laptop and it will be shown as an external USB storage labeled `GIUCAN`; create a file named `settings.ini` with this content:
+
+```ini
+[carousel]
+delayMs=10000
+intervalMs=3500
+loops=3
+enabled=true
+```
+
+by doing so GiUCAN will show favorite items in a carousel when you start the car (after 10 seconds for 3 times with 3.5 seconds interval); settings are checked for valid values by `void validate_and_fix_settings(Settings *settings)` in `storage.c`.
 
 ### user config examples
 

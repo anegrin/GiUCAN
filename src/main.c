@@ -8,27 +8,22 @@
 #include "slcan.h"
 #include "processing.h"
 #include "usb_device.h"
-#ifdef ENABLE_USB_MASS_STORAGE
-#include "usbd_storage_if.h"
-#else
+#ifdef SLCAN
 #include "usbd_cdc_if.h"
 #endif
-#include "ff.h"
+#include "storage.h"
 #include "logging.h"
 
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
-void state_init(GlobalState *state);
+void state_init(GlobalState *state, Settings *settings);
 void SystemClock_Config(void);
 static void MX_DMA_Init(void);
 
 int main(void)
 {
-    GlobalState state = {};
-    state_init(&state);
-
     CAN_RxHeaderTypeDef rx_msg_header; // msg header
     uint8_t rx_msg_data[8] = {
         0,
@@ -41,32 +36,9 @@ int main(void)
     MX_DMA_Init();
     uart_init();
 
-
-#ifdef ENABLE_USB_MASS_STORAGE
-    FATFS fs;
-    FIL fil;
-    UINT bw;
-    FRESULT res;
-    BYTE work[FF_MIN_SS];
-
-    res = f_mount(&fs, "", 1);
-    if (res != FR_OK)
-    {
-        MKFS_PARM opt = {.fmt = FM_FAT | FM_SFD, .n_fat = 1, .align = 0, .n_root = 224, .au_size = FF_MIN_SS};
-        res = f_mkfs("", &opt, work, FF_MIN_SS);
-        if (res == FR_OK)
-        {
-            res = f_setlabel("GIUCAN");
-            res = f_open(&fil, "version.txt", FA_WRITE | FA_OPEN_ALWAYS);
-            if (res == FR_OK)
-            {
-                res = f_write(&fil, GIUCAN_VERSION, strlen(GIUCAN_VERSION), &bw);
-                f_close(&fil);
-            }
-        }
-    }
-    res = f_unmount("");
-#endif
+    Settings settings = {};
+    storage_init();
+    load_settings(&settings);
 
     MX_USB_DEVICE_Init();
 
@@ -81,12 +53,15 @@ int main(void)
 #ifdef SLCAN
     leds_blink(4, 100);
 #endif
-#ifdef C1CAN
+#ifdef C1CAN    
     leds_blink(3, 250);
 #endif
 #ifdef BHCAN
     leds_blink(2, 500);
 #endif
+
+    GlobalState state = {};
+    state_init(&state, &settings);
 
     while (1)
     {
@@ -99,7 +74,7 @@ int main(void)
         can_process();
 
 #ifdef XCAN
-        state_process(&state);
+        state_process(&state, &settings);
 #endif
         uart_process(&state);
         if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
@@ -133,14 +108,16 @@ int main(void)
     }
 }
 
-void state_init(GlobalState *state)
+void state_init(GlobalState *state, Settings *settings)
 {
+    uint32_t now = HAL_GetTick();
     state->board.collectingMultiframeResponse = -1;
     state->board.dashboardExternallyUpdatedAt = 0;
     state->board.dashboardState.itemsCount = DASHBOARD_ITEMS_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
+    state->board.dashboardState.carouselShowNextItemAt = settings->bootCarouselEnabled ? now + settings->bootCarouselDelay : 0;
     state->board.dpfRegenNotificationRequestAt = 0;
     state->board.latestMessageReceivedAt = 0;
     state->board.snsRequestOffAt = 0;

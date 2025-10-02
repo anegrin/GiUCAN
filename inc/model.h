@@ -31,18 +31,19 @@ typedef struct
 typedef struct
 {
     uint32_t rpm;
+    uint16_t torque;
+    uint8_t gear;
+    bool ccActive;
     DPF dpf;
     Oil oil;
     Battery battery;
     SNSState sns;
-    uint16_t torque;
-    uint8_t gear;
-    bool ccActive;
 } CarState;
 
 typedef struct
 {
     float values[2];
+    uint32_t carouselShowNextItemAt;
     uint8_t itemsCount;
     uint8_t currentItemIndex;
     bool visible;
@@ -64,5 +65,14 @@ typedef struct
     BoardState board;
     CarState car;
 } GlobalState;
+
+typedef struct
+{
+    uint32_t bootCarouselDelay;
+    uint32_t bootCarouselInterval;
+    uint8_t bootCarouselLoops;
+    bool bootCarouselEnabled;
+} Settings;
+
 
 #endif /* __MODEL_H */

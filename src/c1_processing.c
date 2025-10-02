@@ -35,7 +35,11 @@ static uint32_t valuesUpdatedAt = 0;
 static int valueToExtract = 0;
 static uint8_t localCurrentDashboardItemIndex = 0;
 static uint32_t refreshOperations = 0;
-void state_process(GlobalState *state)
+static DashboardItemType favDashboardItems[] = {FAV_DASHBOARD_ITEMS};
+static uint8_t favDashboardItemsLength = sizeof(favDashboardItems) / sizeof(DashboardItemType);
+static int8_t carouselItemsToShow = -1;
+static uint8_t currentFavToShow = 0;
+void state_process(GlobalState *state, Settings *settings)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
     bool shouldHandleSNSAutoOff = state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && state->board.now > (SNS_AUTO_OFF_DELAY_MS / 2) && state->car.rpm > CAR_IS_ON_MIN_RPM;
@@ -57,6 +61,33 @@ void state_process(GlobalState *state)
 #endif
 #ifdef ENABLE_DASHBOARD
 
+    if (state->board.dashboardState.carouselShowNextItemAt > 0 && state->car.rpm > CAR_IS_ON_MIN_RPM)
+    {
+        if (carouselItemsToShow == -1)
+        {
+            carouselItemsToShow = settings->bootCarouselLoops * favDashboardItemsLength;
+        }
+        else if (state->board.dashboardState.carouselShowNextItemAt < state->board.now)
+        {
+            if (carouselItemsToShow == 0)
+            {
+                state->board.dashboardState.visible = false;
+                state->board.dashboardState.carouselShowNextItemAt = 0;
+                state->board.dashboardState.currentItemIndex = 0;
+                send_state(state);
+            }
+            else
+            {
+                state->board.dashboardState.visible = true;
+                state->board.dashboardState.currentItemIndex = favDashboardItems[currentFavToShow];
+
+                carouselItemsToShow--;
+                currentFavToShow = (currentFavToShow + 1) % favDashboardItemsLength;
+                state->board.dashboardState.carouselShowNextItemAt = state->board.now + settings->bootCarouselInterval;
+            }
+        }
+    }
+
     if (state->board.dashboardState.visible && state->board.latestMessageReceivedAt + VALUES_TIMEOUT_MS < state->board.now)
     {
         VLOG("%d no msg", state->board.now);
@@ -77,8 +108,8 @@ void state_process(GlobalState *state)
 
         uint32_t values_refresh_ms = values_refresh_rate_of(type);
 
-        //first 2 iterations for an item (v0 and optional v1)
-        //must be done ASAP, then we'll honor values_refresh_rate_of
+        // first 2 iterations for an item (v0 and optional v1)
+        // must be done ASAP, then we'll honor values_refresh_rate_of
         if (refreshOperations < 2)
         {
             values_refresh_ms = DEFAULT_VALUES_REFRESH_MS / 5;
