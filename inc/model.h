@@ -72,6 +72,8 @@ typedef struct
     uint32_t bootCarouselInterval;
     uint8_t bootCarouselLoops;
     bool bootCarouselEnabled;
+    uint8_t favoriteItemsCount;
+    uint8_t *favoriteItems;
 } Settings;
 
 

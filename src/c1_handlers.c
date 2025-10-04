@@ -68,9 +68,7 @@ void handle_oil(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
 #define SPEED_HARD_DOWN 0x20
 #define SPEED_UP 0x08
 #define SPEED_DOWN 0x18
-static DashboardItemType favDashboardItems[] = {FAV_DASHBOARD_ITEMS};
-static uint8_t favDashboardItemsLength = sizeof(favDashboardItems) / sizeof(DashboardItemType);
-void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_cc_buttons(GlobalState *state, Settings *settings, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     uint8_t ccButtonEvent = rx_msg_data[0];
 
@@ -138,15 +136,15 @@ void handle_cc_buttons(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, ui
 
                     if (state->board.dashboardState.visible)
                     {
-                        if (favDashboardItemsLength > 0)
+                        if (settings->favoriteItemsCount > 0)
                         {
-                            DashboardItemType nextFav = favDashboardItems[0];
+                            DashboardItemType nextFav = settings->favoriteItems[0];
                             DashboardItemType current = state->board.dashboardState.currentItemIndex;
-                            for (int i = 0; i < favDashboardItemsLength; i++)
+                            for (int i = 0; i < settings->favoriteItemsCount; i++)
                             {
-                                if (favDashboardItems[i] < DASHBOARD_ITEMS_COUNT && favDashboardItems[i] > current)
+                                if (settings->favoriteItems[i] < DASHBOARD_ITEMS_COUNT && settings->favoriteItems[i]  > current)
                                 {
-                                    nextFav = favDashboardItems[i];
+                                    nextFav = settings->favoriteItems[i];
                                     break;
                                 }
                             }
@@ -215,7 +213,7 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
 }
 #endif
 
-#ifdef ENABLE_DPF_REGEN_NOTIFICATIION
+#ifdef ENABLE_DPF_REGEN_NOTIFICATION
 void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (rx_msg_header.DLC >= 6)
@@ -226,8 +224,8 @@ void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_head
         {
             state->car.dpf.regenerating = 1;
             LOG("%d start DPF r\n", state->board.now);
-#ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATIION
-            state->board.dashboardState.currentItemIndex = DPF_REGEN_VISUAL_NOTIFICATIION_ITEM;
+#ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATION
+            state->board.dashboardState.currentItemIndex = DPF_REGEN_VISUAL_NOTIFICATION_ITEM;
             state->board.dashboardState.visible = true;
 #endif
         }
@@ -241,7 +239,7 @@ void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_head
 }
 #endif
 
-void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_standard_frame(GlobalState *state, Settings *settings, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     switch (rx_msg_header.StdId)
     {
@@ -263,7 +261,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     case 0x02FA:
         if (!state->car.ccActive)
         {
-            handle_cc_buttons(state, rx_msg_header, rx_msg_data);
+            handle_cc_buttons(state, settings, rx_msg_header, rx_msg_data);
         }
         break;
     case 0x05A5:
@@ -282,7 +280,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         handle_sns_request(state, rx_msg_header, rx_msg_data);
         break;
 #endif
-#ifdef ENABLE_DPF_REGEN_NOTIFICATIION
+#ifdef ENABLE_DPF_REGEN_NOTIFICATION
     case 0x05AE:
         handle_dpf_regeneration(state, rx_msg_header, rx_msg_data);
         break;
@@ -393,7 +391,7 @@ bool apply_extractor(CarValueExtractor extractor, GlobalState *state, CAN_RxHead
 }
 
 static uint8_t localCurrentDashboardItemIndex = 0;
-void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_extended_frame(GlobalState *state, Settings *settings, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
 
     if (localCurrentDashboardItemIndex != state->board.dashboardState.currentItemIndex)

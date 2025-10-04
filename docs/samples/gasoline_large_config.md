@@ -1,5 +1,5 @@
 ```c
-#define DISABLE_DPF_REGEN_NOTIFICATIION
+#define DISABLE_DPF_REGEN_NOTIFICATION
 
 #define DASHBOARD_ITEMS                         \
     X(FIRMWARE_ITEM, "GiUCAN " GIUCAN_VERSION)  \
@@ -24,8 +24,6 @@
                      "\xB0")
 #define CONVERTERS \
     X(GEAR_ITEM, char, ((unsigned char)value), bool, false)
-
-#define FAV_DASHBOARD_ITEMS OIL_TEMP_ITEM,BATTERY_P_ITEM
 
 #define EXTRACTION_FUNCTIONS                                                      \
     X(extractTempCommon, ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f)        \

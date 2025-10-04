@@ -12,12 +12,12 @@
 #include "logging.h"
 #include <string.h>
 
-#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
+#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATION
 static uint8_t dpfSoundAlertFrame[8];
 static CAN_TxHeaderTypeDef dpfSoundAlertHeader = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x05AC, .DLC = 8};
 #endif
 
-void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_standard_frame(GlobalState *state, Settings *settings, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     switch (rx_msg_header.StdId)
     {
@@ -26,7 +26,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
         {
             state->board.dpfRegenNotificationRequestAt = 0;
 
-#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATIION
+#ifdef ENABLE_DPF_REGEN_SOUND_NOTIFICATION
             memcpy(dpfSoundAlertFrame, rx_msg_data, rx_msg_header.DLC);
 
             dpfSoundAlertHeader.DLC = rx_msg_header.DLC;
@@ -48,7 +48,7 @@ void handle_standard_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header
     }
 }
 
-void handle_extended_frame(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_extended_frame(GlobalState *state, Settings *settings, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
 }
 #endif

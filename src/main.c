@@ -93,10 +93,10 @@ int main(void)
                         switch (rx_msg_header.IDE)
                         {
                         case CAN_ID_STD:
-                            handle_standard_frame(&state, rx_msg_header, rx_msg_data);
+                            handle_standard_frame(&state, &settings, rx_msg_header, rx_msg_data);
                             break;
                         case CAN_ID_EXT:
-                            handle_extended_frame(&state, rx_msg_header, rx_msg_data);
+                            handle_extended_frame(&state, &settings, rx_msg_header, rx_msg_data);
                             break;
                         default:
                         }

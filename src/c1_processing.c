@@ -35,8 +35,6 @@ static uint32_t valuesUpdatedAt = 0;
 static int valueToExtract = 0;
 static uint8_t localCurrentDashboardItemIndex = 0;
 static uint32_t refreshOperations = 0;
-static DashboardItemType favDashboardItems[] = {FAV_DASHBOARD_ITEMS};
-static uint8_t favDashboardItemsLength = sizeof(favDashboardItems) / sizeof(DashboardItemType);
 static int8_t carouselItemsToShow = -1;
 static uint8_t currentFavToShow = 0;
 void state_process(GlobalState *state, Settings *settings)
@@ -65,7 +63,7 @@ void state_process(GlobalState *state, Settings *settings)
     {
         if (carouselItemsToShow == -1)
         {
-            carouselItemsToShow = settings->bootCarouselLoops * favDashboardItemsLength;
+            carouselItemsToShow = settings->bootCarouselLoops * settings->favoriteItemsCount;
         }
         else if (state->board.dashboardState.carouselShowNextItemAt < state->board.now)
         {
@@ -79,10 +77,10 @@ void state_process(GlobalState *state, Settings *settings)
             else
             {
                 state->board.dashboardState.visible = true;
-                state->board.dashboardState.currentItemIndex = favDashboardItems[currentFavToShow];
+                state->board.dashboardState.currentItemIndex = settings->favoriteItems[currentFavToShow];
 
                 carouselItemsToShow--;
-                currentFavToShow = (currentFavToShow + 1) % favDashboardItemsLength;
+                currentFavToShow = (currentFavToShow + 1) % settings->favoriteItemsCount;
                 state->board.dashboardState.carouselShowNextItemAt = state->board.now + settings->bootCarouselInterval;
             }
         }

@@ -44,13 +44,13 @@ GiUCAN has been developed and tested for [FYSETC UCAN](https://github.com/FYSETC
 
 Boards must be powered with 5V, you can get the power from the USB connector below the AC; if your ETM has a free USB HSD connector you can use that one to keep the power connection hidden
 
-**DO NOT** connect boards to 12V OBD2 pin with a power converter: OBD2 12V is always providing power even when the car is off and in deep sleep mode, GiUCAN relays on ETM powering off USB for shutdown of boards; **NO LOW CONSUMPTION MODE HAS BEEN IMPLEMENTED.**
+**DO NOT** connect boards to 12V OBD2 pin with a power converter: OBD2 12V is always providing power even when the car is off and in deep sleep mode, GiUCAN relies on ETM powering off USB for shutdown of boards; **NO LOW CONSUMPTION MODE HAS BEEN IMPLEMENTED.**
 
 ## Building
 
 Just run [build.sh](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmware files under `dist` folder:
 
-- GiUCAN_SLCAN.elf: it's badically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for example with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
+- GiUCAN_SLCAN.elf: it's basically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for example with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
 - GiUCAN_BHCAN.elf: firmware for BHCAN board
 - GiUCAN_C1CAN.elf: firmware for C1CAN board
 
@@ -66,15 +66,15 @@ Once flashed and connected power on your car; after few seconds you'll see the S
 
 To view messages on the dashboard just keep the cruise control RES button pressed for a couple of seconds, keep it pressed again to hide; you can use cruise control speed joystick to move across dashboard items (1 by 1 or 10 by 10 using "hard press").
 
-If ETM need to show something it will stay on the dashboard for a little bit ore than a second, then GiUCAN will display the item again.
+If ETM need to show something it will stay on the dashboard for a little bit more than a second, then GiUCAN will display the item again.
 
 If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will fire a sound notification (seat belts alarm) and display the "DPF status" item on the dashboard (even if you haven't enabled messages by long press of RES button).
 
 ## USB behavior
 
 - SLCAN firmware setup board's USB as serial CDC so just connect it to your laptop to sniff CAN Bus messages  
-- BHCAN firmware setup board's USB as storage CDC (read-only); currently not used, it will just contain a file named `giucan.ver` with the version of the firmware that initialized the filesystem
-- C1CAN firmware setup board's USB as storage CDC (read-write); it will just contain a file named `giucan.ver` with the version of the firmware that initialized the filesystem and user can store an optional `settings.ini` (see [Settings](#settings) paragraph)
+- BHCAN firmware setup board's USB as storage CDC (read-only); currently not used, it will just contain a file named `giucan.ver` with the version of the firmware that initialized the file system
+- C1CAN firmware setup board's USB as storage CDC (read-write); it will just contain a file named `giucan.ver` with the version of the firmware that initialized the file system and user can store an optional `settings.ini` (see [Settings](#settings) paragraph)
 
 ## Customization
 
@@ -90,11 +90,11 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS` milliseconds so a full message takes `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS*DASHBOARD_MESSAGE_MAX_LENGTH/3` milliseconds to be rendered
 - `#define DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS 50`: messages are sent do dashboard in frames of 3 characters; this controls the pace, default is 29 milliseconds.
 - `#define DISABLE_DASHBOARD_FORCED_REFRESH`: GiUCAN will refresh items only when their values change
-- `#define DASHBOARD_FORCED_REFRESH_MS 1000`: if GiUCAN can refresh items even if no values have changed this controls how often to do so, in milliseconds. default is 1.5s
-- `#define DISABLE_DPF_REGEN_NOTIFICATIION`: completely disable the DPF regeneration notification feature
-- `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATIION`: disable the sound notification when DPF regeneration starts
-- `#define DISABLE_DPF_REGEN_VISUAL_NOTIFICATIION`: disable visual notification (dashboard item display) when DPF regeneration starts
-- `#define DPF_REGEN_VISUAL_NOTIFICATIION_ITEM`: what dashboard item to show as visual notification, default is `DPF_STATUS_ITEM`
+- `#define DASHBOARD_FORCED_REFRESH_MS 1000`: if GiUCAN can refresh items even if no values have changed this controls how often to do so, in milliseconds. Default is 1.5s
+- `#define DISABLE_DPF_REGEN_NOTIFICATION`: completely disable the DPF regeneration notification feature
+- `#define DISABLE_DPF_REGEN_SOUND_NOTIFICATION`: disable the sound notification when DPF regeneration starts
+- `#define DISABLE_DPF_REGEN_VISUAL_NOTIFICATION`: disable visual notification (dashboard item display) when DPF regeneration starts
+- `#define DPF_REGEN_VISUAL_NOTIFICATION_ITEM`: what dashboard item to show as visual notification, default is `DPF_STATUS_ITEM`
 - `#define DISABLE_DASHBOARD`: disable the dashboard feature, not items will be displayed
 - `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, default is 2s
 - `#define  5`: how many items to skip when "hard pressing" speed control joystick; default is 10
@@ -108,7 +108,6 @@ You can customize what items are displayed, how they are rendered and how they a
 
 - `DASHBOARD_ITEMS` defines what items to display, in what order and how they are rendered (printf pattern); every item can display at most 2 values, both optional
 - `CONVERTERS` defines how to convert a value from float to any other type before rendering
-- `FAV_DASHBOARD_ITEMS` defines a comma separated list of favorite items: pressing RES button when dashboard is visible will jump to the next favorite item; just define it empty to disable the feature
 - `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from CAN message (8 bytes)
 - `EXTRACTORS`: defines how extract first and second value for each item, defines if it needs to send a query to the bus and what function to use
 - `VALUES_REFRESH_MS`: defines values extraction rate, by default values are refreshed every `DEFAULT_VALUES_REFRESH_MS`
@@ -117,7 +116,7 @@ take a look at [inc/dashboard.h](https://github.com/anegrin/GiUCAN/blob/main/inc
 
 #### Patterns
 
-GiUCAN do render messages using `snprintf` so output is always truncated to `DASHBOARD_MESSAGE_MAX_LENGTH`
+GiUCAN do render messages using `snprintf`, so output is always truncated to `DASHBOARD_MESSAGE_MAX_LENGTH`
 
 #### Converters
 
@@ -240,11 +239,20 @@ static CarValueExtractors UPTIME_ITEM_extractors = {
 
 GiUCAN will use extractors to send queries - if needed - the consume the response and extract first and second float values using extraction functions (`noop_extract` is provided in the codebase for convenience).
 
+### user config examples
+
+- Diesel 3.5 inches display [user_config.h](samples/diesel_small_config.md)
+- Gasoline 7 inches display [user_config.h](samples/gasoline_large_config.md)
+
+Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/danardi78/Alfaromeo-Giulia-Stelvio-PIDs) for all known PIDs
+
 ## Settings
 
 Connect the board with C1CAN firmware to your laptop and it will be shown as an external USB storage labeled `GIUCAN`; create a file named `settings.ini` with this content:
 
 ```ini
+[dashboard]
+favorites=5,13,21
 [carousel]
 delayMs=10000
 intervalMs=3500
@@ -252,11 +260,11 @@ loops=3
 enabled=true
 ```
 
-by doing so GiUCAN will show favorite items in a carousel when you start the car (after 10 seconds for 3 times with 3.5 seconds interval); settings are checked for valid values by `void validate_and_fix_settings(Settings *settings)` in `storage.c`.
+dashboard:
+  - favorites: 0-based position of items to use as favorites;  pressing RES button when dashboard is visible will jump to the next favorite item; not mandatory, default is empty
 
-### user config examples
-
-- Diesel 3.5 inches display [user_config.h](samples/diesel_small_config.md)
-- Gasoline 7 inches display [user_config.h](samples/gasoline_large_config.md)
-
-Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/danardi78/Alfaromeo-Giulia-Stelvio-PIDs) for all known PIDs
+carousel:
+  - enabled: enables carousel display of favorites when car starts, default is false
+  - loops: how many times to iterate through favorites, default is 3
+  - delayMs: after how many milliseconds to display the carousel, default is 10000 (i.e. 10s)
+  - intervalMs: how many times to wait between items, default is 3000 (i.e. 3s)
