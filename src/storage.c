@@ -25,7 +25,7 @@ void storage_init(void)
     res = f_mount(&fs, "", 1);
     if (res != FR_OK)
     {
-        MKFS_PARM opt = {.fmt = FM_FAT | FM_SFD, .n_fat = 1, .align = 0, .n_root = 224, .au_size = FF_MIN_SS};
+        MKFS_PARM opt = {.fmt = FM_FAT | FM_SFD, .n_fat = 1, .align = 0, .n_root = 32, .au_size = FF_MIN_SS};
         res = f_mkfs("", &opt, work, FF_MIN_SS);
         if (res == FR_OK)
         {
