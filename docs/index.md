@@ -58,7 +58,7 @@ By default builds are for Diesel and 7 inch dashboard display
 
 ## Flashing
 
-You can use [dfu-util](https://github.com/anegrin/GiUCAN/blob/main/Makefile#L102C7-L102C15) or [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html); connect boards via USB in boot mode by short cutting BO and 3V3 pins then flash the firmware you like via DFU (Erasing & Programming -> USB from the dropdown on the left).
+You can use [dfu-util](https://github.com/anegrin/GiUCAN/blob/main/Makefile) or [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html); connect boards via USB in boot mode by short cutting BO and 3V3 pins then flash the firmware you like via DFU (Erasing & Programming -> USB from the dropdown on the left).
 
 ## Usage
 
@@ -84,7 +84,7 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 
 - `#define DISABLE_EXTERNAL_OSCILLATOR`: UCAN has and external 8Mhz oscillator, GiUCAN use it by default; you can disable it and use internal.
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
-- `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h#L47-L49)
+- `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h)
 - `#define DEFAULT_VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.333s
 - `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
 - `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS` milliseconds so a full message takes `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS*DASHBOARD_MESSAGE_MAX_LENGTH/3` milliseconds to be rendered
@@ -108,7 +108,7 @@ You can customize what items are displayed, how they are rendered and how they a
 
 - `DASHBOARD_ITEMS` defines what items to display, in what order and how they are rendered (printf pattern); every item can display at most 2 values, both optional
 - `CONVERTERS` defines how to convert a value from float to any other type before rendering
-- `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from CAN message (8 bytes)
+- `EXTRACTION_FUNCTIONS`: defines how to extract a value from current [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h) or from CAN message (8 bytes)
 - `EXTRACTORS`: defines how extract first and second value for each item, defines if it needs to send a query to the bus and what function to use
 - `VALUES_REFRESH_MS`: defines values extraction rate, by default values are refreshed every `DEFAULT_VALUES_REFRESH_MS`
 
@@ -149,7 +149,7 @@ so you might wanna then use it for an item with a pattern like `"Current gear: %
 
 #### Extraction functions
 
-Yuo can extract values from the [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h#L65) or from a CAN response depending on how extractors are defined; a function is defined as
+Yuo can extract values from the [state](https://github.com/anegrin/GiUCAN/blob/main/inc/model.h) or from a CAN response depending on how extractors are defined; a function is defined as
 
 `function_name, code`
 
@@ -171,7 +171,7 @@ renders to
 float extractTempCommon(GlobalState *s, uint8_t *r) { return ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f; }
 ```
 
-(GiUCAN does provide defines for [A, B, C and D](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L14-L17) to facilitate the extraction of bytes 4,5,6 and 7 of `r`)
+(GiUCAN does provide defines for [A, B, C, D for all frame response types and E, F, G for multiline responses](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h) to facilitate the extraction of bytes from `r`)
 
 also for example
 
@@ -203,7 +203,7 @@ forV1_query_reqData,
 forV1_extraction_function
 ```
 
-and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h#L108-L115); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see [Extraction functions](#extraction-functions))
+and the renders to [CarValueExtractors](https://github.com/anegrin/GiUCAN/blob/main/inc/dashboard.h); they defines if a value needs a query, what are query request id, request data and reply id and what function to use to extract the value from state or response (see [Extraction functions](#extraction-functions))
 
 for example
 

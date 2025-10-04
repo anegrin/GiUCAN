@@ -58,6 +58,7 @@ Plaese read [GiUCAN GitHub Pages](https://anegrin.github.io/GiUCAN/) to learn ab
 - Building for SLCAN, C1CAN and BHCAN
 - Flashing using [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)
 - Customizing build for small displays, gasoline etc.
+- Configure already built firmware (via `settings.ini`)
 
 ## License
 
