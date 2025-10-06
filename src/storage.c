@@ -78,8 +78,8 @@ void validate_and_fix_settings(Settings *settings)
 
 typedef struct FavItemNode
 {
-    uint8_t item;
     struct FavItemNode *next;
+    uint8_t item;
 } FavItemNode;
 
 static int settings_ini_handler(void *user, const char *section, const char *name,

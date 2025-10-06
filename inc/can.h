@@ -34,11 +34,12 @@ typedef enum can_bus_state {
 
 typedef struct cantxbuf_
 {
-	CAN_TxHeaderTypeDef header[TXQUEUE_LEN]; // Header buffer
-	uint8_t data[TXQUEUE_LEN][TXQUEUE_DATALEN]; // Data buffer
 	uint8_t head; // Head pointer
 	uint8_t tail; // Tail pointer
 	uint8_t full; // TODO: Set this when we are full, clear when the tail moves one.
+	uint8_t _pad;
+	CAN_TxHeaderTypeDef header[TXQUEUE_LEN]; // Header buffer
+	uint8_t data[TXQUEUE_LEN][TXQUEUE_DATALEN]; // Data buffer
 } can_txbuf_t;
 
 

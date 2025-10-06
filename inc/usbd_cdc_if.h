@@ -72,12 +72,12 @@
 /* USER CODE BEGIN EXPORTED_TYPES */
 typedef struct _usbrx_buf_
 {
-	// Receive buffering: circular buffer FIFO
-	uint8_t buf[NUM_RX_BUFS][RX_BUF_SIZE];
-	uint32_t msglen[NUM_RX_BUFS];
 	uint8_t head;
 	uint8_t tail;
-
+	uint8_t _pad[2];
+	uint32_t msglen[NUM_RX_BUFS];
+	// Receive buffering: circular buffer FIFO
+	uint8_t buf[NUM_RX_BUFS][RX_BUF_SIZE];
 } usbrx_buf_t;
 /* USER CODE END EXPORTED_TYPES */
 

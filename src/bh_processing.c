@@ -26,10 +26,11 @@ typedef struct
 
 typedef struct
 {
-    DashboardFrame buffer[FRAME_QUEUE_SIZE];
     uint8_t head;
     uint8_t tail;
     uint8_t count;
+    uint8_t _pad;
+    DashboardFrame buffer[FRAME_QUEUE_SIZE];
 } FrameQueue;
 
 static FrameQueue queue = {0};
