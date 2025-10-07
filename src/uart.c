@@ -207,6 +207,11 @@ void uart_init(void)
 #endif
 }
 
+void uart_deinit(void)
+{
+    HAL_UART_MspDeInit(&huart2);
+}
+
 void uart_process(GlobalState *state)
 {
     if (rx_tx_queue->count == 0)

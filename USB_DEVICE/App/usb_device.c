@@ -59,7 +59,11 @@ USBD_HandleTypeDef hUsbDeviceFS;
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
-
+void MX_USB_DEVICE_DeInit(void)
+{
+  USBD_Stop(&hUsbDeviceFS);
+  USBD_DeInit(&hUsbDeviceFS);
+}
 /* USER CODE END 1 */
 
 /**

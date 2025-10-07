@@ -21,15 +21,13 @@ DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 void state_init(GlobalState *state, Settings *settings);
 void SystemClock_Config(void);
 static void MX_DMA_Init(void);
+static void MX_DMA_DeInit(void);
+
+static bool readyToSleep = false;
+static bool gotToSleep = false;
 
 int main(void)
 {
-    CAN_RxHeaderTypeDef rx_msg_header; // msg header
-    uint8_t rx_msg_data[8] = {
-        0,
-    }; // msg data
-    uint8_t msg_buf[SLCAN_MTU];
-
     HAL_Init();
     SystemClock_Config();
     led_init();
@@ -53,7 +51,7 @@ int main(void)
 #ifdef SLCAN
     leds_blink(4, 100);
 #endif
-#ifdef C1CAN    
+#ifdef C1CAN
     leds_blink(3, 250);
 #endif
 #ifdef BHCAN
@@ -62,11 +60,27 @@ int main(void)
 
     GlobalState state = {};
     state_init(&state, &settings);
+    LOGS("\nboot\n");
 
     while (1)
     {
         state.board.now = HAL_GetTick();
-
+        if (!readyToSleep && state.board.now > 27000)
+        {
+            readyToSleep = true;
+            LOGS("\nsleep in 3\n");
+        }
+        
+        if (!gotToSleep && state.board.now > 30000)
+        {
+            gotToSleep = true;
+            MX_USB_DEVICE_DeInit();
+            uart_deinit();
+            MX_DMA_DeInit();
+            HAL_SuspendTick();
+            HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+            //HAL_ResumeTick();
+        }
 #ifdef SLCAN
         cdc_process();
 #endif
@@ -77,7 +91,7 @@ int main(void)
         state_process(&state, &settings);
 #endif
         uart_process(&state);
-        if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
+        /*if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
         {
             if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
             {
@@ -104,6 +118,43 @@ int main(void)
 #endif
                 }
             }
+        }*/
+    }
+}
+
+CAN_RxHeaderTypeDef rx_msg_header; // msg header
+uint8_t rx_msg_data[8] = {
+    0,
+}; // msg data
+uint8_t msg_buf[SLCAN_MTU];
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+    if (gotToSleep) {
+        HAL_NVIC_SystemReset();
+    }
+    if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
+    {
+        uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
+        if (msg_len)
+        {
+#ifdef SLCAN
+            CDC_Transmit_FS(msg_buf, msg_len);
+#endif
+#ifdef XCAN
+            if (rx_msg_header.RTR == CAN_RTR_DATA)
+            {
+                switch (rx_msg_header.IDE)
+                {
+                case CAN_ID_STD:
+                    handle_standard_frame(&state, &settings, rx_msg_header, rx_msg_data);
+                    break;
+                case CAN_ID_EXT:
+                    handle_extended_frame(&state, &settings, rx_msg_header, rx_msg_data);
+                    break;
+                default:
+                }
+            }
+#endif
         }
     }
 }
@@ -211,6 +262,15 @@ static void MX_DMA_Init(void)
     /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
+}
+
+static void MX_DMA_DeInit(void)
+{
+
+    /* DMA interrupt deinit */
+    HAL_NVIC_DisableIRQ(DMA1_Channel4_5_6_7_IRQn);
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA1_CLK_DISABLE();
 }
 
 /**

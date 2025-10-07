@@ -7,6 +7,7 @@
 #include "usbd_cdc_if.h"
 #include "can.h"
 #include "led.h"
+#include "logging.h"
 #include "error.h"
 
 // Private variables
@@ -28,13 +29,17 @@ void MX_CAN_Init()
     can_handle.Init.TimeSeg2 = CAN_BS2_3TQ;
     can_handle.Init.TimeTriggeredMode = DISABLE;
     can_handle.Init.AutoBusOff = ENABLE;
-    can_handle.Init.AutoWakeUp = DISABLE;
+    can_handle.Init.AutoWakeUp = ENABLE;
     can_handle.Init.AutoRetransmission = ENABLE;
     can_handle.Init.ReceiveFifoLocked = DISABLE;
     can_handle.Init.TransmitFifoPriority = ENABLE;
     if (HAL_CAN_Init(&can_handle) != HAL_OK)
     {
         Error_Handler();
+    } else {
+    LOGS("\npre\n");
+        HAL_CAN_ActivateNotification(&can_handle, CAN_IT_WAKEUP | CAN_IT_RX_FIFO0_MSG_PENDING);
+    LOGS("\npost\n");
     }
 }
 
@@ -44,17 +49,17 @@ void can_enable(void)
     if (bus_state == OFF_BUS)
     {
         MX_CAN_Init();
-    #ifdef BHCAN
+#ifdef BHCAN
         filter.FilterIdHigh = (SOUND_FRAME_STD_ID << 5);
         filter.FilterIdLow = (DASHBOARD_FRAME_STD_ID << 5);
         filter.FilterMode = CAN_FILTERMODE_IDLIST;
         filter.FilterScale = CAN_FILTERSCALE_16BIT;
-    #else
+#else
         filter.FilterIdHigh = 0;
         filter.FilterIdLow = 0;
         filter.FilterMode = CAN_FILTERMODE_IDMASK;
         filter.FilterScale = CAN_FILTERSCALE_32BIT;
-    #endif
+#endif
         filter.FilterMaskIdHigh = 0;
         filter.FilterMaskIdLow = 0;
         filter.FilterFIFOAssignment = CAN_RX_FIFO0;

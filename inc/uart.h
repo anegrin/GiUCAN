@@ -24,6 +24,7 @@ uint8_t printf_to_uart(const char* format, ...);
 #endif
 #endif
 void uart_init(void);
+void uart_deinit(void);
 void uart_process(GlobalState *state);
 
 #endif // _UART_H
