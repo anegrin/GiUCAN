@@ -13,7 +13,6 @@
 
 #define LED_DURATION 25 
 
-void led_init();
 void leds_on_error(void);
 void leds_blink(uint8_t count, uint32_t delay);
 void led_rx_on(void);

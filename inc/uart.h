@@ -11,7 +11,7 @@
 #endif
 
 #ifdef XCAN
-#define MESSAGE_SIZE 13
+#define MESSAGE_SIZE 14
 #endif
 
 #ifdef C1CAN

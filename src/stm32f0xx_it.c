@@ -180,11 +180,11 @@ void USART2_IRQHandler(void)
 void CEC_CAN_IRQHandler(void)
 {
   /* USER CODE BEGIN CEC_CAN_IRQn 0 */
-  LOGS(".");
+
   /* USER CODE END CEC_CAN_IRQn 0 */
   HAL_CAN_IRQHandler(can_gethandle());
   /* USER CODE BEGIN CEC_CAN_IRQn 1 */
-  LOGS(",");
+
   /* USER CODE END CEC_CAN_IRQn 1 */
 }
 

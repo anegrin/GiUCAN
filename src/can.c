@@ -37,9 +37,7 @@ void MX_CAN_Init()
     {
         Error_Handler();
     } else {
-    LOGS("\npre\n");
         HAL_CAN_ActivateNotification(&can_handle, CAN_IT_WAKEUP | CAN_IT_RX_FIFO0_MSG_PENDING);
-    LOGS("\npost\n");
     }
 }
 

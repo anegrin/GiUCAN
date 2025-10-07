@@ -79,6 +79,8 @@ bool send_state(GlobalState *state)
     memcpy(&buffer[7], &v1, 4);
     bool regenerating = state->car.dpf.regenerating;
     buffer[11] = regenerating;
+    bool goingToBed = state->board.goingToBedAt != 0;
+    buffer[12] = goingToBed;
     uint8_t crc = calculate_crc8(buffer, MESSAGE_SIZE - 1);
     buffer[MESSAGE_SIZE - 1] = crc;
     return uart_enqueue(buffer, MESSAGE_SIZE);
@@ -167,12 +169,21 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
     memcpy(&v0, &data[3], 4);
     memcpy(&v1, &data[7], 4);
     bool regenerating = data[11];
+    bool goingToBed = data[12];
     uint8_t crc_check = calculate_crc8(data, MESSAGE_SIZE - 1);
     uint8_t crc = data[MESSAGE_SIZE - 1];
 
     if (type == MSG_START && crc_check == crc)
     {
-        update_state(state, visible, currentItemIndex, v0, v1, regenerating);
+        if (goingToBed)
+        {
+            HAL_SuspendTick();
+            HAL_PWR_EnterSTANDBYMode();
+        }
+        else
+        {
+            update_state(state, visible, currentItemIndex, v0, v1, regenerating);
+        }
         return true;
     }
 

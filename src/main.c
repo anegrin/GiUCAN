@@ -12,29 +12,30 @@
 #include "usbd_cdc_if.h"
 #endif
 #include "storage.h"
-#include "logging.h"
 
+static GlobalState state = {};
+static Settings settings = {};
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
 void state_init(GlobalState *state, Settings *settings);
 void SystemClock_Config(void);
+void GPIO_Init(void);
 static void MX_DMA_Init(void);
+#ifdef C1CAN
 static void MX_DMA_DeInit(void);
-
-static bool readyToSleep = false;
-static bool gotToSleep = false;
+#endif
+static bool sleeping = false;
 
 int main(void)
 {
     HAL_Init();
     SystemClock_Config();
-    led_init();
+    GPIO_Init();
     MX_DMA_Init();
     uart_init();
 
-    Settings settings = {};
     storage_init();
     load_settings(&settings);
 
@@ -58,29 +59,32 @@ int main(void)
     leds_blink(2, 500);
 #endif
 
-    GlobalState state = {};
     state_init(&state, &settings);
-    LOGS("\nboot\n");
+
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_13, GPIO_PIN_SET);
 
     while (1)
     {
         state.board.now = HAL_GetTick();
-        if (!readyToSleep && state.board.now > 27000)
+
+#ifdef C1CAN
+        if (state.board.goingToBedAt == 0 && state.board.latestMessageReceivedAt + STANDBY_MS < state.board.now)
         {
-            readyToSleep = true;
-            LOGS("\nsleep in 3\n");
+            state.board.goingToBedAt = state.board.now + 5000;
+            send_state(&state);
         }
-        
-        if (!gotToSleep && state.board.now > 30000)
+
+        if (!sleeping && state.board.goingToBedAt != 0 && state.board.goingToBedAt < state.board.now)
         {
-            gotToSleep = true;
+            sleeping = true;
             MX_USB_DEVICE_DeInit();
             uart_deinit();
             MX_DMA_DeInit();
             HAL_SuspendTick();
             HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-            //HAL_ResumeTick();
         }
+#endif
+
 #ifdef SLCAN
         cdc_process();
 #endif
@@ -91,34 +95,6 @@ int main(void)
         state_process(&state, &settings);
 #endif
         uart_process(&state);
-        /*if (is_can_msg_pending(CAN_RX_FIFO0) > 0)
-        {
-            if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
-            {
-                uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
-                if (msg_len)
-                {
-#ifdef SLCAN
-                    CDC_Transmit_FS(msg_buf, msg_len);
-#endif
-#ifdef XCAN
-                    if (rx_msg_header.RTR == CAN_RTR_DATA)
-                    {
-                        switch (rx_msg_header.IDE)
-                        {
-                        case CAN_ID_STD:
-                            handle_standard_frame(&state, &settings, rx_msg_header, rx_msg_data);
-                            break;
-                        case CAN_ID_EXT:
-                            handle_extended_frame(&state, &settings, rx_msg_header, rx_msg_data);
-                            break;
-                        default:
-                        }
-                    }
-#endif
-                }
-            }
-        }*/
     }
 }
 
@@ -129,9 +105,11 @@ uint8_t rx_msg_data[8] = {
 uint8_t msg_buf[SLCAN_MTU];
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    if (gotToSleep) {
+    if (sleeping)
+    {
         HAL_NVIC_SystemReset();
     }
+
     if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
     {
         uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
@@ -172,6 +150,7 @@ void state_init(GlobalState *state, Settings *settings)
     state->board.dpfRegenNotificationRequestAt = 0;
     state->board.latestMessageReceivedAt = 0;
     state->board.snsRequestOffAt = 0;
+    state->board.goingToBedAt = 0;
 
     state->car.battery.chargePercent = 0;
     state->car.battery.current = 0.0f;
@@ -247,6 +226,28 @@ void SystemClock_Config(void)
     }
 }
 
+void GPIO_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+#ifdef C1CAN
+    uint16_t GPIO_Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_13;
+#else
+    uint16_t GPIO_Pin = GPIO_PIN_0 | GPIO_PIN_1;
+#endif
+
+    HAL_GPIO_WritePin(GPIOA, GPIO_Pin, GPIO_PIN_RESET);
+
+    GPIO_InitStruct.Pin = GPIO_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
 /**
  * Enable DMA controller clock
  * Configure DMA for memory to memory transfers
@@ -264,6 +265,7 @@ static void MX_DMA_Init(void)
     HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
 }
 
+#ifdef C1CAN
 static void MX_DMA_DeInit(void)
 {
 
@@ -272,6 +274,7 @@ static void MX_DMA_DeInit(void)
     /* DMA controller clock enable */
     __HAL_RCC_DMA1_CLK_DISABLE();
 }
+#endif
 
 /**
  * @brief  This function is executed in case of error occurrence.
