@@ -7,7 +7,6 @@
 #include "usbd_cdc_if.h"
 #include "can.h"
 #include "led.h"
-#include "logging.h"
 #include "error.h"
 
 // Private variables
@@ -29,15 +28,17 @@ void MX_CAN_Init()
     can_handle.Init.TimeSeg2 = CAN_BS2_3TQ;
     can_handle.Init.TimeTriggeredMode = DISABLE;
     can_handle.Init.AutoBusOff = ENABLE;
-    can_handle.Init.AutoWakeUp = ENABLE;
+    can_handle.Init.AutoWakeUp = DISABLE;
     can_handle.Init.AutoRetransmission = ENABLE;
     can_handle.Init.ReceiveFifoLocked = DISABLE;
     can_handle.Init.TransmitFifoPriority = ENABLE;
     if (HAL_CAN_Init(&can_handle) != HAL_OK)
     {
         Error_Handler();
-    } else {
-        HAL_CAN_ActivateNotification(&can_handle, CAN_IT_WAKEUP | CAN_IT_RX_FIFO0_MSG_PENDING);
+    }
+    else
+    {
+        HAL_CAN_ActivateNotification(&can_handle, CAN_IT_RX_FIFO0_MSG_PENDING);
     }
 }
 

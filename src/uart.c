@@ -247,8 +247,8 @@ void uart_process(GlobalState *state)
     }
 }
 
-#ifdef SLCAN
-#ifdef DEBUG_MODE
+//#ifdef SLCAN
+//#ifdef DEBUG_MODE
 uint8_t print_to_uart(char *message)
 {
     static uint8_t buffer[MESSAGE_SIZE];
@@ -267,5 +267,5 @@ uint8_t printf_to_uart(const char *format, ...)
     va_end(args);
     return uart_enqueue(buffer, written < MESSAGE_SIZE ? (uint8_t)written : MESSAGE_SIZE);
 }
-#endif
-#endif
+//#endif
+//#endif
