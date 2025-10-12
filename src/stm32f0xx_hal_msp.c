@@ -110,7 +110,7 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* hcan)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* CAN interrupt Init */
-    HAL_NVIC_SetPriority(CEC_CAN_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(CEC_CAN_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
     /* USER CODE BEGIN CAN_MspInit 1 */
 
@@ -258,7 +258,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     __HAL_LINKDMA(huart,hdmarx,hdma_usart2_rx);
 
     /* USART2 interrupt Init */
-    HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USART2_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
     /* USER CODE BEGIN USART2_MspInit 1 */
 

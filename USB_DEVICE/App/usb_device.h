@@ -51,7 +51,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+void MX_USB_DEVICE_Stop(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

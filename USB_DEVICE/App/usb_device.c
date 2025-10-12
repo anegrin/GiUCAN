@@ -52,7 +52,10 @@ USBD_HandleTypeDef hUsbDeviceFS;
  * -- Insert your variables declaration here --
  */
 /* USER CODE BEGIN 0 */
-
+void MX_USB_DEVICE_Stop(void)
+{
+  USBD_Stop(&hUsbDeviceFS);
+}
 /* USER CODE END 0 */
 
 /*

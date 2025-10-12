@@ -29,7 +29,16 @@ void storage_init(void)
         res = f_mkfs("", &opt, work, FF_MIN_SS);
         if (res == FR_OK)
         {
-            res = f_setlabel("GIUCAN");
+            res = f_setlabel(
+                "GIUCAN"
+#ifdef SLCAN
+" SL"
+#elif C1CAN
+" C1"
+#elif BHCAN
+" BH"
+#endif
+            );
             res = f_open(&fil, "giucan.ver", FA_WRITE | FA_OPEN_ALWAYS);
             if (res == FR_OK)
             {

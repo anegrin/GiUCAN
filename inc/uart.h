@@ -17,12 +17,12 @@
 #ifdef C1CAN
 bool send_state(GlobalState *state);
 #endif
-//#ifdef SLCAN
-//#ifdef DEBUG_MODE
+#ifdef SLCAN
+#ifdef DEBUG_MODE
 uint8_t print_to_uart(char* message);
 uint8_t printf_to_uart(const char* format, ...);
-//#endif
-//#endif
+#endif
+#endif
 void uart_init(void);
 void uart_deinit(void);
 void uart_process(GlobalState *state);

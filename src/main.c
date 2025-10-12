@@ -39,7 +39,7 @@ int main(void)
     storage_init();
     load_settings(&settings);
 
-    //MX_USB_DEVICE_Init();
+    MX_USB_DEVICE_Init();
 
 #ifdef XCAN
     can_set_bitrate(CAN_BITRATE);
@@ -72,7 +72,6 @@ int main(void)
 #ifdef C1CAN
         if (state.board.goingToBedAt == 0 && state.board.latestMessageReceivedAt + STANDBY_MS < state.board.now)
         {
-            print_to_uart("\nGTB\n");
             state.board.goingToBedAt = state.board.now + 5000;
             send_state(&state);
         }
@@ -80,14 +79,12 @@ int main(void)
         if (!sleeping && state.board.goingToBedAt != 0 && state.board.goingToBedAt < state.board.now)
         {
             sleeping = true;
-            led_rx_on();
-            //MX_USB_DEVICE_DeInit();
+            MX_USB_DEVICE_Stop();
             uart_deinit();
             MX_DMA_DeInit();
             HAL_SuspendTick();
             HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
             HAL_ResumeTick();
-            led_tx_on();
         }
 #endif
 
@@ -111,7 +108,6 @@ uint8_t rx_msg_data[8] = {
 uint8_t msg_buf[SLCAN_MTU];
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    print_to_uart(".");
     if (sleeping)
     {
         HAL_NVIC_SystemReset();
@@ -268,7 +264,7 @@ static void MX_DMA_Init(void)
 
     /* DMA interrupt init */
     /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
 }
 

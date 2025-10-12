@@ -24,6 +24,7 @@
 /* USER CODE BEGIN INCLUDE */
 #include <stdbool.h>
 #include "config.h"
+#include "uart.h"
 #ifdef ENABLE_RW_USB_MASS_STORAGE
 #include "ff.h"
 #include "diskio.h"
@@ -112,7 +113,17 @@ const int8_t STORAGE_Inquirydata_FS[] = {/* 36 */
   0x00,
   'T', 'O', 'S', 'C', ' ', ' ', ' ', ' ', /* Manufacturer : 8 bytes */
   'G', 'i', 'U', 'C', 'A', 'N', ' ', 'M', /* Product      : 16 Bytes */
-  'S', 'C', ' ', ' ', ' ', ' ', ' ', ' ',
+  'S', 'C', ' ', 
+  #ifdef SLCAN
+'S', 'L', 
+#elif C1CAN
+'C', '1', 
+#elif BHCAN
+'B', 'H', 
+#else
+' ', ' ', 
+#endif
+   ' ', ' ', ' ',
   'v', '9', '5' ,'2'                      /* Version      : 4 Bytes */
 };
 /* USER CODE END INQUIRY_DATA_FS */
