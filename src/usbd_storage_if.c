@@ -24,7 +24,6 @@
 /* USER CODE BEGIN INCLUDE */
 #include <stdbool.h>
 #include "config.h"
-#include "uart.h"
 #ifdef ENABLE_RW_USB_MASS_STORAGE
 #include "ff.h"
 #include "diskio.h"
@@ -129,7 +128,7 @@ const int8_t STORAGE_Inquirydata_FS[] = {/* 36 */
 /* USER CODE END INQUIRY_DATA_FS */
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+static bool accessed = false;
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -165,6 +164,9 @@ static int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uin
 static int8_t STORAGE_GetMaxLun_FS(void);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
+bool STORAGE_Accessed_FS(void) {
+  return accessed;
+}
 
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -193,6 +195,7 @@ USBD_StorageTypeDef USBD_Storage_Interface_fops_FS =
 int8_t STORAGE_Init_FS(uint8_t lun)
 {
   /* USER CODE BEGIN 2 */
+  accessed = true;
   return (USBD_OK);
   /* USER CODE END 2 */
 }

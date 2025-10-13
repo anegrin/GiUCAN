@@ -11,10 +11,11 @@
 #ifdef SLCAN
 #include "usbd_cdc_if.h"
 #endif
+#ifdef C1CAN
+#include "usbd_storage_if.h"
+#endif
 #include "storage.h"
 
-static GlobalState state = {};
-static Settings settings = {};
 DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
@@ -26,6 +27,12 @@ static void MX_DMA_Init(void);
 #ifdef C1CAN
 static void MX_DMA_DeInit(void);
 #endif
+
+static const uint32_t goToBedDelay = 5000;
+static uint32_t nextBlinkBeforeSleeping = 0;
+
+static GlobalState state = {};
+static Settings settings = {};
 static bool sleeping = false;
 
 int main(void)
@@ -70,21 +77,32 @@ int main(void)
         state.board.now = HAL_GetTick();
 
 #ifdef C1CAN
-        if (state.board.goingToBedAt == 0 && state.board.latestMessageReceivedAt + STANDBY_MS < state.board.now)
+        if (!STORAGE_Accessed_FS())
         {
-            state.board.goingToBedAt = state.board.now + 5000;
-            send_state(&state);
-        }
+            if (state.board.goingToBedAt == 0 && state.board.latestMessageReceivedAt + STANDBY_MS < state.board.now)
+            {
+                state.board.goingToBedAt = state.board.now + goToBedDelay;
+                nextBlinkBeforeSleeping = state.board.now + (goToBedDelay / 4);
+                send_state(&state);
+            }
 
-        if (!sleeping && state.board.goingToBedAt != 0 && state.board.goingToBedAt < state.board.now)
-        {
-            sleeping = true;
-            MX_USB_DEVICE_Stop();
-            uart_deinit();
-            MX_DMA_DeInit();
-            HAL_SuspendTick();
-            HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-            HAL_ResumeTick();
+            if (!sleeping && state.board.goingToBedAt != 0 && state.board.goingToBedAt < state.board.now)
+            {
+                sleeping = true;
+                //do not de init USB or it will mess up with interrupts, just stop it
+                MX_USB_DEVICE_Stop();
+                uart_deinit();
+                MX_DMA_DeInit();
+                HAL_SuspendTick();
+                HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+                HAL_ResumeTick();
+            }
+
+            if (!sleeping && nextBlinkBeforeSleeping != 0 && nextBlinkBeforeSleeping < state.board.now) {
+                led_tx_on();
+                led_rx_on();
+                nextBlinkBeforeSleeping = state.board.now + (goToBedDelay / 4);
+            }
         }
 #endif
 
