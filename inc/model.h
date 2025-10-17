@@ -76,5 +76,4 @@ typedef struct
     uint8_t *favoriteItems;
 } Settings;
 
-
 #endif /* __MODEL_H */

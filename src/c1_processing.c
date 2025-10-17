@@ -59,30 +59,37 @@ void state_process(GlobalState *state, Settings *settings)
 #endif
 #ifdef ENABLE_DASHBOARD
 
-    if (state->board.dashboardState.carouselShowNextItemAt > 0 && state->car.rpm > CAR_IS_ON_MIN_RPM)
+    if (state->board.dashboardState.carouselShowNextItemAt > 0)
     {
-        if (carouselItemsToShow == -1)
+        if (state->car.rpm > CAR_IS_ON_MIN_RPM)
         {
-            carouselItemsToShow = settings->bootCarouselLoops * settings->favoriteItemsCount;
-        }
-        else if (state->board.dashboardState.carouselShowNextItemAt < state->board.now)
-        {
-            if (carouselItemsToShow == 0)
+            if (carouselItemsToShow == -1)
             {
-                state->board.dashboardState.visible = false;
-                state->board.dashboardState.carouselShowNextItemAt = 0;
-                state->board.dashboardState.currentItemIndex = 0;
-                send_state(state);
+                carouselItemsToShow = settings->bootCarouselLoops * settings->favoriteItemsCount;
             }
-            else
+            else if (state->board.dashboardState.carouselShowNextItemAt < state->board.now)
             {
-                state->board.dashboardState.visible = true;
-                state->board.dashboardState.currentItemIndex = settings->favoriteItems[currentFavToShow];
+                if (carouselItemsToShow == 0)
+                {
+                    state->board.dashboardState.visible = false;
+                    state->board.dashboardState.carouselShowNextItemAt = 0;
+                    state->board.dashboardState.currentItemIndex = 0;
+                    send_state(state);
+                }
+                else
+                {
+                    state->board.dashboardState.visible = true;
+                    state->board.dashboardState.currentItemIndex = settings->favoriteItems[currentFavToShow];
 
-                carouselItemsToShow--;
-                currentFavToShow = (currentFavToShow + 1) % settings->favoriteItemsCount;
-                state->board.dashboardState.carouselShowNextItemAt = state->board.now + settings->bootCarouselInterval;
+                    carouselItemsToShow--;
+                    currentFavToShow = (currentFavToShow + 1) % settings->favoriteItemsCount;
+                    state->board.dashboardState.carouselShowNextItemAt = state->board.now + settings->bootCarouselInterval;
+                }
             }
+        }
+        else if (carouselItemsToShow == -1)
+        {
+           state->board.dashboardState.carouselShowNextItemAt =  state->board.now + settings->bootCarouselDelay;
         }
     }
 
