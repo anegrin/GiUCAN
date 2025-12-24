@@ -20,7 +20,9 @@ void handle_rpm(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *
         state->car.rpm = (rx_msg_data[0] * 256 + (rx_msg_data[1] & ~0x03)) / 4;
         if (state->car.rpm > CAR_IS_ON_MIN_RPM)
         {
-            state->board.latestMessageReceivedAt = state->board.now;
+            state->car.engineIsOnAt = state->board.now;
+        } else {
+            state->car.engineIsOnAt = 0;
         }
     }
 }

@@ -6,7 +6,7 @@ This repository contains sources for GiUCAN, a minimalistic version of [BACCAble
 - DPF regeneration warnings ✔
 - Dashboard info display ✔
 
-It's tested and documented using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**; as it's derived from [Canable-fw](https://github.com/normaldotcom/canable-fw) it should work with 
+It's tested and documented using [FYSETC UCAN](https://github.com/FYSETC/UCAN) **ONLY**; as it's derived from [Canable-fw](https://github.com/normaldotcom/canable-fw) it should work with other STM32F0x based boards with minimal changes.
 
 ## DISCLAIMER
 
@@ -18,7 +18,7 @@ Do not use this project in real-world vehicle control or autonomous driving appl
 
 ## Rationale
 
-I'm contributing to the [BACCAble](https://github.com/gaucho1978/BACCAble) repository, I'm keeping this one strictly target to my needs; the goal is to use it as a learning playgroud.
+I'm contributing to the [BACCAble](https://github.com/gaucho1978/BACCAble) repository, I'm keeping this one strictly target to my needs; the goal is to use it as a learning playground.
 Please check the amazing [BACCAble](https://github.com/gaucho1978/BACCAble) project!
 
 ## Supported Commands in CANable mode

@@ -87,7 +87,24 @@ typedef enum
 const char *pattern_of(DashboardItemType type);
 void render_message(char *buffer, GlobalState *state);
 // utility fn to optimize crazy nested ternary
-const char *dpf_status_as_string(float value);
+static inline char *dpf_status_as_string(float value)
+{
+    switch ((uint8_t)value)
+    {
+    case 1:
+        return "DPF Low";
+    case 2:
+        return "DPF High";
+    case 3:
+        return "De-NOx";
+    case 4:
+        return "De-SOx";
+    case 5:
+        return "SCR HeatUp";
+    default:
+        return "Idle";
+    }
+}
 
 #ifndef CONVERTERS
 /*

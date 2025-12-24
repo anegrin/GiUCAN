@@ -30,9 +30,11 @@ typedef struct
 
 typedef struct
 {
+    uint32_t canIsOnAt;
+    uint32_t engineIsOnAt;
     uint32_t rpm;
     uint16_t torque;
-    uint8_t gear;
+    uint8_t gear;//char
     bool ccActive;
     DPF dpf;
     Oil oil;
@@ -54,10 +56,11 @@ typedef struct
     uint32_t now;
     uint32_t snsRequestOffAt;
     uint32_t dpfRegenNotificationRequestAt;
-    uint32_t latestMessageReceivedAt;
     uint32_t dashboardExternallyUpdatedAt;
+    uint32_t goingToBedAt;
     DashboardState dashboardState;
     int8_t collectingMultiframeResponse;
+    bool sleeping;
 } BoardState;
 
 typedef struct

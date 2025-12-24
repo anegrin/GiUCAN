@@ -40,7 +40,7 @@ static uint8_t currentFavToShow = 0;
 void state_process(GlobalState *state, Settings *settings)
 {
 #ifdef ENABLE_SNS_AUTO_OFF
-    bool shouldHandleSNSAutoOff = state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && state->board.now > (SNS_AUTO_OFF_DELAY_MS / 2) && state->car.rpm > CAR_IS_ON_MIN_RPM;
+    bool shouldHandleSNSAutoOff = state->car.sns.snsOffAt == 0 && state->board.snsRequestOffAt == 0 && state->board.now > (SNS_AUTO_OFF_DELAY_MS / 2) && state->car.engineIsOnAt > 0;
 
     if (shouldHandleSNSAutoOff)
     {
@@ -61,7 +61,7 @@ void state_process(GlobalState *state, Settings *settings)
 
     if (state->board.dashboardState.carouselShowNextItemAt > 0)
     {
-        if (state->car.rpm > CAR_IS_ON_MIN_RPM)
+        if (state->car.engineIsOnAt > 0)
         {
             if (carouselItemsToShow == -1)
             {
@@ -93,7 +93,7 @@ void state_process(GlobalState *state, Settings *settings)
         }
     }
 
-    if (state->board.dashboardState.visible && state->board.latestMessageReceivedAt + VALUES_TIMEOUT_MS < state->board.now)
+    if (state->board.dashboardState.visible && state->car.engineIsOnAt + VALUES_TIMEOUT_MS < state->board.now)
     {
         VLOG("%d no msg", state->board.now);
         state->board.dashboardState.visible = false;

@@ -36,6 +36,24 @@ void MX_CAN_Init()
     {
         Error_Handler();
     }
+    else
+    {
+        HAL_CAN_ActivateNotification(&can_handle, CAN_IT_RX_FIFO0_MSG_PENDING);
+    }
+}
+
+void can_readonly(void)
+{
+    // 1 Request Initialization mode
+    SET_BIT(can_handle.Instance->MCR, CAN_MCR_INRQ);
+    while ((can_handle.Instance->MSR & CAN_MSR_INAK) == 0);
+
+    // 2 Set Silent (read-only) mode
+    MODIFY_REG(can_handle.Instance->BTR, CAN_BTR_SILM, CAN_BTR_SILM);
+
+    // 3 Leave Initialization mode (back to normal operation)
+    CLEAR_BIT(can_handle.Instance->MCR, CAN_MCR_INRQ);
+    while (can_handle.Instance->MSR & CAN_MSR_INAK);
 }
 
 // Start the CAN peripheral
@@ -44,17 +62,17 @@ void can_enable(void)
     if (bus_state == OFF_BUS)
     {
         MX_CAN_Init();
-    #ifdef BHCAN
+#ifdef BHCAN
         filter.FilterIdHigh = (SOUND_FRAME_STD_ID << 5);
         filter.FilterIdLow = (DASHBOARD_FRAME_STD_ID << 5);
         filter.FilterMode = CAN_FILTERMODE_IDLIST;
         filter.FilterScale = CAN_FILTERSCALE_16BIT;
-    #else
+#else
         filter.FilterIdHigh = 0;
         filter.FilterIdLow = 0;
         filter.FilterMode = CAN_FILTERMODE_IDMASK;
         filter.FilterScale = CAN_FILTERSCALE_32BIT;
-    #endif
+#endif
         filter.FilterMaskIdHigh = 0;
         filter.FilterMaskIdLow = 0;
         filter.FilterFIFOAssignment = CAN_RX_FIFO0;
@@ -80,6 +98,9 @@ void can_disable(void)
 
         led_tx_on();
         led_rx_on();
+
+        HAL_CAN_Stop(&can_handle);
+        HAL_CAN_DeInit(&can_handle);
     }
 }
 

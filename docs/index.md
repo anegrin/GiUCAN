@@ -32,9 +32,9 @@ GiUCAN has been developed and tested for [FYSETC UCAN](https://github.com/FYSETC
 - 1 OBD2 male connector
 - 4 wires to connect OBD2 pins for BH and C1 CanCAN Busses to UCAN boards
 
-### Connection schema
+### USB powered connection schema
 
-![image](images/schema.png)
+![image](images/schema_usb.png)
 
 - connect CK pin of the 2 boards
 - connect C1CAN CAN_H to OBD2 pin 6 
@@ -44,7 +44,20 @@ GiUCAN has been developed and tested for [FYSETC UCAN](https://github.com/FYSETC
 
 Boards must be powered with 5V, you can get the power from the USB connector below the AC; if your ETM has a free USB HSD connector you can use that one to keep the power connection hidden
 
-**DO NOT** connect boards to 12V OBD2 pin with a power converter: OBD2 12V is always providing power even when the car is off and in deep sleep mode, GiUCAN relies on ETM powering off USB for shutdown of boards; **NO LOW CONSUMPTION MODE HAS BEEN IMPLEMENTED.**
+### OBD2 powered connection schema
+
+You need an additional DC-DC step down (12v -> 5v) board.
+
+![image](images/schema_obd2.png)
+
+- connect all pins as for USB
+- connect DO pin of the C1 board to the RES pin of the BH board
+- connect DC-DC step down input to OBD2 mass (pins 4 and 5) and 12v (pin 16)
+- connect DC-DC step down output to USB-C male connectors
+
+When the C1 bust stop sending data (car goes in sleep mode) for `STANDBY_DELAY_MS` milliseconds the BHCAN board will be put in STANDBY mode and the the C1CAN board will enter the standby mode; when the C1 bus will send data again boards will reboot and start processing data as usual.
+
+When in low consumption mode on 12v the 2 boards should draw around 7 mA; considering that most Giulia/Stelvio batteries capacity is 80Ah it would take 3 months to drain 20% of the battery's charge.
 
 ## Building
 
@@ -86,7 +99,8 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define GIUCAN_VERSION "foo"`: default is `dev` or `commit short hash` but you can provide your own like "foo"
 - `#define DISPLAY_INFO_CODE 0x09`: dashboard message icon, default is `0x08` (Center USB); values reference [here](https://github.com/anegrin/GiUCAN/blob/main/inc/config.h)
 - `#define DEFAULT_VALUES_REFRESH_MS 1000`: how often to refresh values of the visible dashboard item in milliseconds, default is 0.333s
-- `#define VALUES_TIMEOUT_MS 30000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 60s
+- `#define VALUES_TIMEOUT_MS 15000`: after how many milliseconds GiUCAN should stop refreshing items (as the car is off), default is 30s
+- `#define STANDBY_DELAY_MS 30000`: how many more milliseconds GiUCAN should wait before putting boards in sleep/standby mode (C1CAN/BHCAN) when the car is off, default is 60s
 - `#define DASHBOARD_MESSAGE_MAX_LENGTH 18`: suggested value if you have 3.5 inches dashboard; **MUST BE MULTIPLE of 3**, values greater than 27 are not recommended; there are some considerations to make: GiUCAN is refreshing values twice per second and sending 3 chars to the dashboard every `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS` milliseconds so a full message takes `DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS*DASHBOARD_MESSAGE_MAX_LENGTH/3` milliseconds to be rendered
 - `#define DASHBOARD_FRAME_QUEUE_POLLING_INTERVAL_MS 50`: messages are sent do dashboard in frames of 3 characters; this controls the pace, default is 29 milliseconds.
 - `#define DISABLE_DASHBOARD_FORCED_REFRESH`: GiUCAN will refresh items only when their values change

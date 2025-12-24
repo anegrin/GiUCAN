@@ -109,18 +109,8 @@
 #define CAR_IS_ON_MIN_RPM 400
 #endif
 
-#ifndef ENABLE_DASHBOARD
-#ifndef ENABLE_SNS_AUTO_OFF
-#warning "You're building a C1CAN without any active feature :/"
-#endif
-#endif
-
 #ifndef DEFAULT_VALUES_REFRESH_MS
 #define DEFAULT_VALUES_REFRESH_MS 333
-#endif
-
-#ifndef VALUES_TIMEOUT_MS
-#define VALUES_TIMEOUT_MS 60000
 #endif
 
 #ifndef DISABLE_DPF_REGEN_NOTIFICATION
@@ -135,15 +125,39 @@
 
 #endif
 
+#ifndef ENABLE_DASHBOARD
+#ifndef ENABLE_SNS_AUTO_OFF
+#ifndef ENABLE_DPF_REGEN_VISUAL_NOTIFICATION
+#warning "You're building a C1CAN without any active feature :/"
+#endif
+#endif
+#endif
+
 #endif
 
 #ifdef XCAN
+#ifndef VALUES_TIMEOUT_MS
+#define VALUES_TIMEOUT_MS 30000
+#endif
+
+#ifndef STANDBY_DELAY_MS
+#define STANDBY_DELAY_MS 60000
+#endif
+
 #define PRINTF_INCLUDE_CONFIG_H
+
 #ifndef DEBUG_MODE
 #define ENABLE_USB_MASS_STORAGE
 #ifdef C1CAN
 #define ENABLE_RW_USB_MASS_STORAGE
 #endif
+#ifdef DISABLE_USB_MASS_STORAGE_ALWAYS_AWAKE
+#define USB_MASS_STORAGE_CAN_SLEEP true
+#else
+#define USB_MASS_STORAGE_CAN_SLEEP false
+#endif
+#else
+#define USB_MASS_STORAGE_CAN_SLEEP false
 #endif
 #endif
 

@@ -44,6 +44,7 @@ typedef struct cantxbuf_
 
 
 // Prototypes
+void can_readonly(void);
 void can_enable(void);
 void can_disable(void);
 void can_set_bitrate(enum can_bitrate bitrate);

@@ -37,25 +37,6 @@ const char *pattern_of(DashboardItemType type)
     }
 }
 
-const char *dpf_status_as_string(float value)
-{
-    switch ((uint8_t)value)
-    {
-    case 1:
-        return "DPF Low";
-    case 2:
-        return "DPF High";
-    case 3:
-        return "De-NOx";
-    case 4:
-        return "De-SOx";
-    case 5:
-        return "SCR HeatUp";
-    default:
-        return "Idle";
-    }
-}
-
 void render_message(char *buffer, GlobalState *state)
 {
     DashboardItemType type = state->board.dashboardState.currentItemIndex;
