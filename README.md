@@ -1,6 +1,6 @@
 # GiUCAN Firmware
 
-This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Diesel engines with 7 inches dashboard; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
+This repository contains sources for GiUCAN, a minimalistic version of [BACCAble](https://github.com/gaucho1978/BACCAble) for Alfa Romeo Giulia and Stelvio; it's interacting with C1 nad BH bus only and providing this subset of functionalities:
 
 - Smart Start and Stop disabling ✔
 - DPF regeneration warnings ✔

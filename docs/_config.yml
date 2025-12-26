@@ -3,5 +3,5 @@ plugins:
 - jekyll-remote-theme
 title: GiUCAN
 description: >
-  a minimalistic version of <a href="https://github.com/gaucho1978/BACCAble">BACCAble</a> providing a subset of functionalities:
+  a minimalistic version of <a href="https://github.com/gaucho1978/BACCAble">BACCAble</a> providing a subset of functionalities for Alfa Romeo Giulia and Stelvio:
   Smart Start and Stop disabling, DPF regeneration warnings, Dashboard info display
