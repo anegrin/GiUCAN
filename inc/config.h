@@ -10,12 +10,42 @@
 #include "user_config.h"
 #endif
 
+#ifndef UART_PIN
+//UART_PIN on GPIOA, default is SWDCLK one
+#define UART_PIN GPIO_PIN_14
+#endif
+
+#ifdef C1CAN
+#ifndef RESET_CMD_PIN
+//RESET_PIN on RESET_CMD_PIN_PORT, default is SWDIO one
+#define RESET_CMD_PIN GPIO_PIN_13
+#endif
+#endif
+
+#ifndef CAN_S_PIN
+//CAN_S_PIN on CAN_S_PIN_PORT
+#define CAN_S_PIN GPIO_PIN_13
+#endif
+
+#ifndef CAN_S_PIN_PORT
+//CAN_S_PIN port, default is GPIOC
+#define CAN_S_PIN_PORT GPIOC
+#endif
+
+#ifndef LED_TX_Pin
+//LED_TX_Pin on GPIOA
+#define LED_TX_Pin GPIO_PIN_1
+#endif
+#ifndef LED_RX_Pin
+//LED_RX_Pin on GPIOA
+#define LED_RX_Pin GPIO_PIN_0
+#endif
+
 #ifndef DISABLE_EXTERNAL_OSCILLATOR
 #define ENABLE_EXTERNAL_OSCILLATOR
 #endif
 
 #ifndef GIUCAN_VERSION
-
 #ifdef GIT_VERSION
 #define GIUCAN_VERSION GIT_VERSION
 #else

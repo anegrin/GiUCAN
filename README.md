@@ -50,12 +50,12 @@ This firmware currently does not provide any ACK/NACK feedback for serial comman
 
 ## Building, Flashing  and Debugging
 
-Please read [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md) as make will build SLCAN firmware by default.
+Please read [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md) as `make` will build SLCAN firmware by default.
 
 Plaese read [GiUCAN GitHub Pages](https://anegrin.github.io/GiUCAN/) to learn about:
 
 - Hardware and connections
-- Building for SLCAN, C1CAN and BHCAN
+- Building for SLCAN, C1CAN and BHCAN (and BACCAble compatible binaries too)
 - Flashing using [STM32CubeProgrammer](https://www.st.com/en/development-tools/stm32cubeprog.html)
 - Customizing build for small displays, gasoline etc.
 - Configure already built firmware (via `settings.ini`)

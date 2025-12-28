@@ -41,6 +41,11 @@ int main(void)
 {
     HAL_Init();
     SystemClock_Config();
+#ifdef C2CAN
+    __disable_irq();
+    HAL_SuspendTick();
+    HAL_PWR_EnterSTANDBYMode();
+#endif
     GPIO_Init();
     MX_DMA_Init();
     uart_init();
@@ -80,7 +85,7 @@ int main(void)
 #ifdef C1CAN
             if (state.board.goingToBedAt == 0 && state.car.canIsOnAt + STANDBY_DELAY_MS < state.board.now)
             {
-                HAL_GPIO_WritePin(GPIOC, CAN_S_PIN, GPIO_PIN_SET);//can silent pin
+                HAL_GPIO_WritePin(CAN_S_PIN_PORT, CAN_S_PIN, GPIO_PIN_SET);//can silent pin
                 state.board.goingToBedAt = state.board.now + goToBedDelay + blinkInterval;
                 nextBlinkBeforeSleeping = state.board.now + blinkInterval;
                 send_state(&state);
@@ -104,7 +109,7 @@ int main(void)
             if (state.board.goingToBedAt == 1 /*|| (state.board.goingToBedAt == 0 && (state.car.canIsOnAt + STANDBY_DELAY_MS + goToBedDelay) < state.board.now)*/)
             {
                 //state.car.canIsOnAt = 0;
-                HAL_GPIO_WritePin(GPIOC, CAN_S_PIN, GPIO_PIN_SET);//can silent pin
+                HAL_GPIO_WritePin(CAN_S_PIN_PORT, CAN_S_PIN, GPIO_PIN_SET);//can silent pin
                 state.board.goingToBedAt = state.board.now + goToBedDelay - blinkInterval;
                 nextBlinkBeforeSleeping = state.board.now + blinkInterval;
             }
@@ -289,7 +294,7 @@ void GPIO_Init(void)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    HAL_GPIO_WritePin(GPIOC, CAN_S_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(CAN_S_PIN_PORT, CAN_S_PIN, GPIO_PIN_RESET);
 #ifdef C1CAN
     HAL_GPIO_WritePin(GPIOA, RESET_CMD_PIN, GPIO_PIN_RESET);
 #endif
@@ -300,7 +305,7 @@ void GPIO_Init(void)
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    HAL_GPIO_Init(CAN_S_PIN_PORT, &GPIO_InitStruct);
 
 #ifdef C1CAN
     /*Configure GPIO pin : PA13 */

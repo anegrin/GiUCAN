@@ -61,13 +61,15 @@ When in low consumption mode on 12v the 2 boards should draw around 7 mA; consid
 
 ## Building
 
-Just run [build.sh](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmware files under `dist` folder:
+Just run [`build.sh`](https://github.com/anegrin/GiUCAN/blob/main/build.sh) and it will create 3 elf firmware files under `dist` folder:
 
 - GiUCAN_SLCAN.elf: it's basically the original firmware, flash this if you wanna use the board to sniff CAN Bus (for example with [SavvyCAN](https://github.com/collin80/SavvyCAN)); there are plenty of examples online on how to use canable-fw with SavvyCAN
 - GiUCAN_BHCAN.elf: firmware for BHCAN board
 - GiUCAN_C1CAN.elf: firmware for C1CAN board
 
 By default builds are for Diesel and 7 inch dashboard display
+
+Run `build.sh help` to get help for additional binaries building (i.e. BACCAble compatible ones)
 
 ## Flashing
 

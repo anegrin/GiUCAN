@@ -17,6 +17,11 @@
 #endif
 #endif
 
+#ifdef C2CAN
+#define UART_QUEUE_SIZE 1
+#define MESSAGE_SIZE 3
+#endif
+
 #ifdef XCAN
 #define UART_QUEUE_SIZE 64
 #define MESSAGE_SIZE 14
