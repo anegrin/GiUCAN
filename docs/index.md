@@ -113,7 +113,7 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DPF_REGEN_VISUAL_NOTIFICATION_ITEM`: what dashboard item to show as visual notification, default is `DPF_STATUS_ITEM`
 - `#define DISABLE_DASHBOARD`: disable the dashboard feature, not items will be displayed
 - `#define RES_LONG_PRESS_DURATION_MS 3000`: how long RES button must be kept pressed to display items on dashboard in milliseconds, default is 2s
-- `#define  5`: how many items to skip when "hard pressing" speed control joystick; default is 10
+- `#define DASHBOARD_PAGE_SIZE 5`: how many items to skip when "hard pressing" speed control joystick; default is 10
 - `#define DISABLE_SNS_AUTO_OFF`: disable Start and Stop auto off
 - `#define SNS_AUTO_OFF_DELAY_MS 30000`: if GiUCAN can disable Start and Stop this controls after how many milliseconds to do so. default is 20s
 - `#define CAR_IS_ON_MIN_RPM 800`: the minimum value for Revolutions Per Minute for considering the engine on, default is 400; it's used by Start and Stop auto off and by dashboard feature to stop sending messages on BH (if you power off the car and the dashboard items feature was on)
