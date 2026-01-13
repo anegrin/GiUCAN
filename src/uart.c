@@ -48,13 +48,16 @@ void fill_buffer(uint8_t *buffer, uint8_t bufferLength, const uint8_t *data, uin
     }
 }
 
-bool uart_enqueue(const uint8_t *data, uint8_t size)
+bool uart_enqueue(const uint8_t *data, uint8_t size, bool mandatory)
 {
     if (rx_tx_queue->count < UART_QUEUE_SIZE)
     {
         fill_buffer(rx_tx_queue->buffer[rx_tx_queue->tail], MESSAGE_SIZE, data, size);
         rx_tx_queue->tail = (rx_tx_queue->tail + 1) % UART_QUEUE_SIZE;
         rx_tx_queue->count++;
+        return true;
+    } else if (mandatory) {
+        fill_buffer(rx_tx_queue->buffer[UART_QUEUE_SIZE - 1], MESSAGE_SIZE, data, size);
         return true;
     }
 
@@ -81,7 +84,7 @@ bool send_state(GlobalState *state)
     buffer[12] = goingToBed;
     uint8_t crc = calculate_crc8(buffer, MESSAGE_SIZE - 1);
     buffer[MESSAGE_SIZE - 1] = crc;
-    return uart_enqueue(buffer, MESSAGE_SIZE);
+    return uart_enqueue(buffer, MESSAGE_SIZE, !visible || regenerating || goingToBed);
 }
 #endif
 
@@ -133,7 +136,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         else if (rx_state == UART_SYNC_RECEIVING)
         {
             rx_state = UART_SYNC_WAIT_START;
-            if (uart_enqueue(rx_buffer, MESSAGE_SIZE))
+            if (uart_enqueue(rx_buffer, MESSAGE_SIZE, false))
             {
                 led_rx_on();
             }
@@ -188,7 +191,7 @@ bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
 }
 #endif
 
-const int UART_QUEUE_POLLING_INTERVAL = 10 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
+const int UART_QUEUE_POLLING_INTERVAL = 5 * (1000 / (USART2_BAUD_RATE / (10 * MESSAGE_SIZE)));
 static uint32_t queuePolledAt = 0;
 void uart_init(void)
 {
@@ -252,7 +255,7 @@ uint8_t print_to_uart(char *message)
     uint16_t msg_len = strlen(message);
     msg_len = msg_len < MESSAGE_SIZE ? msg_len : MESSAGE_SIZE;
     memcpy(buffer, message, msg_len);
-    return uart_enqueue(buffer, msg_len);
+    return uart_enqueue(buffer, msg_len, false);
 }
 
 uint8_t printf_to_uart(const char *format, ...)
@@ -262,7 +265,7 @@ uint8_t printf_to_uart(const char *format, ...)
     va_start(args, format);
     int written = vsnprintf_((char *)buffer, MESSAGE_SIZE, format, args);
     va_end(args);
-    return uart_enqueue(buffer, written < MESSAGE_SIZE ? (uint8_t)written : MESSAGE_SIZE);
+    return uart_enqueue(buffer, written < MESSAGE_SIZE ? (uint8_t)written : MESSAGE_SIZE, false);
 }
 #endif
 #endif
