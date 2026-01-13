@@ -5,3 +5,4 @@ dist/*
 user_config.h
 cube/GiUCAN
 test
+.DS_Store
