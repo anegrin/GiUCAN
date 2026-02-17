@@ -90,7 +90,7 @@ void send_dashboard_text(DashboardFrame *frame)
     }
 }
 
-void state_process(GlobalState *state, Settings *settings)
+void state_process(GlobalState *state)
 {
     bool updateDashboard = false;
     if (localStateSet)
@@ -119,7 +119,6 @@ void state_process(GlobalState *state, Settings *settings)
 
         if (state->car.dpf.regenerating != dpfLocalState.regenerating)
         {
-            state->board.dpfRegenNotificationRequestAt = state->car.dpf.regenerating ? state->board.now : 0;
             LOGS(state->car.dpf.regenerating ? "regen started\n" : "regen ended\n");
         }
     }

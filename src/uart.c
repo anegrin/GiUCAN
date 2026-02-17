@@ -64,6 +64,38 @@ bool uart_enqueue(const uint8_t *data, uint8_t size, bool mandatory)
     return false;
 }
 
+typedef struct {
+    bool visible : 1;
+    bool goingToBed : 1;
+    bool regenerating : 1;
+    bool dpfNotify : 1;
+    uint8_t _padding : 4;
+} UartMessageFlags;
+
+#ifdef C1CAN
+uint8_t serialize_flags(UartMessageFlags flags) {
+    uint8_t out = 0;
+    out |= (flags.visible & 0x01) << 0;
+    out |= (flags.goingToBed & 0x01) << 1;
+    out |= (flags.regenerating & 0x01) << 2;
+    out |= (flags.dpfNotify & 0x01) << 3;
+    // Padding is ignored during serialization
+    return out;
+}
+#endif
+
+#ifdef BHCAN
+UartMessageFlags deserialize_flags(uint8_t byte) {
+    UartMessageFlags flags;
+    flags.visible      = (byte >> 0) & 0x01;
+    flags.goingToBed   = (byte >> 1) & 0x01;
+    flags.regenerating = (byte >> 2) & 0x01;
+    flags.dpfNotify    = (byte >> 3) & 0x01;
+    flags._padding     = 0; // Clean the padding
+    return flags;
+}
+#endif
+
 #ifdef C1CAN
 bool send_state(GlobalState *state)
 {
@@ -72,30 +104,42 @@ bool send_state(GlobalState *state)
     uint8_t buffer[MESSAGE_SIZE];
     uint8_t type = MSG_START;
     buffer[0] = type;
-    bool visible = state->board.dashboardState.visible;
-    buffer[1] = visible;
+    UartMessageFlags flags = {
+        .visible = state->board.dashboardState.visible,
+        .goingToBed = state->board.goingToBedAt != 0,
+        .regenerating = state->car.dpf.regenerating,
+        .dpfNotify = state->board.dpfRegenSoundNotificationRequestAt != 0,
+        ._padding = 0,
+    };
+    buffer[1] = serialize_flags(flags);
     uint8_t currentItemIndex = state->board.dashboardState.currentItemIndex;
     buffer[2] = currentItemIndex;
     memcpy(&buffer[3], &v0, 4);
     memcpy(&buffer[7], &v1, 4);
-    bool regenerating = state->car.dpf.regenerating;
-    buffer[11] = regenerating;
-    bool goingToBed = state->board.goingToBedAt != 0;
-    buffer[12] = goingToBed;
     uint8_t crc = calculate_crc8(buffer, MESSAGE_SIZE - 1);
     buffer[MESSAGE_SIZE - 1] = crc;
-    return uart_enqueue(buffer, MESSAGE_SIZE, !visible || regenerating || goingToBed);
+    bool mandatory = !flags.visible || flags.dpfNotify || flags.goingToBed;
+    return uart_enqueue(buffer, MESSAGE_SIZE, mandatory);
 }
 #endif
 
 #ifdef BHCAN
-void update_state(GlobalState *state, bool visible, uint8_t currentItemIndex, float v0, float v1, bool regenerating)
+void update_state(GlobalState *state, UartMessageFlags flags, uint8_t currentItemIndex, float v0, float v1)
 {
-    state->board.dashboardState.visible = visible;
+    if (flags.goingToBed)
+    {
+        state->board.goingToBedAt = 1;
+        return;
+    }
+
+    state->board.dashboardState.visible = flags.visible;
     state->board.dashboardState.currentItemIndex = currentItemIndex;
     state->board.dashboardState.values[0] = v0;
     state->board.dashboardState.values[1] = v1;
-    state->car.dpf.regenerating = regenerating;
+    state->car.dpf.regenerating = flags.regenerating;
+    if (flags.dpfNotify) {
+        state->board.dpfRegenSoundNotificationRequestAt = state->board.now;
+    }
 }
 #endif
 
@@ -160,30 +204,21 @@ bool uart_tx(const uint8_t *data, uint8_t size)
 }
 
 #ifdef BHCAN
-bool dashboard_tx(GlobalState *state, const uint8_t *data, uint8_t size)
+bool handle_msg(GlobalState *state, const uint8_t *data, uint8_t size)
 {
     float v0 = 0;
     float v1 = 0;
     uint8_t type = data[0];
-    bool visible = data[1];
+    UartMessageFlags flags = deserialize_flags(data[1]);
     uint8_t currentItemIndex = data[2];
     memcpy(&v0, &data[3], 4);
     memcpy(&v1, &data[7], 4);
-    bool regenerating = data[11];
-    bool goingToBed = data[12];
     uint8_t crc_check = calculate_crc8(data, MESSAGE_SIZE - 1);
     uint8_t crc = data[MESSAGE_SIZE - 1];
 
     if (type == MSG_START && crc_check == crc)
     {
-        if (goingToBed)
-        {
-            state->board.goingToBedAt = 1;
-        }
-        else
-        {
-            update_state(state, visible, currentItemIndex, v0, v1, regenerating);
-        }
+        update_state(state, flags, currentItemIndex, v0, v1);
         return true;
     }
 
@@ -236,7 +271,7 @@ void uart_process(GlobalState *state)
         bool success = uart_tx(rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
 #endif
 #ifdef BHCAN
-        bool success = dashboard_tx(state, rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
+        bool success = handle_msg(state, rx_tx_queue->buffer[rx_tx_queue->head], MESSAGE_SIZE);
 #endif
         if (success)
         {

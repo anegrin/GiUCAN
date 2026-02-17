@@ -19,7 +19,11 @@ DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
-void state_init(GlobalState *state, Settings *settings);
+void state_init(GlobalState *state
+#ifdef C1CAN
+    , Settings *settings
+#endif
+);
 void SystemClock_Config(void);
 void GPIO_Init(void);
 void GPIO_DeInit(void);
@@ -35,7 +39,9 @@ static uint32_t nextBlinkBeforeSleeping = 0;
 #endif
 
 static GlobalState state = {};
+#ifdef C1CAN
 static Settings settings = {};
+#endif
 
 int main(void)
 {
@@ -51,7 +57,9 @@ int main(void)
     uart_init();
 
     storage_init();
+#ifdef C1CAN
     load_settings(&settings);
+#endif
 
     MX_USB_DEVICE_Init();
 
@@ -73,7 +81,11 @@ int main(void)
     leds_blink(2, 500);
 #endif
 
-    state_init(&state, &settings);
+    state_init(&state
+#ifdef C1CAN
+        , &settings
+#endif
+);
 
     while (1)
     {
@@ -145,8 +157,11 @@ int main(void)
         led_process();
         can_process();
 
-#ifdef XCAN
+#ifdef C1CAN
         state_process(&state, &settings);
+#endif
+#ifdef BHCAN
+        state_process(&state);
 #endif
         uart_process(&state);
     }
@@ -181,10 +196,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
                 switch (rx_msg_header.IDE)
                 {
                 case CAN_ID_STD:
-                    handle_standard_frame(&state, &settings, rx_msg_header, rx_msg_data);
+                    handle_standard_frame(&state
+                        #ifdef C1CAN
+                        , &settings
+                        #endif
+                        , rx_msg_header, rx_msg_data);
                     break;
                 case CAN_ID_EXT:
-                    handle_extended_frame(&state, &settings, rx_msg_header, rx_msg_data);
+                    handle_extended_frame(&state
+                        #ifdef C1CAN
+                        , &settings
+                        #endif
+                        , rx_msg_header, rx_msg_data);
                     break;
                 default:
                 }
@@ -194,35 +217,42 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
 }
 
-void state_init(GlobalState *state, Settings *settings)
+void state_init(GlobalState *state
+#ifdef C1CAN
+    , Settings *settings
+#endif
+)
 {
-    uint32_t now = HAL_GetTick();
+#ifdef C1CAN
     state->board.collectingMultiframeResponse = -1;
     state->board.dashboardExternallyUpdatedAt = 0;
+    state->board.snsRequestOffAt = 0;
+    state->board.dashboardState.carouselShowNextItemAt = settings->bootCarouselEnabled ? HAL_GetTick() + settings->bootCarouselDelay : 0;
+#endif
+    state->board.dpfRegenSoundNotificationRequestAt = 0;
     state->board.dashboardState.itemsCount = DASHBOARD_ITEMS_COUNT;
     state->board.dashboardState.currentItemIndex = 0;
     state->board.dashboardState.values[0] = -1.0f;
     state->board.dashboardState.values[1] = -1.0f;
-    state->board.dashboardState.carouselShowNextItemAt = settings->bootCarouselEnabled ? now + settings->bootCarouselDelay : 0;
-    state->board.dpfRegenNotificationRequestAt = 0;
-    state->board.snsRequestOffAt = 0;
     state->board.goingToBedAt = 0;
     state->board.sleeping = false;
 
+    state->car.dpf.regenerating = false;
+    state->car.dpf.regenMode = 0;
+    state->car.canIsOnAt = 0;
+#ifdef C1CAN
     state->car.battery.chargePercent = 0;
     state->car.battery.current = 0.0f;
     state->car.ccActive = false;
-    state->car.dpf.regenerating = false;
-    state->car.dpf.regenMode = 0;
     state->car.gear = '-';
     state->car.oil.pressure = 0.0f;
     state->car.oil.temperature = 0;
     state->car.engineIsOnAt = 0;
-    state->car.canIsOnAt = 0;
     state->car.rpm = 0;
     state->car.sns.active = true;
     state->car.sns.snsOffAt = 0;
     state->car.torque = 0;
+#endif
 }
 
 /**

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef C1CAN
 typedef struct
 {
     uint32_t snsOffAt;
@@ -21,31 +22,37 @@ typedef struct
     float pressure;
     int16_t temperature;
 } Oil;
+#endif
+
 
 typedef struct
 {
-    uint8_t regenMode;
     bool regenerating;
+    uint8_t regenMode;
 } DPF;
 
 typedef struct
 {
     uint32_t canIsOnAt;
+#ifdef C1CAN
     uint32_t engineIsOnAt;
     uint32_t rpm;
     uint16_t torque;
     uint8_t gear;//char
     bool ccActive;
-    DPF dpf;
     Oil oil;
     Battery battery;
     SNSState sns;
+#endif
+    DPF dpf;
 } CarState;
 
 typedef struct
 {
     float values[2];
+#ifdef C1CAN
     uint32_t carouselShowNextItemAt;
+#endif
     uint8_t itemsCount;
     uint8_t currentItemIndex;
     bool visible;
@@ -54,12 +61,14 @@ typedef struct
 typedef struct
 {
     uint32_t now;
-    uint32_t snsRequestOffAt;
-    uint32_t dpfRegenNotificationRequestAt;
-    uint32_t dashboardExternallyUpdatedAt;
-    uint32_t goingToBedAt;
     DashboardState dashboardState;
+    uint32_t goingToBedAt;
+    uint32_t dpfRegenSoundNotificationRequestAt;
+    uint32_t dashboardExternallyUpdatedAt;
+#ifdef C1CAN
+    uint32_t snsRequestOffAt;
     int8_t collectingMultiframeResponse;
+#endif
     bool sleeping;
 } BoardState;
 
@@ -69,6 +78,7 @@ typedef struct
     CarState car;
 } GlobalState;
 
+#ifdef C1CAN
 typedef struct
 {
     uint32_t bootCarouselDelay;
@@ -77,6 +87,8 @@ typedef struct
     bool bootCarouselEnabled;
     uint8_t favoriteItemsCount;
     uint8_t *favoriteItems;
+    bool dpfNotifyWhenFinished;
 } Settings;
+#endif
 
 #endif /* __MODEL_H */

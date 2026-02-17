@@ -216,26 +216,38 @@ void handle_sns_request(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, u
 #endif
 
 #ifdef ENABLE_DPF_REGEN_NOTIFICATION
-void handle_dpf_regeneration(GlobalState *state, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
+void handle_dpf_regeneration(GlobalState *state, bool dpfNotifyWhenFinished, CAN_RxHeaderTypeDef rx_msg_header, uint8_t *rx_msg_data)
 {
     if (rx_msg_header.DLC >= 6)
     {
         state->car.dpf.regenMode = (rx_msg_data[5] >> 2) & 0b00000111;
 
-        if (state->car.dpf.regenMode == 2 && state->car.dpf.regenerating == 0)
+        if (state->car.dpf.regenMode == 2 && !state->car.dpf.regenerating)
         {
-            state->car.dpf.regenerating = 1;
             LOG("%d start DPF r\n", state->board.now);
+            state->car.dpf.regenerating = true;
+            state->board.dpfRegenSoundNotificationRequestAt = state->board.now;
 #ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATION
             state->board.dashboardState.currentItemIndex = DPF_REGEN_VISUAL_NOTIFICATION_ITEM;
             state->board.dashboardState.visible = true;
 #endif
+            send_state(state);
+            state->board.dpfRegenSoundNotificationRequestAt = 0;
         }
 
-        if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating == 1)
+        if (state->car.dpf.regenMode == 0 && state->car.dpf.regenerating)
         {
-            state->car.dpf.regenerating = 0;
             LOG("%d end DPF r\n", state->board.now);
+            state->car.dpf.regenerating = false;
+            if (dpfNotifyWhenFinished) {
+                state->board.dpfRegenSoundNotificationRequestAt = state->board.now;
+#ifdef ENABLE_DPF_REGEN_VISUAL_NOTIFICATION
+                state->board.dashboardState.currentItemIndex = DPF_REGEN_VISUAL_NOTIFICATION_ITEM;
+                state->board.dashboardState.visible = true;
+#endif
+                send_state(state);
+                state->board.dpfRegenSoundNotificationRequestAt = 0;
+            }
         }
     }
 }
@@ -284,7 +296,7 @@ void handle_standard_frame(GlobalState *state, Settings *settings, CAN_RxHeaderT
 #endif
 #ifdef ENABLE_DPF_REGEN_NOTIFICATION
     case 0x05AE:
-        handle_dpf_regeneration(state, rx_msg_header, rx_msg_data);
+        handle_dpf_regeneration(state, settings->dpfNotifyWhenFinished, rx_msg_header, rx_msg_data);
         break;
 #endif
     default:

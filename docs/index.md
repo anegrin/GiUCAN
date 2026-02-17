@@ -83,7 +83,7 @@ To view messages on the dashboard just keep the cruise control RES button presse
 
 If ETM need to show something it will stay on the dashboard for a little bit more than a second, then GiUCAN will display the item again.
 
-If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will fire a sound notification (seat belts alarm) and display the "DPF status" item on the dashboard (even if you haven't enabled messages by long press of RES button).
+If a DPF regeneration is about to start and it's not a "forced" one GiUCAN will play a sound notification (seat belts alarm) and display the "DPF status" item on the dashboard (even if you haven't enabled messages by long press of RES button).
 
 ## USB behavior
 
@@ -267,6 +267,8 @@ Take a look at [danardi78/Alfaromeo-Giulia-Stelvio-PIDs](https://github.com/dana
 Connect the board with C1CAN firmware to your laptop and it will be shown as an external USB storage labeled `GIUCAN`; create a file named `settings.ini` with this content:
 
 ```ini
+[dpf]
+notifyWhenFinished=true
 [dashboard]
 favorites=5,13,21
 [carousel]
@@ -275,6 +277,9 @@ intervalMs=3500
 loops=3
 enabled=true
 ```
+
+dpf:
+  - notifyWhenFinished: plays a sound notification and displays status when DPF regeneration finishes, not just when it starts, default is false
 
 dashboard:
   - favorites: 0-based position of items to use as favorites;  pressing RES button when dashboard is visible will jump to the next favorite item; not mandatory, default is empty

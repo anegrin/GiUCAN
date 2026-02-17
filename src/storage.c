@@ -52,6 +52,7 @@ void storage_init(void)
 #endif
 }
 
+#ifdef C1CAN
 void init_settings(Settings *settings)
 {
     settings->bootCarouselEnabled = false;
@@ -61,7 +62,9 @@ void init_settings(Settings *settings)
     uint8_t NO_ITEMS[0];
     settings->favoriteItems = NO_ITEMS;
     settings->favoriteItemsCount = 0;
+    settings->dpfNotifyWhenFinished = false;
 }
+#endif
 
 #ifdef ENABLE_RW_USB_MASS_STORAGE
 
@@ -158,6 +161,10 @@ static int settings_ini_handler(void *user, const char *section, const char *nam
             free(temp);
         }
     }
+    else if (MATCH("dpf", "notifyWhenFinished"))
+    {
+        settings->dpfNotifyWhenFinished = strcmp("true", value) == 0 ? true : false;
+    }
     else
     {
         return 0;
@@ -208,10 +215,5 @@ void load_settings(Settings *settings)
     }
 
     res = f_unmount("");
-}
-#else
-void load_settings(Settings *settings)
-{
-    init_settings(settings);
 }
 #endif

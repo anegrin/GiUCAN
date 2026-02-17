@@ -199,7 +199,7 @@
 #define CAN_BITRATE CAN_BITRATE_500K
 #endif
 
-#if DEBUG_MODE
+#ifdef DEBUG_MODE
 #ifdef ENABLE_DASHBOARD
 #warning "DEBUG_MODE+ENABLE_DASHBOARD might lead to malfunction because of UART communication"
 #endif

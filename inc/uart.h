@@ -24,7 +24,7 @@
 
 #ifdef XCAN
 #define UART_QUEUE_SIZE 64
-#define MESSAGE_SIZE 14
+#define MESSAGE_SIZE 12
 #endif
 
 #ifdef C1CAN
