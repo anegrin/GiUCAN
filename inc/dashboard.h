@@ -66,7 +66,10 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
     X(BATTERY_V_A_ITEM, "Battery: %.1fV/%.2fA")                \
     X(BATTERY_P_ITEM, "Battery charge: %.0f%%")                \
     X(STEERING_ITEM, "Steering angle: %.1f"                    \
-                     "\xB0")
+                     "\xB0")                                   \
+    X(FUEL_TEMP_LV_ITEM, "Fuel: %.0f"                          \
+                         "\xB0"                                \
+                         "C/%.0f%%")
 #endif
 
 typedef enum
@@ -185,6 +188,7 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
     X(extractGearboxTemp, (float)A(r) - 40.0f)                                                                                                                              \
     X(extractGear, (float)s->car.gear)                                                                                                                                      \
     X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)                                                                                               \
+    X(extractFuelPercent, ((float)A(r)))                                                                                                                      \
     X(extractTireTemp, ((float)E(r) - 50.0f))
 #endif
 
@@ -224,7 +228,8 @@ forV1_extraction_function
     X(GEARBOX_TEMP_ITEM, true, true, 0x18DA18F1, 0x032204FE, extractGearboxTemp, false, false, 0, 0, noop_extract)                                     \
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)                                       \
     X(TIRES_TEMP_FRONT_ITEM, true, true, 0x18DAC7F1, 0x032240B1, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B2, extractTireTemp)                 \
-    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B4, extractTireTemp)
+    X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B4, extractTireTemp)                  \
+    X(FUEL_TEMP_LV_ITEM, true, true, 0x18DA10F1, 0x03221900, extractTempCommon, true, true, 0x18DB33F1, 0x0322012F, extractFuelPercent)
 #endif
 #endif
 
@@ -249,7 +254,8 @@ forV1_extraction_function
     X(AIR_IN_ITEM, 15000)                 \
     X(GEARBOX_TEMP_ITEM, 15000)           \
     X(TIRES_TEMP_FRONT_ITEM, 60000)       \
-    X(TIRES_TEMP_REAR_ITEM, 60000)
+    X(TIRES_TEMP_REAR_ITEM, 60000)        \
+    X(FUEL_TEMP_LV_ITEM, 15000)
 #endif
 
 #endif // _DASHBOARD_H
