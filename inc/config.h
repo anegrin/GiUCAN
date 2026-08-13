@@ -135,6 +135,10 @@
 #endif
 #endif
 
+#ifndef TANK_CAPACITY
+#define TANK_CAPACITY 52.0f
+#endif
+
 #ifndef CAR_IS_ON_MIN_RPM
 #define CAR_IS_ON_MIN_RPM 400
 #endif
