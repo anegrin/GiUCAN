@@ -139,6 +139,10 @@
 #define TANK_CAPACITY 52.0f
 #endif
 
+#ifndef SERVICE_INTERVAL
+#define SERVICE_INTERVAL 20000.0f
+#endif
+
 #ifndef CAR_IS_ON_MIN_RPM
 #define CAR_IS_ON_MIN_RPM 400
 #endif
