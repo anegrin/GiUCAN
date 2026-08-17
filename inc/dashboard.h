@@ -67,7 +67,7 @@ float noop_extract(GlobalState *state, uint8_t *rx_msg_data);
     X(BATTERY_P_ITEM, "Battery charge: %.0f%%")                \
     X(STEERING_ITEM, "Steering angle: %.1f"                    \
                      "\xB0")                                   \
-    X(FUEL_LVL_ITEM, "Fuel level: %.0f%%/%.1fL")                         \
+    X(FUEL_LVL_ITEM, "Fuel level: %.0f%%/%.1fL")               \
     X(OIL_CHANGE_DIST_ITEM, "Oil change in: %.0fkm")
 #endif
 
@@ -162,35 +162,36 @@ renders to
 
 float function_name(GlobalState *s, uint8_t *r) { return code; }
 */
-#define EXTRACTION_FUNCTIONS                                                                                                                                                \
-    X(extractTempCommon, ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f)                                                                                                  \
-    X(extractCarUptime, ((float)((A(r) * 256) + B(r)) / 4.0f))                                                                                                              \
-    X(extractBoardUptime, (((float)s->board.now) / 60000.0f))                                                                                                               \
-    X(extractHP, ((float)s->car.torque - 500) * (float)s->car.rpm * 0.000142378f)                                                                                           \
-    X(extractNM, (float)s->car.torque - 500)                                                                                                                                \
-    X(extractBoost, fmax(0.0f, ((float)(((A(r) * 256) + B(r))) - 32768.0f - (s->board.dashboardState.values[1] > 0 ? s->board.dashboardState.values[1] : 1000)) / 1000.0f)) \
-    X(extractAtmPress, ((float)(((A(r) * 256) + B(r))) - 32768.0f))                                                                                                         \
-    X(extractDpfStatus, (float)s->car.dpf.regenMode)                                                                                                                        \
-    X(extractDpfClog, ((float)((A(r) * 256) + B(r))) * 0.01525902f)                                                                                                         \
-    X(extractDpfReg, ((float)((A(r) * 256) + B(r))) * 0.001525902f)                                                                                                         \
-    X(extractDpfDist, ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) * 0.1)                                                                                                \
-    X(extractDpfCount, (float)((A(r) * 256) + B(r)))                                                                                                                        \
-    X(extractDpfMeanDist, (float)((A(r) * 256) + B(r)))                                                                                                                     \
-    X(extractDpfMeanDuration, (float)((A(r) * 256) + B(r)) / 60.0f)                                                                                                         \
-    X(extractBatteryVolt, (float)((A(r) * 256) + B(r)) * 0.0005f)                                                                                                           \
-    X(extractBatteryPerc, (float)s->car.battery.chargePercent)                                                                                                              \
-    X(extractBatteryAmpere, (float)s->car.battery.current)                                                                                                                  \
-    X(extractOilPressure, s->car.oil.pressure)                                                                                                                              \
-    X(extractOilQuality, ((float)((A(r) * 256) + B(r))) * 0.001525902f)                                                                                                     \
-    X(extractOilTemp, (float)s->car.oil.temperature)                                                                                                                        \
-    X(extractOilLevel, ((float)((A(r) * 256) + B(r))) / 10.0f)                                                                                                              \
-    X(extractGearboxTemp, (float)A(r) - 40.0f)                                                                                                                              \
-    X(extractGear, (float)s->car.gear)                                                                                                                                      \
-    X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)                                                                                               \
-    X(extractTireTemp, ((float)E(r) - 50.0f))                                                                                                                               \
-    X(extractFuelPercent, ((float)A(r) * 100.0f) / 255.0f)                                                                                                                   \
-    X(extractFuelLiters, ((float)A(r) * TANK_CAPACITY) / 255.0f)                                                                                                             \
-    X(extractOilChangeDistance, ((float)((A(r) * 256) + B(r))) * 10.0f)
+#define EXTRACTION_FUNCTIONS                                                                                                                                                                     \
+    X(extractTempCommon, ((float)(((A(r) * 256) + B(r))) * 0.02f) - 40.0f)                                                                                                                       \
+    X(extractCarUptime, ((float)((A(r) * 256) + B(r)) / 4.0f))                                                                                                                                   \
+    X(extractBoardUptime, (((float)s->board.now) / 60000.0f))                                                                                                                                    \
+    X(extractHP, ((float)s->car.torque - 500) * (float)s->car.rpm * 0.000142378f)                                                                                                                \
+    X(extractNM, (float)s->car.torque - 500)                                                                                                                                                     \
+    X(extractBoost, fmax(0.0f, ((float)(((A(r) * 256) + B(r))) - 32768.0f - (s->board.dashboardState.values[1] > 0 ? s->board.dashboardState.values[1] : 1000)) / 1000.0f))                      \
+    X(extractAtmPress, ((float)(((A(r) * 256) + B(r))) - 32768.0f))                                                                                                                              \
+    X(extractDpfStatus, (float)s->car.dpf.regenMode)                                                                                                                                             \
+    X(extractDpfClog, ((float)((A(r) * 256) + B(r))) * 0.01525902f)                                                                                                                              \
+    X(extractDpfReg, ((float)((A(r) * 256) + B(r))) * 0.001525902f)                                                                                                                              \
+    X(extractDpfDist, ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) * 0.1)                                                                                                                     \
+    X(extractDpfCount, (float)((A(r) * 256) + B(r)))                                                                                                                                             \
+    X(extractDpfMeanDist, (float)((A(r) * 256) + B(r)))                                                                                                                                          \
+    X(extractDpfMeanDuration, (float)((A(r) * 256) + B(r)) / 60.0f)                                                                                                                              \
+    X(extractBatteryVolt, (float)((A(r) * 256) + B(r)) * 0.0005f)                                                                                                                                \
+    X(extractBatteryPerc, (float)s->car.battery.chargePercent)                                                                                                                                   \
+    X(extractBatteryAmpere, (float)s->car.battery.current)                                                                                                                                       \
+    X(extractOilPressure, s->car.oil.pressure)                                                                                                                                                   \
+    X(extractOilQuality, ((float)((A(r) * 256) + B(r))) * 0.001525902f)                                                                                                                          \
+    X(extractOilTemp, (float)s->car.oil.temperature)                                                                                                                                             \
+    X(extractOilLevel, ((float)((A(r) * 256) + B(r))) / 10.0f)                                                                                                                                   \
+    X(extractGearboxTemp, (float)A(r) - 40.0f)                                                                                                                                                   \
+    X(extractGear, (float)s->car.gear)                                                                                                                                                           \
+    X(extractSteeringAngle, ((float)((((int8_t)A(r)) * 256) + B(r))) / 16.0f)                                                                                                                    \
+    X(extractTireTemp, ((float)E(r) - 50.0f))                                                                                                                                                    \
+    X(extractFuelPercent, ((float)A(r) * 100.0f) / 255.0f)                                                                                                                                       \
+    X(extractFuelLiters, ((float)A(r) * TANK_CAPACITY) / 255.0f)                                                                                                                                 \
+    X(extractOilChangeOdometer, s->board.dashboardState.values[1] <= 0 ? 0 : ((((float)((A(r) * 65536) + (B(r) * 256) + C(r))) / 10.0f) + SERVICE_INTERVAL - s->board.dashboardState.values[1])) \
+    X(extractOdometer, ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) / 10.0f)
 #endif
 
 #ifndef EXTRACTORS
@@ -230,8 +231,8 @@ forV1_extraction_function
     X(STEERING_ITEM, true, true, 0x18DA2AF1, 0x0322083C, extractSteeringAngle, false, false, 0, 0, noop_extract)                                       \
     X(TIRES_TEMP_FRONT_ITEM, true, true, 0x18DAC7F1, 0x032240B1, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B2, extractTireTemp)                 \
     X(TIRES_TEMP_REAR_ITEM, true, true, 0x18DAC7F1, 0x032240B3, extractTireTemp, true, true, 0x18DAC7F1, 0x032240B4, extractTireTemp)                  \
-    X(FUEL_LVL_ITEM, true, true, 0x18DA10F1, 0x03221001, extractFuelPercent, true, true, 0x18DA10F1, 0x03221001, extractFuelLiters)                   \
-    X(OIL_CHANGE_DIST_ITEM, true, true, 0x18DA10F1, 0x03223810, extractOilChangeDistance, false, false, 0, 0, noop_extract)
+    X(FUEL_LVL_ITEM, true, true, 0x18DA10F1, 0x03221001, extractFuelPercent, true, true, 0x18DA10F1, 0x03221001, extractFuelLiters)                    \
+    X(OIL_CHANGE_DIST_ITEM, true, true, 0x18DA10F1, 0x0322380E, extractOilChangeOdometer, true, true, 0x18DA10F1, 0x03222001, extractOdometer)
 #endif
 #endif
 
@@ -257,7 +258,7 @@ forV1_extraction_function
     X(GEARBOX_TEMP_ITEM, 15000)           \
     X(TIRES_TEMP_FRONT_ITEM, 60000)       \
     X(TIRES_TEMP_REAR_ITEM, 60000)        \
-    X(FUEL_LVL_ITEM, 15000)              \
+    X(FUEL_LVL_ITEM, 15000)               \
     X(OIL_CHANGE_DIST_ITEM, 60000)
 #endif
 

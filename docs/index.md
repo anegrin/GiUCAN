@@ -116,7 +116,8 @@ By creating a file named `inc/user_config.h` you can customize almost any featur
 - `#define DASHBOARD_PAGE_SIZE 5`: how many items to skip when "hard pressing" speed control joystick; default is 10
 - `#define DISABLE_SNS_AUTO_OFF`: disable Start and Stop auto off
 - `#define SNS_AUTO_OFF_DELAY_MS 30000`: if GiUCAN can disable Start and Stop this controls after how many milliseconds to do so. default is 20s
-- `#define TANK_CAPACITY 52.0f`: fuel-tank capacity; default is 52 (liters)
+- `#define TANK_CAPACITY 53.0f`: fuel-tank capacity; default is 52 (liters)
+- `#define SERVICE_INTERVAL 10000.0f`: service interval as distance; default is 20000 (km)
 - `#define CAR_IS_ON_MIN_RPM 800`: the minimum value for Revolutions Per Minute for considering the engine on, default is 400; it's used by Start and Stop auto off and by dashboard feature to stop sending messages on BH (if you power off the car and the dashboard items feature was on)
 
 ### Customize items
