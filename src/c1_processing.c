@@ -113,11 +113,13 @@ void state_process(GlobalState *state, Settings *settings)
 
         uint32_t values_refresh_ms = values_refresh_rate_of(type);
 
-        // first 6 iterations for an item (3 v0 and optional 3 v1)
+        // first 3 iterations for an item (rendering might depend on v0 and v1)
         // must be done ASAP, then we'll honor values_refresh_rate_of
-        if (refreshOperations < 6)
+        uint32_t min_values_refresh_ms = DEFAULT_VALUES_REFRESH_MS / 3;
+        if (refreshOperations < 3)
         {
-            values_refresh_ms = values_refresh_ms > DEFAULT_VALUES_REFRESH_MS ? DEFAULT_VALUES_REFRESH_MS : values_refresh_ms;
+
+            values_refresh_ms = values_refresh_ms > min_values_refresh_ms ? min_values_refresh_ms : values_refresh_ms;
         }
 
         if (valuesUpdatedAt + values_refresh_ms < state->board.now)
