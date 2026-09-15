@@ -12,9 +12,11 @@
 typedef struct
 {
     uint8_t echo, linefeeds, spaces, headers, responses, auto_format, dlc;
-    uint8_t protocol, timeout;
+    uint8_t protocol, timeout, adaptive_timing, flow_control;
     uint8_t custom_header_set;
+    uint8_t receive_filter_set;
     CAN_TxHeaderTypeDef custom_header;
+    CAN_TxHeaderTypeDef receive_filter;
 } elm_settings_t;
 
 static elm_settings_t settings;
@@ -23,6 +25,7 @@ static uint8_t got_response;
 static uint32_t response_deadline;
 static uint8_t isotp_data[64], isotp_len;
 static uint16_t isotp_expected;
+static CAN_TxHeaderTypeDef last_tx_header;
 
 static uint8_t hex(uint8_t c)
 {
@@ -64,10 +67,36 @@ static void reset_settings(void)
     settings.dlc = 0;
     settings.protocol = 6; // ISO 15765-4, 11 bit, 500 kbit/s
     settings.timeout = 0x32; // ELM327 default: 200 ms
+    settings.adaptive_timing = 1;
+    settings.flow_control = 1;
     settings.custom_header_set = 0;
+    settings.receive_filter_set = 0;
     request_pending = 0;
     got_response = 0;
     isotp_len = isotp_expected = 0;
+}
+
+static uint8_t header_matches(CAN_RxHeaderTypeDef *header, CAN_TxHeaderTypeDef *filter)
+{
+    if (header->IDE != filter->IDE)
+    {
+        return 0;
+    }
+    if (header->IDE == CAN_ID_EXT)
+    {
+        return header->ExtId == filter->ExtId;
+    }
+    return header->StdId == filter->StdId;
+}
+
+static void send_flow_control(void)
+{
+    uint8_t flow_control[] = {0x30, 0x00, 0x00};
+    CAN_TxHeaderTypeDef header = last_tx_header;
+
+    header.RTR = CAN_RTR_DATA;
+    header.DLC = sizeof(flow_control);
+    can_tx(&header, flow_control);
 }
 
 static void append_hex(uint8_t *buf, uint8_t *pos, uint8_t value)
@@ -119,6 +148,10 @@ int16_t elm327_parse_frame(uint8_t *buf, CAN_RxHeaderTypeDef *header, uint8_t *d
     {
         return 0;
     }
+    if (settings.receive_filter_set && !header_matches(header, &settings.receive_filter))
+    {
+        return 0;
+    }
     got_response = 1;
     response_deadline = HAL_GetTick() + ((uint32_t)settings.timeout * 4U);
 
@@ -140,6 +173,10 @@ int16_t elm327_parse_frame(uint8_t *buf, CAN_RxHeaderTypeDef *header, uint8_t *d
     {
         isotp_expected = ((uint16_t)(data[0] & 0x0F) << 8) | data[1];
         isotp_len = 0;
+        if (settings.flow_control && isotp_expected <= sizeof(isotp_data))
+        {
+            send_flow_control();
+        }
         for (uint8_t i = 2; i < header->DLC && isotp_len < sizeof(isotp_data); ++i)
         {
             isotp_data[isotp_len++] = data[i];
@@ -178,7 +215,7 @@ static int8_t set_protocol(const uint8_t *cmd, uint8_t len)
         return -1;
     }
     uint8_t p = hex(cmd[pos]);
-    if (p == 6 || p == 7)
+    if (p == 6 || p == 7 || p == 0xC)
     {
         can_set_bitrate(CAN_BITRATE_500K);
     }
@@ -191,6 +228,32 @@ static int8_t set_protocol(const uint8_t *cmd, uint8_t len)
         return -1;
     }
     settings.protocol = p;
+    return 0;
+}
+
+static int8_t set_receive_filter(const uint8_t *cmd, uint8_t len)
+{
+    uint8_t digits = len - 5; // ATCRA
+    uint32_t id = 0;
+
+    if (digits != 3 && digits != 8)
+    {
+        return -1;
+    }
+    for (uint8_t i = 5; i < len; ++i)
+    {
+        uint8_t nibble = hex(cmd[i]);
+        if (nibble == 0xFF)
+        {
+            return -1;
+        }
+        id = (id << 4) | nibble;
+    }
+
+    settings.receive_filter.IDE = digits == 8 ? CAN_ID_EXT : CAN_ID_STD;
+    settings.receive_filter.StdId = id;
+    settings.receive_filter.ExtId = id;
+    settings.receive_filter_set = 1;
     return 0;
 }
 
@@ -291,6 +354,31 @@ int8_t elm327_parse_str(uint8_t *buf, uint8_t len)
             ok = set_protocol(cmd, command_len);
             result(ok ? "?" : "OK");
         }
+        else if (command_len == 6 && !memcmp(cmd, "ATCFC", 5) && (cmd[5] == '0' || cmd[5] == '1'))
+        {
+            settings.flow_control = cmd[5] - '0';
+            result("OK");
+        }
+        else if (command_len == 5 && !memcmp(cmd, "ATCRA", 5))
+        {
+            settings.receive_filter_set = 0;
+            result("OK");
+        }
+        else if (command_len >= 8 && !memcmp(cmd, "ATCRA", 5))
+        {
+            ok = set_receive_filter(cmd, command_len);
+            result(ok ? "?" : "OK");
+        }
+        else if (command_len == 5 && !memcmp(cmd, "ATAT", 4) && (cmd[4] >= '0' && cmd[4] <= '2'))
+        {
+            settings.adaptive_timing = cmd[4] - '0';
+            result("OK");
+        }
+        else if (command_len == 4 && !memcmp(cmd, "ATBI", 4))
+        {
+            // CAN does not require a separate initialization sequence.
+            result("OK");
+        }
         else if (command_len >= 5 && !memcmp(cmd, "ATSH", 4))
         {
             ok = set_header(cmd, command_len);
@@ -316,7 +404,7 @@ int8_t elm327_parse_str(uint8_t *buf, uint8_t len)
     for (uint8_t i = 0; i < command_len / 2; ++i) { uint8_t a = hex(cmd[i * 2]), b = hex(cmd[i * 2 + 1]); if (a == 0xFF || b == 0xFF) { result("?"); return -1; } data[i] = (a << 4) | b; }
     CAN_TxHeaderTypeDef header = settings.custom_header;
     if (!settings.custom_header_set) {
-        header.IDE = (settings.protocol == 7 || settings.protocol == 9 || settings.protocol == 0xA) ? CAN_ID_EXT : CAN_ID_STD;
+        header.IDE = (settings.protocol == 7 || settings.protocol == 9 || settings.protocol == 0xA || settings.protocol == 0xC) ? CAN_ID_EXT : CAN_ID_STD;
         header.StdId = 0x7DF;
         header.ExtId = 0x18DB33F1;
         header.RTR = CAN_RTR_DATA;
@@ -324,6 +412,7 @@ int8_t elm327_parse_str(uint8_t *buf, uint8_t len)
     header.DLC = command_len / 2;
     can_enable();
     if (can_tx(&header, data) != HAL_OK) { result("BUFFER FULL"); return -1; }
+    last_tx_header = header;
     request_pending = settings.responses;
     got_response = 0;
     response_deadline = HAL_GetTick() + ((uint32_t)settings.timeout * 4U);

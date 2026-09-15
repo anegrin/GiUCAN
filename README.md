@@ -55,7 +55,9 @@ defaults to ISO 15765-4 CAN at 500 kbit/s using the standard functional OBD
 header (`7DF`). It accepts hexadecimal OBD requests and returns decoded
 single-frame and up-to-64-byte ISO-TP replies. Supported configuration includes
 `ATZ`, `ATI`, `ATE`, `ATL`, `ATH`, `ATS`, `ATR`, `ATCAF`, `ATSP`/`ATTP`
-(protocols 6–A), `ATSH`, `ATST`, `ATDP`, `ATDPN`, `ATPC`, and `ATCSM`.
+(protocols 6–A), `ATSH`, `ATST`, `ATDP`, `ATDPN`, `ATPC`, `ATCSM`, `ATCFC`,
+`ATCRA`, `ATAT`, and `ATBI`. The MultiECUScan interface-test sequence is
+supported; hardware validation against a vehicle is still required.
 
 ## Building, Flashing  and Debugging
 
