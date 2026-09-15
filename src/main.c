@@ -5,9 +5,10 @@
 #include "led.h"
 #include "model.h"
 #include "slcan.h"
+#include "elm327.h"
 #include "processing.h"
 #include "usb_device.h"
-#ifdef SLCAN
+#if defined(SLCAN) || defined(ELM327)
 #include "usbd_cdc_if.h"
 #endif
 #ifdef XCAN
@@ -57,6 +58,9 @@ int main(void)
     uart_init();
 
     storage_init();
+#ifdef ELM327
+    elm327_init();
+#endif
 #ifdef C1CAN
     load_settings(&settings);
 #endif
@@ -73,6 +77,9 @@ int main(void)
 #endif
 #ifdef SLCAN
     leds_blink(4, 100);
+#endif
+#ifdef ELM327
+    leds_blink(5, 100);
 #endif
 #ifdef C1CAN
     leds_blink(3, 250);
@@ -151,8 +158,11 @@ int main(void)
         }
 #endif
 
-#ifdef SLCAN
+#if defined(SLCAN) || defined(ELM327)
         cdc_process();
+#endif
+#ifdef ELM327
+        elm327_process();
 #endif
         led_process();
         can_process();
@@ -171,7 +181,13 @@ CAN_RxHeaderTypeDef rx_msg_header; // msg header
 uint8_t rx_msg_data[8] = {
     0,
 }; // msg data
-uint8_t msg_buf[SLCAN_MTU];
+uint8_t msg_buf[
+#ifdef ELM327
+ELM327_MTU
+#else
+SLCAN_MTU
+#endif
+];
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 #ifdef C1CAN
@@ -183,10 +199,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
     if (can_rx(&rx_msg_header, rx_msg_data) == HAL_OK)
     {
-        uint16_t msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
+        uint16_t msg_len = 0;
+#ifdef SLCAN
+        msg_len = slcan_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
+#endif
+#ifdef ELM327
+        msg_len = elm327_parse_frame((uint8_t *)&msg_buf, &rx_msg_header, rx_msg_data);
+#endif
         if (msg_len)
         {
-#ifdef SLCAN
+#if defined(SLCAN) || defined(ELM327)
             CDC_Transmit_FS(msg_buf, msg_len);
 #endif
 #ifdef XCAN

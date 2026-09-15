@@ -6,7 +6,7 @@
 #include "stm32f0xx_hal.h"
 #include "model.h"
 
-#ifdef SLCAN
+#if defined(SLCAN) || defined(ELM327)
 #ifdef DEBUG_MODE
 #define UART_QUEUE_SIZE 8
 #define MESSAGE_SIZE 128
@@ -30,7 +30,7 @@
 #ifdef C1CAN
 bool send_state(GlobalState *state);
 #endif
-#ifdef SLCAN
+#if defined(SLCAN) || defined(ELM327)
 #ifdef DEBUG_MODE
 uint8_t print_to_uart(char* message);
 uint8_t printf_to_uart(const char* format, ...);

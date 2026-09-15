@@ -22,6 +22,7 @@
 #include "usbd_cdc_if.h"
 #include "error.h"
 #include "slcan.h"
+#include "elm327.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -103,8 +104,14 @@ USBD_CDC_LineCodingTypeDef LineCoding = {
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 static usbrx_buf_t rxbuf = {0};
 static uint8_t txbuf[TX_BUF_SIZE];
-static uint8_t slcan_str[SLCAN_MTU];
-static uint8_t slcan_str_index = 0;
+static uint8_t protocol_str[
+#ifdef ELM327
+ELM327_COMMAND_MTU
+#else
+SLCAN_MTU
+#endif
+];
+static uint8_t protocol_str_index = 0;
 
 /* USER CODE END PRIVATE_VARIABLES */
 
@@ -377,7 +384,12 @@ uint8_t cdc_process(void)
         {
             if (rxbuf.buf[rxbuf.tail][i] == '\r')
             {
-                int8_t result = slcan_parse_str(slcan_str, slcan_str_index);
+                int8_t result;
+#ifdef ELM327
+                result = elm327_parse_str(protocol_str, protocol_str_index);
+#else
+                result = slcan_parse_str(protocol_str, protocol_str_index);
+#endif
                 UNUSED(result);
 
                 // Success
@@ -387,19 +399,19 @@ uint8_t cdc_process(void)
                 //else
                 //    CDC_Transmit_FS("\a", 1);
 
-                slcan_str_index = 0;
+                protocol_str_index = 0;
                 processed = 1;
             }
             else
             {
                 // Check for overflow of buffer
-                if(slcan_str_index >= SLCAN_MTU)
+                if(protocol_str_index >= sizeof(protocol_str))
                 {
                     // TODO: Return here and discard this CDC buffer?
-                    slcan_str_index = 0;
+                    protocol_str_index = 0;
                 }
 
-                slcan_str[slcan_str_index++] = rxbuf.buf[rxbuf.tail][i];
+                protocol_str[protocol_str_index++] = rxbuf.buf[rxbuf.tail][i];
             }
         }
 
@@ -415,16 +427,16 @@ uint8_t cdc_process(void)
 uint8_t print_to_usb(char* message)
 {
     uint16_t msg_len = strlen(message);
-    return CDC_Transmit_FS((uint8_t*)message, msg_len < SLCAN_MTU ? msg_len : SLCAN_MTU);
+    return CDC_Transmit_FS((uint8_t*)message, msg_len < sizeof(protocol_str) ? msg_len : sizeof(protocol_str));
 }
 
 uint8_t printf_to_usb(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int written = vsnprintf_((char*)slcan_str, SLCAN_MTU, format, args);
+    int written = vsnprintf_((char*)protocol_str, sizeof(protocol_str), format, args);
     va_end(args);
-    return CDC_Transmit_FS(slcan_str, written < SLCAN_MTU ? (uint8_t) written : SLCAN_MTU);
+    return CDC_Transmit_FS(protocol_str, written < sizeof(protocol_str) ? (uint8_t) written : sizeof(protocol_str));
   }
 #endif
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */

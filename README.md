@@ -48,6 +48,15 @@ Note: Channel configuration commands must be sent before opening the channel. Th
 
 This firmware currently does not provide any ACK/NACK feedback for serial commands.
 
+## ELM327 flavor
+
+Build the ELM327-compatible USB CDC flavor with `make USER_DEFS=-DELM327`. It
+defaults to ISO 15765-4 CAN at 500 kbit/s using the standard functional OBD
+header (`7DF`). It accepts hexadecimal OBD requests and returns decoded
+single-frame and up-to-64-byte ISO-TP replies. Supported configuration includes
+`ATZ`, `ATI`, `ATE`, `ATL`, `ATH`, `ATS`, `ATR`, `ATCAF`, `ATSP`/`ATTP`
+(protocols 6–A), `ATSH`, `ATST`, `ATDP`, `ATDPN`, `ATPC`, and `ATCSM`.
+
 ## Building, Flashing  and Debugging
 
 Please read [Canable-fw README.md](https://github.com/normaldotcom/canable-fw/blob/master/README.md) as `make` will build SLCAN firmware by default.

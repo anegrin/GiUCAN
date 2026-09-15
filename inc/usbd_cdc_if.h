@@ -55,7 +55,11 @@
 #define APP_TX_DATA_SIZE  1024
 */
 /* USER CODE BEGIN EXPORTED_DEFINES */
-#define TX_BUF_SIZE  64 // Linear TX buf size
+#ifdef ELM327
+#define TX_BUF_SIZE  256 // Fits a formatted 64-byte ISO-TP ELM327 reply
+#else
+#define TX_BUF_SIZE  64
+#endif
 #define NUM_RX_BUFS 6 // Number of RX buffers in FIFO
 #define RX_BUF_SIZE CDC_DATA_FS_MAX_PACKET_SIZE // Size of RX buffer item
 /* USER CODE END EXPORTED_DEFINES */

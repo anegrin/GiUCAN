@@ -3,7 +3,6 @@
 //
 
 #include "stm32f0xx_hal.h"
-#include "slcan.h"
 #include "usbd_cdc_if.h"
 #include "can.h"
 #include "led.h"

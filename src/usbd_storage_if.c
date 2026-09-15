@@ -115,6 +115,8 @@ const int8_t STORAGE_Inquirydata_FS[] = {/* 36 */
   'S', 'C', ' ', 
 #ifdef SLCAN
 'S', 'L', 
+#elif defined(ELM327)
+'E', 'L', 
 #elif C1CAN
 'C', '1', 
 #elif BHCAN
