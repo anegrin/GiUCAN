@@ -8,7 +8,7 @@
 #include "elm327.h"
 #include "processing.h"
 #include "usb_device.h"
-#if defined(SLCAN) || defined(ELM327)
+#ifdef XPROTO
 #include "usbd_cdc_if.h"
 #endif
 #ifdef XCAN
@@ -158,7 +158,7 @@ int main(void)
         }
 #endif
 
-#if defined(SLCAN) || defined(ELM327)
+#ifdef XPROTO
         cdc_process();
 #endif
 #ifdef ELM327
@@ -208,7 +208,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 #endif
         if (msg_len)
         {
-#if defined(SLCAN) || defined(ELM327)
+#ifdef XPROTO
             CDC_Transmit_FS(msg_buf, msg_len);
 #endif
 #ifdef XCAN

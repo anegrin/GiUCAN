@@ -56,6 +56,8 @@
 
 #ifdef SLCAN
 
+#define XPROTO
+
 #ifdef BHCAN
 #error "Can't build SLCAN+BHCAN"
 #endif
@@ -74,6 +76,8 @@
 #endif
 
 #ifdef ELM327
+
+#define XPROTO
 
 #ifdef BHCAN
 #error "Can't build ELM327+BHCAN"

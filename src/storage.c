@@ -33,7 +33,7 @@ void storage_init(void)
                 "GIUCAN"
 #ifdef SLCAN
 " SL"
-#elif defined(ELM327)
+#elif ELM327
 " EL"
 #elif C1CAN
 " C1"

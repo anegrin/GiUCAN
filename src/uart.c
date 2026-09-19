@@ -282,7 +282,7 @@ void uart_process(GlobalState *state)
     }
 }
 
-#if defined(SLCAN) || defined(ELM327)
+#ifdef XPROTO
 #ifdef DEBUG_MODE
 uint8_t print_to_uart(char *message)
 {
