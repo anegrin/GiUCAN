@@ -376,7 +376,12 @@ void system_irq_enable(void)
 uint8_t cdc_process(void)
 {
     uint8_t processed = 0;
+#ifndef ELM327
+    // Do not disable interrupts while processing commands: the ELM327 handler
+    // may transmit more than one CDC packet and USB interrupts must run to
+    // clear TxState between those packets.
     system_irq_disable();
+#endif
     if(rxbuf.tail != rxbuf.head)
     {
         //  Process one whole buffer
@@ -418,7 +423,9 @@ uint8_t cdc_process(void)
         // Move on to next buffer
         rxbuf.tail = (rxbuf.tail + 1) % NUM_RX_BUFS;
     }
+#ifndef ELM327
     system_irq_enable();
+#endif
     return processed;
 }
 
