@@ -193,8 +193,8 @@ float function_name(GlobalState *s, uint8_t *r) { return code; }
     X(extractTireTemp, ((float)E(r) - 50.0f))                                                                                                                                                    \
     X(extractFuelPercent, ((float)A(r) * 100.0f) / 255.0f)                                                                                                                                       \
     X(extractFuelLiters, ((float)A(r) * TANK_CAPACITY) / 255.0f)                                                                                                                                 \
-    X(extractOilChangeOdometer, s->board.dashboardState.values[1] <= 0 ? 0 : ((((float)((A(r) * 65536) + (B(r) * 256) + C(r))) / 10.0f) + SERVICE_INTERVAL - s->board.dashboardState.values[1])) \
-    X(extractOdometer, ((float)((A(r) * 65536) + (B(r) * 256) + C(r))) / 10.0f)
+    X(extractOilChangeOdometer, s->board.dashboardState.values[1] <= 0 ? 0 : (((float)((((A(r) * 65536) + (B(r) * 256) + C(r))) / 10)) + SERVICE_INTERVAL - s->board.dashboardState.values[1])) \
+    X(extractOdometer, ((float)(((A(r) * 65536) + (B(r) * 256) + C(r))) / 10))
 #endif
 
 #ifndef EXTRACTORS

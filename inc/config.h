@@ -140,7 +140,7 @@
 #endif
 
 #ifndef SERVICE_INTERVAL
-#define SERVICE_INTERVAL 20000.0f
+#define SERVICE_INTERVAL 20000
 #endif
 
 #ifndef CAR_IS_ON_MIN_RPM
