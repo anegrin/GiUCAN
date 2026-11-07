@@ -160,6 +160,9 @@ void state_process(GlobalState *state, Settings *settings)
                 extract_or_send_request(extractors.forV1, state, 1);
             }
         }
+    } else if ((refreshOperations > 0 || valueToExtract > -1) && !state->board.dashboardState.visible) {
+        refreshOperations = 0;
+        valueToExtract = -1;
     }
 #endif
 }
